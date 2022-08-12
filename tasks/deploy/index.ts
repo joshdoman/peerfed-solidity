@@ -1,2 +1,1 @@
-import "./greeter";
-import "./rebaseCoin";
+import "./flatcoin";

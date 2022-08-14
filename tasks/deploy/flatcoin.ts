@@ -3,7 +3,11 @@ import { task } from "hardhat/config";
 import type { TaskArguments } from "hardhat/types";
 
 import type { Flatcoin, FlatcoinBond, UnmintedFlatcoin } from "../../src/types/contracts";
-import type { Flatcoin__factory, FlatcoinBond__factory, UnmintedFlatcoin__factory } from "../../src/types/factories/contracts";
+import type {
+  FlatcoinBond__factory,
+  Flatcoin__factory,
+  UnmintedFlatcoin__factory,
+} from "../../src/types/factories/contracts";
 
 task("deploy:Flatcoin").setAction(async function (taskArguments: TaskArguments, { ethers }) {
   const signers: SignerWithAddress[] = await ethers.getSigners();
@@ -22,7 +26,9 @@ task("deploy:Flatcoin").setAction(async function (taskArguments: TaskArguments, 
   await unmintedFlatcoin.deployed();
 
   const flatcoinFactory: Flatcoin__factory = <Flatcoin__factory>await ethers.getContractFactory("Flatcoin");
-  const flatcoin: Flatcoin = <Flatcoin>await flatcoinFactory.connect(owner).deploy(flatcoinBond.address, unmintedFlatcoin.address);
+  const flatcoin: Flatcoin = <Flatcoin>(
+    await flatcoinFactory.connect(owner).deploy(flatcoinBond.address, unmintedFlatcoin.address)
+  );
   await flatcoin.deployed();
 
   console.log("FlatcoinBond deployed to: ", flatcoinBond.address);

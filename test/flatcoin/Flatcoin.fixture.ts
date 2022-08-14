@@ -2,9 +2,17 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 import { ethers } from "hardhat";
 
 import type { Flatcoin, FlatcoinBond, UnmintedFlatcoin } from "../../src/types/contracts";
-import type { Flatcoin__factory, FlatcoinBond__factory, UnmintedFlatcoin__factory } from "../../src/types/factories/contracts";
+import type {
+  FlatcoinBond__factory,
+  Flatcoin__factory,
+  UnmintedFlatcoin__factory,
+} from "../../src/types/factories/contracts";
 
-export async function deployFlatcoinFixture(): Promise<{ flatcoin: Flatcoin }> {
+export async function deployFlatcoinFixture(): Promise<{
+  flatcoin: Flatcoin;
+  flatcoinBond: FlatcoinBond;
+  unmintedFlatcoin: UnmintedFlatcoin;
+}> {
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
 
@@ -21,8 +29,10 @@ export async function deployFlatcoinFixture(): Promise<{ flatcoin: Flatcoin }> {
   await unmintedFlatcoin.deployed();
 
   const flatcoinFactory: Flatcoin__factory = <Flatcoin__factory>await ethers.getContractFactory("Flatcoin");
-  const flatcoin: Flatcoin = <Flatcoin>await flatcoinFactory.connect(owner).deploy(flatcoinBond.address, unmintedFlatcoin.address);
+  const flatcoin: Flatcoin = <Flatcoin>(
+    await flatcoinFactory.connect(owner).deploy(flatcoinBond.address, unmintedFlatcoin.address)
+  );
   await flatcoin.deployed();
 
-  return { flatcoin };
+  return { flatcoin, flatcoinBond, unmintedFlatcoin };
 }

@@ -9,7 +9,6 @@ import "./ERC20Swappable.sol";
 import "./interfaces/IFlatcoin.sol";
 import "./interfaces/IFlatcoinBond.sol";
 import "./interfaces/IUnmintedFlatcoin.sol";
-import "./interfaces/IERC20Burnable.sol";
 
 contract Flatcoin is IFlatcoin, ERC20Swappable {
     address public flatcoinBond;
@@ -18,10 +17,18 @@ contract Flatcoin is IFlatcoin, ERC20Swappable {
     constructor(address flatcoinBond_, address unmintedFlatcoin_) ERC20("Flatcoin", "FTC") {
         unmintedFlatcoin = unmintedFlatcoin_;
         // Initialize the unminted flatcoin contract with this address
-        IUnmintedFlatcoin(unmintedFlatcoin_).initialize(address(this));
+        IUnmintedFlatcoin(unmintedFlatcoin_).initialize(address(this), flatcoinBond_);
         // Initialize the flatcoin bond contract with this address
         IFlatcoinBond(flatcoinBond_).initialize(unmintedFlatcoin_);
-        // Give the sender an initial balance
-        _mint(msg.sender, 1000);
+        // Set this contract as flatcoinBond's `swapper` contract
+        ERC20Swappable(flatcoinBond_).setSwapper(address(this));
+        // Give the sender an initial balance of flatcoins and flatcoinBonds
+        _mint(msg.sender, 100 * 10e18);
+        ERC20Swappable(flatcoinBond_).mintToOnSwap(msg.sender, 1000 * 10e18);
+    }
+
+    function mintUnmintedFlatcoins(address account, uint256 amount) external {
+        require(msg.sender == unmintedFlatcoin, "Forbidden");
+        _mint(account, amount);
     }
 }

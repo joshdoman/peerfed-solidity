@@ -1,19 +1,24 @@
 import { expect } from "chai";
+import { BigNumber, utils } from "ethers";
+
+import { getTime, setTime } from "./UnmintedFlatcoin.behavior";
 
 export function shouldBehaveLikeFlatcoinBond(): void {
   describe("Deployment", function () {
-    // NOTE: Token currently not "Ownable"
-    // it("Should set the right owner", async function () {
-    //     // This test expects the owner variable stored in the contract to be
-    //     // equal to our Signer's owner.
-    //     expect(await this.rebaseToken.owner()).to.equal(this.owner.address);
-    // });
-
     it("Should assign the total supply of tokens to the owner", async function () {
       const { owner } = this.signers;
 
       const ownerBalance = await this.flatcoinBond.balanceOf(owner.address);
       expect(await this.flatcoinBond.totalSupply()).to.equal(ownerBalance);
+    });
+
+    it("Should set the owner's income per second correctly", async function () {
+      const { owner } = this.signers;
+
+      const ownerBalance = await this.flatcoinBond.balanceOf(owner.address);
+      const secondsPerYear = BigNumber.from("31536000");
+      const incomePerSecond = await this.flatcoinBond.incomePerSecond(owner.address);
+      expect(incomePerSecond).to.equal(ownerBalance.mul(eth(1)).div(secondsPerYear));
     });
   });
 
@@ -70,14 +75,42 @@ export function shouldBehaveLikeFlatcoinBond(): void {
 
   describe("Burning", function () {
     it("Should burn tokens from account", async function () {
-      const { owner, } = this.signers;
+      const { owner } = this.signers;
 
       // Transfer 50 tokens from owner to addr1
-      await expect(this.flatcoinBond.burn(50)).to.changeTokenBalance(
-        this.flatcoinBond,
-        owner,
-        -50,
-      );
+      await expect(this.flatcoinBond.burn(50)).to.changeTokenBalance(this.flatcoinBond, owner, -50);
     });
   });
+
+  describe("Minting", function () {
+    it("Should mint sender's unminted balance on transfer", async function () {
+      const { owner, addr1 } = this.signers;
+      await setTime((await getTime()) + 31536000); // Jump 1 year
+
+      expect(await this.unmintedFlatcoin.balanceOf(owner.address)).not.to.equal(0);
+
+      this.flatcoinBond.transfer(addr1.address, 50)
+
+      // Unminted coins should be minted and balance should be zero after transfer
+      expect(await this.unmintedFlatcoin.balanceOf(owner.address)).to.equal(0);
+    });
+
+    it("Should mint receiver's unminted balance on transfer", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.flatcoinBond.transfer(addr1.address, eth(1));
+      await setTime((await getTime()) + 31536000); // Jump 1 year
+
+      expect(await this.unmintedFlatcoin.balanceOf(addr1.address)).not.to.equal(0);
+
+      this.flatcoinBond.transfer(addr1.address, 50);
+
+      // Unminted coins should be minted and balance should be zero after transfer
+      expect(await this.unmintedFlatcoin.balanceOf(addr1.address)).to.equal(0);
+    });
+  });
+}
+
+// ----- Helpers -----
+export function eth(n: number) {
+  return utils.parseEther(n.toString());
 }

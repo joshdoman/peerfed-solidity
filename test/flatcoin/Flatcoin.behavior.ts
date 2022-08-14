@@ -70,14 +70,10 @@ export function shouldBehaveLikeFlatcoin(): void {
 
   describe("Burning", function () {
     it("Should burn tokens from account", async function () {
-      const { owner, } = this.signers;
+      const { owner } = this.signers;
 
       // Transfer 50 tokens from owner to addr1
-      await expect(this.flatcoin.burn(50)).to.changeTokenBalance(
-        this.flatcoin,
-        owner,
-        -50,
-      );
+      await expect(this.flatcoin.burn(50)).to.changeTokenBalance(this.flatcoin, owner, -50);
     });
   });
 }

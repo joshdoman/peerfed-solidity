@@ -8,4 +8,6 @@ interface IFlatcoin is IERC20 {
     function flatcoinBond() external view returns (address);
 
     function unmintedFlatcoin() external view returns (address);
+
+    function mintUnmintedFlatcoins(address account, uint256 amount) external;
 }

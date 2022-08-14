@@ -3,11 +3,11 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 import { ethers } from "hardhat";
 
 import type { Signers } from "../types";
+import { shouldBehaveLikeERC20Swappable } from "./ERC20Swappable.behavior";
 import { shouldBehaveLikeFlatcoin } from "./Flatcoin.behavior";
 import { deployFlatcoinFixture } from "./Flatcoin.fixture";
 import { shouldBehaveLikeFlatcoinBond } from "./FlatcoinBond.behavior";
 import { shouldBehaveLikeUnmintedFlatcoin } from "./UnmintedFlatcoin.behavior";
-import { shouldBehaveLikeERC20Swappable } from "./ERC20Swappable.behavior";
 
 describe("Unit tests", function () {
   before(async function () {
@@ -54,7 +54,7 @@ describe("Unit tests", function () {
     shouldBehaveLikeUnmintedFlatcoin();
   });
 
-  describe("UnmintedERC20Swappable", function () {
+  describe("ERC20Swappable", function () {
     beforeEach(async function () {
       const { flatcoin, flatcoinBond, unmintedFlatcoin } = await this.loadFixture(deployFlatcoinFixture);
       this.flatcoin = flatcoin;

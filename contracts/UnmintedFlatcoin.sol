@@ -9,9 +9,9 @@ import "./interfaces/IUnmintedFlatcoin.sol";
 import "hardhat/console.sol";
 
 contract UnmintedFlatcoin is IUnmintedFlatcoin {
-    string public constant name = "UnmintedFlatcoin";
-    string public constant symbol = "uFTC";
-    uint8 public constant decimals = 18;
+    string public name = "UnmintedFlatcoin";
+    string public symbol = "uFTC";
+    uint8 public decimals = 18;
 
     address public flatcoin;
     address public flatcoinBond;
@@ -34,14 +34,14 @@ contract UnmintedFlatcoin is IUnmintedFlatcoin {
 
     function totalSupply() public view returns (uint256) {
         uint256 totalIncomePerSecond = IFlatcoinBond(flatcoinBond).totalIncomePerSecond();
-        uint256 newSupply = totalIncomePerSecond * (block.timestamp - _mostRecentMint) / 1e18;
+        uint256 newSupply = (totalIncomePerSecond * (block.timestamp - _mostRecentMint)) / 1e18;
         return _totalSupplyAfterMostRecentMint + newSupply;
     }
 
     function balanceOf(address account) public view returns (uint256) {
         uint256 incomePerSecond = IFlatcoinBond(flatcoinBond).incomePerSecond(account);
         uint256 lastMint = _lastMint[account];
-        return incomePerSecond * (block.timestamp - lastMint) / 1e18;
+        return (incomePerSecond * (block.timestamp - lastMint)) / 1e18;
     }
 
     function mintFlatcoinsByOwner() external {
@@ -71,7 +71,7 @@ contract UnmintedFlatcoin is IUnmintedFlatcoin {
         uint256 lastMint = _lastMint[account];
         if (lastMint != 0) {
             // Mint tokens received since `lastMint` given account's `incomePerSecond`
-            uint256 mintAmount = incomePerSecond * (block.timestamp - lastMint) / 1e18;
+            uint256 mintAmount = (incomePerSecond * (block.timestamp - lastMint)) / 1e18;
             IFlatcoin(flatcoin).mintUnmintedFlatcoins(account, mintAmount);
 
             uint256 currentSupply = totalSupply();

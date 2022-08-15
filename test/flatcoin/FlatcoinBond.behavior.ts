@@ -89,7 +89,7 @@ export function shouldBehaveLikeFlatcoinBond(): void {
 
       expect(await this.unmintedFlatcoin.balanceOf(owner.address)).not.to.equal(0);
 
-      this.flatcoinBond.transfer(addr1.address, 50)
+      this.flatcoinBond.transfer(addr1.address, 50);
 
       // Unminted coins should be minted and balance should be zero after transfer
       expect(await this.unmintedFlatcoin.balanceOf(owner.address)).to.equal(0);

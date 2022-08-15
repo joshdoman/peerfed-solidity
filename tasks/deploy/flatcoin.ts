@@ -2,10 +2,20 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { task } from "hardhat/config";
 import type { TaskArguments } from "hardhat/types";
 
-import type { Flatcoin, FlatcoinBond, UnmintedFlatcoin } from "../../src/types/contracts";
+import type {
+  FlatExchange,
+  FlatExchangeFactory,
+  Flatcoin,
+  FlatcoinBond,
+  FlatcoinTotal,
+  Orchestrator,
+  UnmintedFlatcoin,
+} from "../../src/types/contracts";
+
 import type {
   FlatcoinBond__factory,
   Flatcoin__factory,
+  Orchestrator__factory,
   UnmintedFlatcoin__factory,
 } from "../../src/types/factories/contracts";
 
@@ -26,12 +36,33 @@ task("deploy:Flatcoin").setAction(async function (taskArguments: TaskArguments, 
   await unmintedFlatcoin.deployed();
 
   const flatcoinFactory: Flatcoin__factory = <Flatcoin__factory>await ethers.getContractFactory("Flatcoin");
-  const flatcoin: Flatcoin = <Flatcoin>(
-    await flatcoinFactory.connect(owner).deploy(flatcoinBond.address, unmintedFlatcoin.address)
-  );
+  const flatcoin: Flatcoin = <Flatcoin>await flatcoinFactory.connect(owner).deploy(unmintedFlatcoin.address);
   await flatcoin.deployed();
+
+  const orchestratorFactory: Orchestrator__factory = <Orchestrator__factory>(
+    await ethers.getContractFactory("Orchestrator")
+  );
+  const orchestrator: Orchestrator = <Orchestrator>(
+    await orchestratorFactory.connect(owner).deploy(flatcoin.address, unmintedFlatcoin.address, flatcoinBond.address)
+  );
+  await orchestrator.deployed();
+
+  const flatcoinTotalAddress = await orchestrator.flatcoinTotal();
+  const flatcoinTotal: FlatcoinTotal = <FlatcoinTotal>await ethers.getContractAt("FlatcoinTotal", flatcoinTotalAddress);
+
+  const exchangeAddress = await orchestrator.exchange();
+  const exchange: FlatExchange = <FlatExchange>await ethers.getContractAt("FlatExchange", exchangeAddress);
+
+  const factoryAddress = await orchestrator.factory();
+  const factory: FlatExchangeFactory = <FlatExchangeFactory>(
+    await ethers.getContractAt("FlatExchangeFactory", factoryAddress)
+  );
 
   console.log("FlatcoinBond deployed to: ", flatcoinBond.address);
   console.log("UnmintedFlatcoin deployed to: ", unmintedFlatcoin.address);
   console.log("Flatcoin deployed to: ", flatcoin.address);
+  console.log("FlatcoinTotal deployed to: ", flatcoinTotal.address);
+  console.log("FlatExchange deployed to: ", exchange.address);
+  console.log("FlatExchangeFactory deployed to: ", factory.address);
+  console.log("Orchestrator deployed to: ", orchestrator.address);
 });

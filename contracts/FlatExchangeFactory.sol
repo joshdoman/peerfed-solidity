@@ -13,7 +13,11 @@ contract FlatExchangeFactory is IFlatExchangeFactory {
 
     address[] public additionalTokens;
 
-    constructor(address exchange_, address flatcoinTotal_, address flatcoinBond_) {
+    constructor(
+        address exchange_,
+        address flatcoinTotal_,
+        address flatcoinBond_
+    ) {
         exchange = exchange_;
         flatcoinTotal = flatcoinTotal_;
         flatcoinBond = flatcoinBond_;

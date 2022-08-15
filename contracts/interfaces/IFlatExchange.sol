@@ -7,7 +7,14 @@ interface IFlatExchange {
 
     function approveToken(address token) external;
 
-    event Swap(address indexed sender, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address indexed to);
+    event Swap(
+        address indexed sender,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address indexed to
+    );
 
     function swap(
         address tokenIn,

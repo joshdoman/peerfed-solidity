@@ -9,7 +9,7 @@ import "./interfaces/IFlatcoin.sol";
 import "./interfaces/IUnmintedFlatcoin.sol";
 
 // ERC20Swappable wrapper for FlatExchange.sol
-contract TotalFlatcoin is IERC20Swappable {
+contract FlatcoinTotal is IERC20Swappable {
     string public name = "Total Flatcoin";
     string public symbol = "uFTC";
     uint8 public decimals = 18;
@@ -22,6 +22,8 @@ contract TotalFlatcoin is IERC20Swappable {
     constructor(address flatcoin_, address unmintedFlatcoin_) {
         flatcoin = flatcoin_;
         unmintedFlatcoin = unmintedFlatcoin_;
+
+        IERC20Swappable(flatcoin_).setSwapper(address(this));
     }
 
     function setSwapper(address swapper_) external {

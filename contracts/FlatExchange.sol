@@ -8,12 +8,18 @@ import "./libraries/FixedPointMathLib.sol";
 
 contract FlatExchange is IFlatExchange {
     address public approver;
+    address public minter;
 
-    mapping (address => bool) public isApproved;
+    mapping(address => bool) public isApproved;
 
     function setApprover(address approver_) external {
         require(approver == address(0), "Forbidden");
         approver = approver_;
+    }
+
+    function setLiquidityMinter(address minter_) external {
+        require(minter == address(0), "Forbidden");
+        minter = minter_;
     }
 
     function approveToken(address token) external {
@@ -22,13 +28,21 @@ contract FlatExchange is IFlatExchange {
         isApproved[token] = true;
     }
 
+    function mintLiquidity(
+        address token,
+        uint256 amount,
+        address to
+    ) external {
+        require(msg.sender == minter, "Forbidden");
+        IERC20Swappable(token).mintToOnSwap(to, amount);
+    }
+
     function swap(
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
         uint256 amountOut,
-        address to
-        // bytes calldata data
+        address to // bytes calldata data
     ) external {
         require(isApproved[tokenIn] && isApproved[tokenOut], "FlatExchange: TOKEN_NOT_APPROVED");
         require(amountIn > 0 || amountOut > 0, "FlatExchange: INSUFFICIENT_I/O");

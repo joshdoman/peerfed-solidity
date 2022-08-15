@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 
 import "./interfaces/IERC20Swappable.sol";
 import "./interfaces/IFlatExchange.sol";
+import "./interfaces/IFlatExchangeCallee.sol";
 import "./libraries/FixedPointMathLib.sol";
 
 contract FlatExchange is IFlatExchange {
@@ -37,12 +38,14 @@ contract FlatExchange is IFlatExchange {
         IERC20Swappable(token).mintToOnSwap(to, amount);
     }
 
+    // Based on UniswapV2Pair `_swap` implementation but with CSSQ invariant
     function swap(
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
         uint256 amountOut,
-        address to // bytes calldata data
+        address to,
+        bytes calldata data
     ) external {
         require(isApproved[tokenIn] && isApproved[tokenOut], "FlatExchange: TOKEN_NOT_APPROVED");
         require(amountIn > 0 || amountOut > 0, "FlatExchange: INSUFFICIENT_I/O");
@@ -53,11 +56,13 @@ contract FlatExchange is IFlatExchange {
         require(amountIn <= tokenInSupply, "FlatExchange: INSUFFICIENT INPUT SUPPLY");
         require(amountOut * amountOut <= invariant_, "FlatExchange: OUTPUT OUT OF BOUNDS");
 
+        if (amountOut > 0) IERC20Swappable(tokenOut).mintToOnSwap(to, amountOut); // Mint tokens optimistically
+        if (data.length > 0) IFlatExchangeCallee(to).flatExchangeSwapCall(msg.sender, tokenOut, amountOut, data);
+
         require(to != tokenIn && to != tokenOut && to != address(this), "FlatExchange: INVALID_TO");
         if (amountIn > 0 && amountOut > 0) {
-            // Sender provided exact in and out amounts. Burn and mint optimistically.
+            // Sender provided exact in and out amounts. Burn in amount (out already minted).
             IERC20Swappable(tokenIn).burnFromOnSwap(to, amountIn);
-            IERC20Swappable(tokenOut).mintToOnSwap(to, amountOut);
             // Check if invariant is maintained
             tokenInSupply -= amountIn;
             tokenOutSupply += amountOut;
@@ -72,8 +77,7 @@ contract FlatExchange is IFlatExchange {
             amountOut = FixedPointMathLib.sqrt(sqTokenOutSupply) - tokenOutSupply;
             IERC20Swappable(tokenOut).mintToOnSwap(to, amountOut); // mint necessary out tokens
         } else {
-            // Sender provided exact out amount. Go ahead and mint.
-            IERC20Swappable(tokenOut).mintToOnSwap(to, amountOut);
+            // Sender provided exact out amount. Already minted.
             // Calculate required input using the invariant and burn.
             tokenOutSupply += amountOut;
             uint256 sqTokenInSupply = invariant_ - (tokenOutSupply * tokenOutSupply);

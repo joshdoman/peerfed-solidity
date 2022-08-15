@@ -10,7 +10,7 @@ import "hardhat/console.sol";
 
 contract UnmintedFlatcoin is IUnmintedFlatcoin {
     string public name = "Unminted Flatcoin";
-    string public symbol = "uFTC";
+    string public symbol = "uFCN";
     uint8 public decimals = 18;
 
     address public flatcoin;

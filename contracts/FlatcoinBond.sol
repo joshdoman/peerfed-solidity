@@ -9,7 +9,7 @@ import "./interfaces/IUnmintedFlatcoin.sol";
 contract FlatcoinBond is IFlatcoinBond, ERC20Swappable {
     address public unmintedFlatcoin;
 
-    constructor() ERC20Swappable("Flatcoin Bond", "bFTC") {}
+    constructor() ERC20Swappable("Flatcoin Bond", "bFCN") {}
 
     /**
      * @dev Initializes the contract with the UnmintedFlatcoin contract address

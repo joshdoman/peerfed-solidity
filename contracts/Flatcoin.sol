@@ -12,7 +12,7 @@ import "./interfaces/IUnmintedFlatcoin.sol";
 contract Flatcoin is IFlatcoin, ERC20Swappable {
     address public unmintedFlatcoin;
 
-    constructor(address unmintedFlatcoin_) ERC20Swappable("Flatcoin", "FTC") {
+    constructor(address unmintedFlatcoin_) ERC20Swappable("Flatcoin", "FCN") {
         unmintedFlatcoin = unmintedFlatcoin_;
     }
 

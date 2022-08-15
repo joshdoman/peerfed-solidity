@@ -10,22 +10,26 @@ contract FlatExchangeFactory is IFlatExchangeFactory {
     address public exchange;
     address public flatcoinTotal;
     address public flatcoinBond;
+    address public issuanceToken;
 
     address[] public additionalTokens;
 
     constructor(
         address exchange_,
         address flatcoinTotal_,
-        address flatcoinBond_
+        address flatcoinBond_,
+        address issuanceToken_
     ) {
         exchange = exchange_;
         flatcoinTotal = flatcoinTotal_;
         flatcoinBond = flatcoinBond_;
+        issuanceToken = issuanceToken_;
 
         // Set the factory as the FlatExchange approver and approve the core token contracts
         IFlatExchange(exchange_).setApprover(address(this));
         IFlatExchange(exchange_).approveToken(flatcoinTotal_);
         IFlatExchange(exchange_).approveToken(flatcoinBond_);
+        IFlatExchange(exchange_).approveToken(issuanceToken_);
     }
 
     function createSwappableToken(string memory name, string memory symbol) external returns (address) {

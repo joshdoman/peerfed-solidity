@@ -93,9 +93,6 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.7.1",
-    "@uniswap/v2-core": "^1.0.1",
-    "dlx": "^0.2.1",
-    "uniswap-v2-deploy-plugin": "^0.0.4"
+    "@openzeppelin/contracts": "^4.7.1"
   }
 }

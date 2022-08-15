@@ -2,8 +2,6 @@
 
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import "./ERC20Swappable.sol";
 import "./interfaces/IFlatcoinBond.sol";
 import "./interfaces/IUnmintedFlatcoin.sol";
@@ -11,7 +9,7 @@ import "./interfaces/IUnmintedFlatcoin.sol";
 contract FlatcoinBond is IFlatcoinBond, ERC20Swappable {
     address public unmintedFlatcoin;
 
-    constructor() ERC20("Flatcoin Bond", "bFTC") {}
+    constructor() ERC20Swappable("Flatcoin Bond", "bFTC") {}
 
     /**
      * @dev Initializes the contract with the UnmintedFlatcoin contract address

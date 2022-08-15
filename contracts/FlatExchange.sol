@@ -3,14 +3,16 @@
 pragma solidity 0.8.15;
 
 import "./interfaces/IERC20Swappable.sol";
+import "./interfaces/IFlatExchange.sol";
 import "./libraries/FixedPointMathLib.sol";
 
-contract FlatExchange {
+contract FlatExchange is IFlatExchange {
     address public approver;
 
     mapping (address => bool) public isApproved;
 
-    constructor(address approver_) {
+    function setApprover(address approver_) external {
+        require(approver == address(0), "Forbidden");
         approver = approver_;
     }
 
@@ -64,6 +66,8 @@ contract FlatExchange {
             amountIn = tokenInSupply - FixedPointMathLib.sqrt(sqTokenInSupply);
             IERC20Swappable(tokenIn).burnFromOnSwap(to, amountIn); // burn necessary in tokens
         }
+
+        emit Swap(msg.sender, tokenIn, tokenOut, amountIn, amountOut, to);
 
         // TODO: Implement call data
     }

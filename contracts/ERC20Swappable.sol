@@ -2,10 +2,13 @@
 
 pragma solidity 0.8.15;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-abstract contract ERC20Swappable is ERC20Burnable {
+contract ERC20Swappable is ERC20Burnable {
     address public swapper;
+
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
 
     /**
      * Sets the `swapper` contract.

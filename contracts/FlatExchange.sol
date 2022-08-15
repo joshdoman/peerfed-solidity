@@ -54,7 +54,6 @@ contract FlatExchange is IFlatExchange {
         uint256 tokenOutSupply = IERC20Swappable(tokenOut).totalSupply();
         uint256 invariant_ = invariant(tokenInSupply, tokenOutSupply);
         require(amountIn <= tokenInSupply, "FlatExchange: INSUFFICIENT INPUT SUPPLY");
-        require(amountOut * amountOut <= invariant_, "FlatExchange: OUTPUT OUT OF BOUNDS");
 
         if (amountOut > 0) IERC20Swappable(tokenOut).mintToOnSwap(to, amountOut); // Mint tokens optimistically
         if (data.length > 0) IFlatExchangeCallee(to).flatExchangeSwapCall(msg.sender, tokenOut, amountOut, data);
@@ -67,7 +66,7 @@ contract FlatExchange is IFlatExchange {
             tokenInSupply -= amountIn;
             tokenOutSupply += amountOut;
             uint256 newInvariant_ = invariant(tokenInSupply, tokenOutSupply);
-            require(newInvariant_ <= invariant_, "FlatExchange: Invalid Swap");
+            require(newInvariant_ <= invariant_, "FlatExchange: INVALID_SWAP");
         } else if (amountIn > 0) {
             // Sender provided exact in amount. Go ahead and burn.
             IERC20Swappable(tokenIn).burnFromOnSwap(to, amountIn);
@@ -80,18 +79,82 @@ contract FlatExchange is IFlatExchange {
             // Sender provided exact out amount. Already minted.
             // Calculate required input using the invariant and burn.
             tokenOutSupply += amountOut;
-            uint256 sqTokenInSupply = invariant_ - (tokenOutSupply * tokenOutSupply);
+            require(tokenOutSupply * tokenOutSupply <= invariant_, "FlatExchange: OUTPUT OUT OF BOUNDS");
+            uint256 sqTokenInSupply;
+            unchecked {
+                sqTokenInSupply = invariant_ - (tokenOutSupply * tokenOutSupply);
+            }
             amountIn = tokenInSupply - FixedPointMathLib.sqrt(sqTokenInSupply);
             IERC20Swappable(tokenIn).burnFromOnSwap(to, amountIn); // burn necessary in tokens
         }
 
         emit Swap(msg.sender, tokenIn, tokenOut, amountIn, amountOut, to);
-
-        // TODO: Implement call data
     }
 
     // Sum-of-the-squares invariant
     function invariant(uint256 quantity1, uint256 quantity2) internal pure returns (uint256) {
         return (quantity1 * quantity1) + (quantity2 * quantity2);
+    }
+
+    function multiOutputSwap(
+        address tokenIn,
+        address[] memory tokenOuts,
+        uint256 amountIn,
+        uint256[] memory amountOuts,
+        address to,
+        bytes[] calldata singleSwapData,
+        bytes calldata multiSwapData
+    ) external {
+        require(isApproved[tokenIn], "FlatExchange: TOKEN_NOT_APPROVED");
+        for (uint8 i = 0; i < tokenOuts.length; i++) {
+            require(isApproved[tokenOuts[i]], "FlatExchange: TOKEN_NOT_APPROVED");
+        }
+
+        require(tokenOuts.length > 0, "FlatExchange: MISSING_OUT_TOKENS");
+        require(amountOuts.length == tokenOuts.length, "FlatExchange: BAD_TOKEN_OUTS_LENGTH");
+        require(amountOuts.length == singleSwapData.length, "FlatExchange: BAD_DATA_ARRAY_LENGTH");
+
+        uint256 tokenInSupply = IERC20Swappable(tokenIn).totalSupply();
+        uint256 invariant_ = tokenInSupply * tokenInSupply;
+        uint256[] memory outSupply = new uint256[](tokenOuts.length);
+        for (uint8 i = 0; i < tokenOuts.length; i++) {
+            uint256 tokenOutSupply = IERC20Swappable(tokenOuts[i]).totalSupply();
+            outSupply[i] = tokenOutSupply;
+            invariant_ += (tokenOutSupply * tokenOutSupply);
+        }
+
+        require(amountIn <= tokenInSupply, "FlatExchange: INSUFFICIENT INPUT SUPPLY");
+        require(to != tokenIn && to != address(this), "FlatExchange: INVALID_TO");
+        for (uint8 i = 0; i < amountOuts.length; i++) {
+            uint256 amountOut_ = amountOuts[i];
+            if (amountIn == 0) require(amountOut_ > 0, "FlatExchange: OUTPUT MUST BE NON-ZERO");
+
+            address tokenOut_ = tokenOuts[i];
+            require(to != tokenOut_, "FlatExchange: INVALID_TO");
+            IERC20Swappable(tokenOut_).mintToOnSwap(to, amountOut_); // Mint tokens optimistically
+            if (singleSwapData[i].length > 0) {
+                IFlatExchangeCallee(to).flatExchangeSwapCall(msg.sender, tokenOut_, amountOut_, singleSwapData[i]);
+            }
+        }
+        if (multiSwapData.length > 0) {
+            IFlatExchangeCallee(to).flatExchangeMultiSwapCall(msg.sender, tokenOuts, amountOuts, multiSwapData);
+        }
+
+        if (amountIn > 0) {
+            // TODO: Implement
+        } else {
+            uint256 outSumOfSquares;
+            for (uint8 i = 0; i < tokenOuts.length; i++) {
+                outSupply[i] += amountOuts[i];
+                outSumOfSquares += (outSupply[i] * outSupply[i]);
+            }
+            require(outSumOfSquares <= invariant_, "FlatExchange: OUTPUTS OUT OF BOUNDS");
+            uint256 sqTokenInSupply;
+            unchecked {
+                sqTokenInSupply = invariant_ - outSumOfSquares;
+            }
+            amountIn = tokenInSupply - FixedPointMathLib.sqrt(sqTokenInSupply);
+            IERC20Swappable(tokenIn).burnFromOnSwap(to, amountIn); // burn necessary in tokens
+        }
     }
 }

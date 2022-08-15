@@ -27,6 +27,7 @@ contract FlatExchangeFactory is IFlatExchangeFactory {
     function createSwappableToken(string memory name, string memory symbol) external returns (address) {
         ERC20Swappable newToken = new ERC20Swappable(name, symbol);
         additionalTokens.push(address(newToken));
+        IFlatExchange(exchange).approveToken(address(newToken));
         emit TokenCreated(msg.sender, address(newToken), name, symbol);
         return address(newToken);
     }

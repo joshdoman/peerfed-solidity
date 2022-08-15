@@ -6,6 +6,7 @@ import type {
   Flatcoin,
   FlatcoinBond,
   FlatcoinTotal,
+  FlatcoinIssuanceToken,
   Orchestrator,
   UnmintedFlatcoin,
 } from "../src/types/contracts";
@@ -18,6 +19,7 @@ declare module "mocha" {
     flatcoinBond: FlatcoinBond;
     unmintedFlatcoin: UnmintedFlatcoin;
     flatcoinTotal: FlatcoinTotal;
+    issuanceToken: FlatcoinIssuanceToken;
     orchestrator: Orchestrator;
     exchange: FlatExchange;
     factory: FlatExchangeFactory;

@@ -7,6 +7,7 @@ import type {
   Flatcoin,
   FlatcoinBond,
   FlatcoinTotal,
+  FlatcoinIssuanceToken,
   Orchestrator,
   UnmintedFlatcoin,
 } from "../../src/types/contracts";
@@ -22,6 +23,7 @@ export async function deployFlatcoinFixture(): Promise<{
   flatcoinBond: FlatcoinBond;
   unmintedFlatcoin: UnmintedFlatcoin;
   flatcoinTotal: FlatcoinTotal;
+  issuanceToken: FlatcoinIssuanceToken;
   orchestrator: Orchestrator;
   exchange: FlatExchange;
   factory: FlatExchangeFactory;
@@ -56,6 +58,9 @@ export async function deployFlatcoinFixture(): Promise<{
   const flatcoinTotalAddress = await orchestrator.flatcoinTotal();
   const flatcoinTotal: FlatcoinTotal = <FlatcoinTotal>await ethers.getContractAt("FlatcoinTotal", flatcoinTotalAddress);
 
+  const issuanceTokenAddress = await orchestrator.issuanceToken();
+  const issuanceToken: FlatcoinIssuanceToken = <FlatcoinIssuanceToken>await ethers.getContractAt("FlatcoinIssuanceToken", issuanceTokenAddress);
+
   const exchangeAddress = await orchestrator.exchange();
   const exchange: FlatExchange = <FlatExchange>await ethers.getContractAt("FlatExchange", exchangeAddress);
 
@@ -64,5 +69,5 @@ export async function deployFlatcoinFixture(): Promise<{
     await ethers.getContractAt("FlatExchangeFactory", factoryAddress)
   );
 
-  return { flatcoin, flatcoinBond, unmintedFlatcoin, flatcoinTotal, orchestrator, exchange, factory };
+  return { flatcoin, flatcoinBond, unmintedFlatcoin, flatcoinTotal, issuanceToken, orchestrator, exchange, factory };
 }

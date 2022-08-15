@@ -8,6 +8,7 @@ import type {
   Flatcoin,
   FlatcoinBond,
   FlatcoinTotal,
+  FlatcoinIssuanceToken,
   Orchestrator,
   UnmintedFlatcoin,
 } from "../../src/types/contracts";
@@ -50,6 +51,9 @@ task("deploy:Flatcoin").setAction(async function (taskArguments: TaskArguments, 
   const flatcoinTotalAddress = await orchestrator.flatcoinTotal();
   const flatcoinTotal: FlatcoinTotal = <FlatcoinTotal>await ethers.getContractAt("FlatcoinTotal", flatcoinTotalAddress);
 
+  const issuanceTokenAddress = await orchestrator.issuanceToken();
+  const issuanceToken: FlatcoinIssuanceToken = <FlatcoinIssuanceToken>await ethers.getContractAt("FlatcoinIssuanceToken", issuanceTokenAddress);
+
   const exchangeAddress = await orchestrator.exchange();
   const exchange: FlatExchange = <FlatExchange>await ethers.getContractAt("FlatExchange", exchangeAddress);
 
@@ -62,6 +66,7 @@ task("deploy:Flatcoin").setAction(async function (taskArguments: TaskArguments, 
   console.log("UnmintedFlatcoin deployed to: ", unmintedFlatcoin.address);
   console.log("Flatcoin deployed to: ", flatcoin.address);
   console.log("FlatcoinTotal deployed to: ", flatcoinTotal.address);
+  console.log("FlatcoinIssuanceToken deployed to: ", issuanceToken.address);
   console.log("FlatExchange deployed to: ", exchange.address);
   console.log("FlatExchangeFactory deployed to: ", factory.address);
   console.log("Orchestrator deployed to: ", orchestrator.address);

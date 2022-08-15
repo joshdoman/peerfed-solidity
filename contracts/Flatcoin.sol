@@ -17,7 +17,7 @@ contract Flatcoin is IFlatcoin, ERC20Swappable {
     constructor(address flatcoinBond_, address unmintedFlatcoin_) ERC20("Flatcoin", "FTC") {
         unmintedFlatcoin = unmintedFlatcoin_;
         // Initialize the unminted flatcoin contract with this address
-        IUnmintedFlatcoin(unmintedFlatcoin_).initialize(address(this), flatcoinBond_);
+        IUnmintedFlatcoin(unmintedFlatcoin_).initialize(address(this), flatcoinBond_, flatcoinBond_); // TODO: Replace
         // Initialize the flatcoin bond contract with this address
         IFlatcoinBond(flatcoinBond_).initialize(unmintedFlatcoin_);
         // Set this contract as flatcoinBond's `swapper` contract

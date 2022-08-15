@@ -9,12 +9,13 @@ import "./interfaces/IUnmintedFlatcoin.sol";
 import "hardhat/console.sol";
 
 contract UnmintedFlatcoin is IUnmintedFlatcoin {
-    string public name = "UnmintedFlatcoin";
+    string public name = "Unminted Flatcoin";
     string public symbol = "uFTC";
     uint8 public decimals = 18;
 
     address public flatcoin;
     address public flatcoinBond;
+    address public flatcoinSwapper;
 
     uint256 private _totalSupplyAfterMostRecentMint;
     uint256 private _mostRecentMint;
@@ -26,10 +27,15 @@ contract UnmintedFlatcoin is IUnmintedFlatcoin {
      *
      * Requirement: `flatcoin` contract address not already set
      */
-    function initialize(address flatcoin_, address flatcoinBond_) external {
+    function initialize(
+        address flatcoin_,
+        address flatcoinBond_,
+        address flatcoinSwapper_
+    ) external {
         require(flatcoin == address(0), "Initialized already");
         flatcoin = flatcoin_;
         flatcoinBond = flatcoinBond_;
+        flatcoinSwapper = flatcoinSwapper_;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -48,6 +54,14 @@ contract UnmintedFlatcoin is IUnmintedFlatcoin {
         uint256 incomePerSecond = IFlatcoinBond(flatcoinBond).incomePerSecond(msg.sender);
         _mintFlatcoins(msg.sender, incomePerSecond);
         _lastMint[msg.sender] = block.timestamp;
+        _mostRecentMint = block.timestamp;
+    }
+
+    function mintFlatcoinsBySwapper(address account) external {
+        require(msg.sender == flatcoinSwapper, "Forbidden");
+        uint256 incomePerSecond = IFlatcoinBond(flatcoinBond).incomePerSecond(msg.sender);
+        _mintFlatcoins(account, incomePerSecond);
+        _lastMint[account] = block.timestamp;
         _mostRecentMint = block.timestamp;
     }
 

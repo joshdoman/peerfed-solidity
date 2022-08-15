@@ -2,7 +2,9 @@
 
 pragma solidity 0.8.15;
 
-interface IFlatcoinBond {
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface IFlatcoinBond is IERC20 {
     function initialize(address unmintedFlatcoin_) external;
 
     function totalIncomePerSecond() external view returns (uint256);

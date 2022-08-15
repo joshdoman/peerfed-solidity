@@ -15,9 +15,15 @@ interface IUnmintedFlatcoin {
 
     function balanceOf(address owner) external view returns (uint256);
 
-    function initialize(address unmintedFlatcoin_, address flatcoinBond_) external;
+    function initialize(
+        address unmintedFlatcoin_,
+        address flatcoinBond_,
+        address flatcoinSwapper_
+    ) external;
 
     function mintFlatcoinsByOwner() external;
+
+    function mintFlatcoinsBySwapper(address account) external;
 
     function mintFlatcoins(
         address account1,

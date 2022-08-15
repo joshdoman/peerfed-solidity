@@ -5,8 +5,8 @@ import type {
   FlatExchangeFactory,
   Flatcoin,
   FlatcoinBond,
-  FlatcoinTotal,
   FlatcoinIssuanceToken,
+  FlatcoinTotal,
   Orchestrator,
   UnmintedFlatcoin,
 } from "../src/types/contracts";

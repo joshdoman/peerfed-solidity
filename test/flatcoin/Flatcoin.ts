@@ -56,7 +56,9 @@ describe("Unit tests", function () {
 
   describe("ERC20Swappable", function () {
     beforeEach(async function () {
-      const { flatcoin, flatcoinBond, flatcoinTotal, exchange, factory } = await this.loadFixture(deployFlatcoinFixture);
+      const { flatcoin, flatcoinBond, flatcoinTotal, exchange, factory } = await this.loadFixture(
+        deployFlatcoinFixture,
+      );
       this.flatcoin = flatcoin;
       this.flatcoinBond = flatcoinBond;
       this.flatcoinTotal = flatcoinTotal;

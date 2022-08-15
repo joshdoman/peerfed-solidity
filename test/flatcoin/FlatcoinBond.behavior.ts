@@ -89,20 +89,20 @@ export function shouldBehaveLikeFlatcoinBond(): void {
 
       expect(await this.unmintedFlatcoin.balanceOf(owner.address)).not.to.equal(0);
 
-      this.flatcoinBond.transfer(addr1.address, 50);
+      await this.flatcoinBond.transfer(addr1.address, 50);
 
       // Unminted coins should be minted and balance should be zero after transfer
       expect(await this.unmintedFlatcoin.balanceOf(owner.address)).to.equal(0);
     });
 
     it("Should mint receiver's unminted balance on transfer", async function () {
-      const { owner, addr1 } = this.signers;
+      const { addr1 } = this.signers;
       await this.flatcoinBond.transfer(addr1.address, eth(1));
       await setTime((await getTime()) + 31536000); // Jump 1 year
 
       expect(await this.unmintedFlatcoin.balanceOf(addr1.address)).not.to.equal(0);
 
-      this.flatcoinBond.transfer(addr1.address, 50);
+      await this.flatcoinBond.transfer(addr1.address, 50);
 
       // Unminted coins should be minted and balance should be zero after transfer
       expect(await this.unmintedFlatcoin.balanceOf(addr1.address)).to.equal(0);

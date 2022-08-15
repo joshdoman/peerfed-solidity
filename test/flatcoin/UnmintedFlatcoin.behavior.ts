@@ -5,7 +5,6 @@ import { ethers } from "hardhat";
 export function shouldBehaveLikeUnmintedFlatcoin(): void {
   describe("Deployment", function () {
     it("Should set supply at zero at deployment", async function () {
-      const { owner } = this.signers;
       expect(await this.unmintedFlatcoin.totalSupply()).to.equal(0);
     });
 
@@ -27,7 +26,6 @@ export function shouldBehaveLikeUnmintedFlatcoin(): void {
     });
 
     it("Should set supply correctly after time has passed", async function () {
-      const { owner } = this.signers;
       const totalIncomePerSecond = await this.flatcoinBond.totalIncomePerSecond();
       const startTime = await getTime();
       const timePassed = 31536000; // 1 year

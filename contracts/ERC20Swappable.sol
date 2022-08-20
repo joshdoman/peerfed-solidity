@@ -25,7 +25,7 @@ contract ERC20Swappable is ERC20Burnable {
      *
      * Requirement: sender must be the `swapper` contract.
      */
-    function mintToOnSwap(address account, uint256 amount) external {
+    function mintOnSwap(address account, uint256 amount) external {
         require(msg.sender == swapper, "Forbidden");
         _beforeSwap(address(0), account, amount);
         _mint(account, amount);
@@ -37,7 +37,7 @@ contract ERC20Swappable is ERC20Burnable {
      *
      * Requirement: sender must be the `swapper` contract.
      */
-    function burnFromOnSwap(address account, uint256 amount) external {
+    function burnOnSwap(address account, uint256 amount) external {
         require(msg.sender == swapper, "Forbidden");
         _beforeSwap(address(0), account, amount);
         _burn(account, amount);

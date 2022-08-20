@@ -20,12 +20,12 @@ export function shouldBehaveLikeERC20Swappable(): void {
   describe("Swaps", function () {
     it("Should forbid minting if not swapper", async function () {
       const { owner } = this.signers;
-      await expect(this.flatcoin.mintToOnSwap(owner.address, 50)).to.be.revertedWith("Forbidden");
+      await expect(this.flatcoin.mintOnSwap(owner.address, 50)).to.be.revertedWith("Forbidden");
     });
 
     it("Should forbid burning if not swapper", async function () {
       const { owner } = this.signers;
-      await expect(this.flatcoin.burnFromOnSwap(owner.address, 50)).to.be.revertedWith("Forbidden");
+      await expect(this.flatcoin.burnOnSwap(owner.address, 50)).to.be.revertedWith("Forbidden");
     });
   });
 }

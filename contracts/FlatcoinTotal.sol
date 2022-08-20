@@ -39,15 +39,15 @@ contract FlatcoinTotal is IERC20Swappable {
         return IERC20(flatcoin).balanceOf(account) + IERC20(unmintedFlatcoin).balanceOf(account);
     }
 
-    function mintToOnSwap(address account, uint256 amount) external {
-        IERC20Swappable(flatcoin).mintToOnSwap(account, amount);
+    function mintOnSwap(address account, uint256 amount) external {
+        IERC20Swappable(flatcoin).mintOnSwap(account, amount);
     }
 
-    function burnFromOnSwap(address account, uint256 amount) external {
+    function burnOnSwap(address account, uint256 amount) external {
         address flatcoin_ = flatcoin;
         uint256 flatcoinBalance = IFlatcoin(flatcoin_).balanceOf(account);
         if (flatcoinBalance >= amount) {
-            IERC20Swappable(flatcoin).burnFromOnSwap(account, amount);
+            IERC20Swappable(flatcoin).burnOnSwap(account, amount);
             return;
         }
 
@@ -55,6 +55,6 @@ contract FlatcoinTotal is IERC20Swappable {
         uint256 unmintedBalance = IUnmintedFlatcoin(unmintedFlatcoin_).balanceOf(account);
         require(flatcoinBalance + unmintedBalance >= amount, "TotalFlatcoin: INSUFFICIENT_BALANCE");
         IUnmintedFlatcoin(unmintedFlatcoin_).mintFlatcoinsBySwapper(account);
-        IERC20Swappable(flatcoin).burnFromOnSwap(account, amount);
+        IERC20Swappable(flatcoin).burnOnSwap(account, amount);
     }
 }

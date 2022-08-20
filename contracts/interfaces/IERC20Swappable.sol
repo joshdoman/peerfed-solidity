@@ -9,7 +9,7 @@ interface IERC20Swappable {
 
     function setSwapper(address swapper_) external;
 
-    function mintToOnSwap(address account, uint256 amount) external;
+    function mintOnSwap(address account, uint256 amount) external;
 
-    function burnFromOnSwap(address account, uint256 amount) external;
+    function burnOnSwap(address account, uint256 amount) external;
 }

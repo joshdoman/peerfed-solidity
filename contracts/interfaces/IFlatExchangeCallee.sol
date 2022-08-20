@@ -10,10 +10,10 @@ interface IFlatExchangeCallee {
         bytes calldata data
     ) external;
 
-    function flatExchangeMultiSwapCall(
-        address sender,
-        address[] memory tokenOuts,
-        uint256[] memory amountOuts,
-        bytes calldata data
-    ) external;
+    // function flatExchangeMultiSwapCall(
+    //     address sender,
+    //     address[] memory tokenOuts,
+    //     uint256[] memory amountOuts,
+    //     bytes calldata data
+    // ) external;
 }

@@ -1,1 +1,1 @@
-import "./flatcoin";
+import "./stablecash";

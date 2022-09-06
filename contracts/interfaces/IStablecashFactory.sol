@@ -21,4 +21,6 @@ interface IStablecashFactory {
     ) external;
 
     function scaleFactor() external view returns (uint256);
+
+    function updateScaleFactor() external;
 }

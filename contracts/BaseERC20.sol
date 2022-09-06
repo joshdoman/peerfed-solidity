@@ -11,7 +11,11 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     address public factory;
     address public scaledToken;
 
-    constructor(string memory name, string memory symbol, address factory_) ERC20(name, symbol) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        address factory_
+    ) ERC20(name, symbol) {
         factory = factory_;
     }
 

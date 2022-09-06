@@ -93,6 +93,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.7.1"
+    "@openzeppelin/contracts": "^4.7.1",
+    "@prb/math": "^2.5.0"
   }
 }

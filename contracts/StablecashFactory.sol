@@ -3,14 +3,16 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@prb/math/contracts/PRBMathUD60x18.sol";
 
 import "./BaseERC20.sol";
 import "./ScaledERC20.sol";
 import "./interfaces/IBaseERC20.sol";
 import "./interfaces/IStablecashFactory.sol";
-import "./libraries/FixedPointMathLib.sol";
 
 contract StablecashFactory is IStablecashFactory {
+    using PRBMathUD60x18 for uint256;
+
     address public mShare;
     address public bShare;
 
@@ -20,10 +22,12 @@ contract StablecashFactory is IStablecashFactory {
     uint256 public timeOfLastExchange;
     uint256 private _initialScaleFactor = 1e18;
 
+    uint256 internal constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
+
     constructor() {
         // Create contracts for shares of money and shares of bonds
-        mShare = address(new BaseERC20("Stablecash Share", "shSCH", address(this)));
-        bShare = address(new BaseERC20("Stablecash Bond Share", "shBSCH", address(this)));
+        mShare = address(new BaseERC20("Share of Stablecash Supply", "shSCH", address(this)));
+        bShare = address(new BaseERC20("Share of Stablecash Bond Supply", "shBSCH", address(this)));
         // Create contracts for money and bonds
         mToken = address(new ScaledERC20("Stablecash", "SCH", address(this), mShare));
         bToken = address(new ScaledERC20("Stablecash Bond", "BSCH", address(this), bShare));
@@ -38,12 +42,19 @@ contract StablecashFactory is IStablecashFactory {
     }
 
     function scaleFactor() public view returns (uint256) {
-        uint256 _interestRate = interestRate();
-        uint256 secondsPerYear = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
-        // Approximation for e^(rt) where r << 1
-        // TODO: replace with accurate approximation of e^(rt)
-        uint256 growthFactor = (_interestRate * (block.timestamp - timeOfLastExchange)) / secondsPerYear;
-        return _initialScaleFactor * growthFactor / 1e18;
+        // Approximate e^(rt) as 1 + rt since we assume r << 1
+        // Users can call `update()` if approximation is insufficient
+        uint256 growthFactor = 1e18 + ((interestRate() * (block.timestamp - timeOfLastExchange)) / SECONDS_PER_YEAR);
+        return (_initialScaleFactor * growthFactor) / 1e18;
+    }
+
+    function updateScaleFactor() public {
+        // Update scale factor as F(t) = F_0 * e^(rt)
+        uint256 exponent = (interestRate() * (block.timestamp - timeOfLastExchange)) / SECONDS_PER_YEAR;
+        uint256 growthFactor = PRBMathUD60x18.exp(exponent);
+        _initialScaleFactor = (_initialScaleFactor * growthFactor) / 1e18;
+        // Update time of last exchange
+        timeOfLastExchange = block.timestamp;
     }
 
     // Based on UniswapV2Pair `_swap` function with constant sum-of-the-squares invariant
@@ -63,10 +74,8 @@ contract StablecashFactory is IStablecashFactory {
         uint256 invariant_ = invariant(tokenInSupply, tokenOutSupply);
         require(amountIn <= tokenInSupply, "StablecashFactory: INSUFFICIENT INPUT SUPPLY");
 
-        // Update the initial scale factor before starting the exchange
-        _initialScaleFactor = scaleFactor();
-        // Update time of the last exchange
-        timeOfLastExchange = block.timestamp;
+        // Update scale factor before executing the exchange
+        updateScaleFactor();
 
         require(to != tokenIn && to != tokenOut && to != address(this), "StablecashFactory: INVALID_TO");
         if (amountIn > 0 && amountOut > 0) {
@@ -83,8 +92,11 @@ contract StablecashFactory is IStablecashFactory {
             IBaseERC20(tokenIn).burnOnExchange(to, amountIn);
             // Calculate the output amount using the invariant and mint.
             tokenInSupply -= amountIn;
-            uint256 sqTokenOutSupply = invariant_ - (tokenInSupply * tokenInSupply);
-            amountOut = FixedPointMathLib.sqrt(sqTokenOutSupply) - tokenOutSupply;
+            uint256 sqTokenOutSupply;
+            unchecked {
+                sqTokenOutSupply = invariant_ - (tokenInSupply * tokenInSupply);
+            }
+            amountOut = PRBMathUD60x18.sqrt(sqTokenOutSupply) - tokenOutSupply;
             IBaseERC20(tokenOut).mintOnExchange(to, amountOut); // mint necessary out tokens
         } else {
             // Sender provided exact output amount. Go ahead and mint.
@@ -96,7 +108,7 @@ contract StablecashFactory is IStablecashFactory {
             unchecked {
                 sqTokenInSupply = invariant_ - (tokenOutSupply * tokenOutSupply);
             }
-            amountIn = tokenInSupply - FixedPointMathLib.sqrt(sqTokenInSupply);
+            amountIn = tokenInSupply - PRBMathUD60x18.sqrt(sqTokenInSupply);
             IBaseERC20(tokenIn).burnOnExchange(to, amountIn); // burn necessary in tokens
         }
 

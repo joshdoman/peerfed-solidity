@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IStablecashFactory.sol";
-import "./interfaces/IBaseERC20Share.sol";
+import "./interfaces/IBaseERC20.sol";
 
 contract ScaledERC20 is ERC20 {
     address public factory;
@@ -21,13 +21,13 @@ contract ScaledERC20 is ERC20 {
     }
 
     function totalSupply() public view virtual override returns (uint256) {
-        uint256 shareOutstanding = IBaseERC20Share(share).totalSupply();
+        uint256 shareOutstanding = IBaseERC20(share).totalSupply();
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         return (shareOutstanding * scaleFactor) / 1e18;
     }
 
     function balanceOf(address account) public view virtual override returns (uint256) {
-        uint256 shareBalance = IBaseERC20Share(share).balanceOf(account);
+        uint256 shareBalance = IBaseERC20(share).balanceOf(account);
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         return (shareBalance * scaleFactor) / 1e18;
     }
@@ -39,18 +39,18 @@ contract ScaledERC20 is ERC20 {
     ) internal override {
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
-        IBaseERC20Share(share).transferViaScaledToken(from, to, shareAmount);
+        IBaseERC20(share).transferViaScaledToken(from, to, shareAmount);
     }
 
     function _mint(address account, uint256 amount) internal override {
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
-        IBaseERC20Share(share).mintViaScaledToken(account, shareAmount);
+        IBaseERC20(share).mintViaScaledToken(account, shareAmount);
     }
 
     function _burn(address account, uint256 amount) internal override {
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
-        IBaseERC20Share(share).burnViaScaledToken(account, shareAmount);
+        IBaseERC20(share).burnViaScaledToken(account, shareAmount);
     }
 }

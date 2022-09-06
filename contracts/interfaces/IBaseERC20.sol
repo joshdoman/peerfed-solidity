@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-interface IBaseERC20Share is IERC20 {
+interface IBaseERC20 is IERC20 {
     function setScaledToken(address scaledToken_) external;
 
     function transferViaScaledToken(
@@ -16,4 +16,8 @@ interface IBaseERC20Share is IERC20 {
     function mintViaScaledToken(address account, uint256 amount) external;
 
     function burnViaScaledToken(address account, uint256 amount) external;
+
+    function mintOnExchange(address account, uint256 amount) external;
+
+    function burnOnExchange(address account, uint256 amount) external;
 }

@@ -35,12 +35,14 @@ contract StablecashFactory is IStablecashFactory {
         timeOfLastExchange = block.timestamp;
     }
 
+    // Returns the current annualized interest rate
     function interestRate() public view returns (uint256) {
         uint256 mShareSupply = IERC20(mShare).totalSupply();
         uint256 bShareSupply = IERC20(mShare).totalSupply();
         return (mShareSupply * 1e18) / bShareSupply;
     }
 
+    // Returns an approximation for the current scale factor
     function scaleFactor() public view returns (uint256) {
         // Approximate e^(rt) as 1 + rt since we assume r << 1
         // Users can call `update()` if approximation is insufficient
@@ -48,6 +50,7 @@ contract StablecashFactory is IStablecashFactory {
         return (_initialScaleFactor * growthFactor) / 1e18;
     }
 
+    // Updates the scale factor using continuous compounding formula and updates the time of last exchange
     function updateScaleFactor() public {
         // Update scale factor as F(t) = F_0 * e^(rt)
         uint256 exponent = (interestRate() * (block.timestamp - timeOfLastExchange)) / SECONDS_PER_YEAR;
@@ -57,64 +60,64 @@ contract StablecashFactory is IStablecashFactory {
         timeOfLastExchange = block.timestamp;
     }
 
-    // Based on UniswapV2Pair `_swap` function with a constant sum-of-the-squares invariant
-    function exchange(
-        address tokenIn,
-        address tokenOut,
+    // Based on the UniswapV2Pair `_swap` function with a constant sum-of-the-squares invariant
+    function exchangeShares(
+        address shareIn,
+        address shareOut,
         uint256 amountIn,
         uint256 amountOut,
         address to
     ) external {
-        require(allowExchange(tokenIn, tokenOut), "StablecashFactory: INVALID_TOKENS");
+        require(allowExchange(shareIn, shareOut), "StablecashFactory: INVALID_TOKENS");
         require(amountIn > 0 || amountOut > 0, "StablecashFactory: INSUFFICIENT_I/O");
 
-        uint256 tokenInSupply = IBaseERC20(tokenIn).totalSupply();
-        uint256 tokenOutSupply = IBaseERC20(tokenOut).totalSupply();
-        uint256 invariant_ = invariant(tokenInSupply, tokenOutSupply);
-        require(amountIn <= tokenInSupply, "StablecashFactory: INSUFFICIENT INPUT SUPPLY");
+        uint256 shareInSupply = IBaseERC20(shareIn).totalSupply();
+        uint256 shareOutSupply = IBaseERC20(shareOut).totalSupply();
+        uint256 invariant_ = invariant(shareInSupply, shareOutSupply);
+        require(amountIn <= shareInSupply, "StablecashFactory: INSUFFICIENT INPUT SUPPLY");
 
         // Update scale factor before executing the exchange
         updateScaleFactor();
 
-        require(to != tokenIn && to != tokenOut && to != address(this), "StablecashFactory: INVALID_TO");
+        require(to != shareIn && to != shareOut && to != address(this), "StablecashFactory: INVALID_TO");
         if (amountIn > 0 && amountOut > 0) {
             // Sender provided exact in and out amounts. Go ahead and mint and burn.
-            IBaseERC20(tokenOut).mintOnExchange(to, amountOut);
-            IBaseERC20(tokenIn).burnOnExchange(to, amountIn);
+            IBaseERC20(shareOut).mintOnExchange(to, amountOut);
+            IBaseERC20(shareIn).burnOnExchange(to, amountIn);
             // Check if invariant is maintained
-            tokenInSupply -= amountIn;
-            tokenOutSupply += amountOut;
-            uint256 newInvariant_ = invariant(tokenInSupply, tokenOutSupply);
+            shareInSupply -= amountIn;
+            shareOutSupply += amountOut;
+            uint256 newInvariant_ = invariant(shareInSupply, shareOutSupply);
             require(newInvariant_ <= invariant_, "StablecashFactory: INVALID_SWAP");
         } else if (amountIn > 0) {
             // Sender provided exact input amount. Go ahead and burn.
-            IBaseERC20(tokenIn).burnOnExchange(to, amountIn);
+            IBaseERC20(shareIn).burnOnExchange(to, amountIn);
             // Calculate the output amount using the invariant and mint.
-            tokenInSupply -= amountIn;
-            uint256 sqTokenOutSupply;
+            shareInSupply -= amountIn;
+            uint256 sqshareOutSupply;
             unchecked {
-                sqTokenOutSupply = invariant_ - (tokenInSupply * tokenInSupply);
+                sqshareOutSupply = invariant_ - (shareInSupply * shareInSupply);
             }
-            amountOut = PRBMathUD60x18.sqrt(sqTokenOutSupply) - tokenOutSupply;
-            IBaseERC20(tokenOut).mintOnExchange(to, amountOut); // mint necessary out tokens
+            amountOut = PRBMathUD60x18.sqrt(sqshareOutSupply) - shareOutSupply;
+            IBaseERC20(shareOut).mintOnExchange(to, amountOut); // mint necessary out tokens
         } else {
             // Sender provided exact output amount. Go ahead and mint.
-            IBaseERC20(tokenOut).mintOnExchange(to, amountOut);
+            IBaseERC20(shareOut).mintOnExchange(to, amountOut);
             // Calculate the needed input amount using the invariant and burn.
-            tokenOutSupply += amountOut;
-            require(tokenOutSupply * tokenOutSupply <= invariant_, "StablecashFactory: OUTPUT OUT OF BOUNDS");
-            uint256 sqTokenInSupply;
+            shareOutSupply += amountOut;
+            require(shareOutSupply * shareOutSupply <= invariant_, "StablecashFactory: OUTPUT OUT OF BOUNDS");
+            uint256 sqshareInSupply;
             unchecked {
-                sqTokenInSupply = invariant_ - (tokenOutSupply * tokenOutSupply);
+                sqshareInSupply = invariant_ - (shareOutSupply * shareOutSupply);
             }
-            amountIn = tokenInSupply - PRBMathUD60x18.sqrt(sqTokenInSupply);
-            IBaseERC20(tokenIn).burnOnExchange(to, amountIn); // burn necessary in tokens
+            amountIn = shareInSupply - PRBMathUD60x18.sqrt(sqshareInSupply);
+            IBaseERC20(shareIn).burnOnExchange(to, amountIn); // burn necessary in tokens
         }
 
-        emit Swap(msg.sender, tokenIn, tokenOut, amountIn, amountOut, to);
+        emit Swap(msg.sender, shareIn, shareOut, amountIn, amountOut, to);
     }
 
-    // Both tokens must be `mShare` and `bShare`
+    // Returns TRUE if both tokens are `mShare` and `bShare`
     function allowExchange(address tokenA, address tokenB) internal view returns (bool) {
         address mShare_ = mShare;
         address bShare_ = bShare;

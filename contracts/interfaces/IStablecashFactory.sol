@@ -5,20 +5,22 @@ pragma solidity 0.8.15;
 interface IStablecashFactory {
     event Swap(
         address indexed sender,
-        address tokenIn,
-        address tokenOut,
+        address shareIn,
+        address shareOut,
         uint256 amountIn,
         uint256 amountOut,
         address indexed to
     );
 
-    function exchange(
-        address tokenIn,
-        address tokenOut,
+    function exchangeShares(
+        address shareIn,
+        address shareOut,
         uint256 amountIn,
         uint256 amountOut,
         address to
     ) external;
+
+    function interestRate() external view returns (uint256);
 
     function scaleFactor() external view returns (uint256);
 

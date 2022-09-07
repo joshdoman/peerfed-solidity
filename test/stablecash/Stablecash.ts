@@ -3,10 +3,10 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 import { ethers } from "hardhat";
 
 import type { Signers } from "../types";
-
-// import { shouldBehaveLikeExchangeableERC20 } from "./ExchangeableERC20.behavior";
-// import { shouldBehaveLikeFlatcoin } from "./Stablecash.behavior";
-// import { deployFlatcoinFixture } from "./Stablecash.fixture";
+import { shouldBehaveLikeBaseERC20 } from "./BaseERC20.behavior";
+import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
+import { deployStablecashFixture } from "./Stablecash.fixture";
+import { shouldBehaveLikeStablecashFactory } from "./StablecashFactory.behavior";
 
 describe("Unit tests", function () {
   before(async function () {
@@ -21,28 +21,41 @@ describe("Unit tests", function () {
   });
 
   describe("StablecashFactory", function () {
-    // beforeEach(async function () {
-    //   const { flatcoin, flatcoinBond, unmintedFlatcoin } = await this.loadFixture(deployFlatcoinFixture);
-    //   this.flatcoin = flatcoin;
-    //   this.flatcoinBond = flatcoinBond;
-    //   this.unmintedFlatcoin = unmintedFlatcoin;
-    // });
-    //
-    // shouldBehaveLikeFlatcoin();
+    beforeEach(async function () {
+      const { factory, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
+      this.factory = factory;
+      this.mShare = mShare;
+      this.bShare = bShare;
+      this.mToken = mToken;
+      this.bToken = bToken;
+    });
+
+    shouldBehaveLikeStablecashFactory();
   });
 
-  describe("ExchangeableERC20", function () {
-    // beforeEach(async function () {
-    //   const { flatcoin, flatcoinBond, flatcoinTotal, exchange, factory } = await this.loadFixture(
-    //     deployFlatcoinFixture,
-    //   );
-    //   this.flatcoin = flatcoin;
-    //   this.flatcoinBond = flatcoinBond;
-    //   this.flatcoinTotal = flatcoinTotal;
-    //   this.exchange = exchange;
-    //   this.factory = factory;
-    // });
-    //
-    // shouldBehaveLikeERC20Swappable();
+  describe("BaseERC20", function () {
+    beforeEach(async function () {
+      const { factory, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
+      this.factory = factory;
+      this.mShare = mShare;
+      this.bShare = bShare;
+      this.mToken = mToken;
+      this.bToken = bToken;
+    });
+
+    shouldBehaveLikeBaseERC20();
+  });
+
+  describe("BaseERC20", function () {
+    beforeEach(async function () {
+      const { factory, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
+      this.factory = factory;
+      this.mShare = mShare;
+      this.bShare = bShare;
+      this.mToken = mToken;
+      this.bToken = bToken;
+    });
+
+    shouldBehaveLikeScaledERC20();
   });
 });

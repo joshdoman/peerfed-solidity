@@ -57,8 +57,7 @@ contract StablecashFactory is IStablecashFactory {
         timeOfLastExchange = block.timestamp;
     }
 
-    // Based on UniswapV2Pair `_swap` function with constant sum-of-the-squares invariant
-    // TODO: Add cumulative prices so that TWAP can be calculated
+    // Based on UniswapV2Pair `_swap` function with a constant sum-of-the-squares invariant
     function exchange(
         address tokenIn,
         address tokenOut,

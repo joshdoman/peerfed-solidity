@@ -8,9 +8,9 @@ import "@prb/math/contracts/PRBMathUD60x18.sol";
 import "./BaseERC20.sol";
 import "./ScaledERC20.sol";
 import "./interfaces/IBaseERC20.sol";
-import "./interfaces/IStablecashFactory.sol";
+import "./interfaces/IStablecashOrchestrator.sol";
 
-contract StablecashFactory is IStablecashFactory {
+contract StablecashOrchestrator is IStablecashOrchestrator {
     using PRBMathUD60x18 for uint256;
 
     address public mShare;

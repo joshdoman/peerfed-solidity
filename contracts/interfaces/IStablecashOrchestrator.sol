@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.15;
 
-interface IStablecashFactory {
+interface IStablecashOrchestrator {
     event Swap(
         address indexed sender,
         address shareIn,

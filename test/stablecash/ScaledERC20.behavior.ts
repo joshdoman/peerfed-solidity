@@ -1,8 +1,6 @@
 import { expect } from "chai";
-import { BigNumber } from "ethers";
+import { BigNumber, utils } from "ethers";
 import type { Context } from "mocha";
-
-import { eth } from "./StablecashFactory.behavior";
 
 export function shouldBehaveLikeScaledERC20(): void {
   describe("Supply", function () {
@@ -108,12 +106,16 @@ export async function expectedTokenBalance(
 
 // Calculates the equivalent number of shares of a given token amount
 export async function equivalentShareAmount(context: Context, tokenAmount: BigNumber): Promise<BigNumber> {
-  const scaleFactor = await context.factory.scaleFactor();
+  const scaleFactor = await context.orchestrator.scaleFactor();
   return tokenAmount.mul(eth(1)).div(scaleFactor);
 }
 
 // Calculates the equivalent number of tokens of a given share amount
 export async function equivalentTokenAmount(context: Context, shareAmount: BigNumber): Promise<BigNumber> {
-  const scaleFactor = await context.factory.scaleFactor();
+  const scaleFactor = await context.orchestrator.scaleFactor();
   return shareAmount.mul(scaleFactor).div(eth(1));
+}
+
+function eth(n: number) {
+  return utils.parseEther(n.toString());
 }

@@ -6,7 +6,7 @@ import type { Signers } from "../types";
 import { shouldBehaveLikeBaseERC20 } from "./BaseERC20.behavior";
 import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
 import { deployStablecashFixture } from "./Stablecash.fixture";
-import { shouldBehaveLikeStablecashFactory } from "./StablecashFactory.behavior";
+import { shouldBehaveLikeStablecashOrchestrator } from "./StablecashOrchestrator.behavior";
 
 describe("Unit tests", function () {
   before(async function () {
@@ -20,23 +20,23 @@ describe("Unit tests", function () {
     this.loadFixture = loadFixture;
   });
 
-  describe("StablecashFactory", function () {
+  describe("StablecashOrchestrator", function () {
     beforeEach(async function () {
-      const { factory, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
-      this.factory = factory;
+      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
+      this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
       this.mToken = mToken;
       this.bToken = bToken;
     });
 
-    shouldBehaveLikeStablecashFactory();
+    shouldBehaveLikeStablecashOrchestrator();
   });
 
   describe("BaseERC20", function () {
     beforeEach(async function () {
-      const { factory, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
-      this.factory = factory;
+      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
+      this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
       this.mToken = mToken;
@@ -48,8 +48,8 @@ describe("Unit tests", function () {
 
   describe("ScaledERC20", function () {
     beforeEach(async function () {
-      const { factory, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
-      this.factory = factory;
+      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
+      this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
       this.mToken = mToken;

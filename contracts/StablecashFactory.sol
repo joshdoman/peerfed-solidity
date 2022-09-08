@@ -20,9 +20,9 @@ contract StablecashFactory is IStablecashFactory {
     address public bToken;
 
     uint256 public timeOfLastExchange;
-    uint256 private _initialScaleFactor = 1e18;
+    uint256 private _startingScaleFactor = 1e18;
 
-    uint256 internal constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
+    uint256 public constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
 
     constructor() {
         // Create contracts for shares of money and shares of bonds
@@ -33,13 +33,22 @@ contract StablecashFactory is IStablecashFactory {
         bToken = address(new ScaledERC20("Stablecash Bond", "BSCH", address(this), bShare));
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
+
+        // TEMPORARY: Assign the total supply of shares to the owner at 1:1 ratio
+        IBaseERC20(mShare).mintOnExchange(msg.sender, 100 * 1e18);
+        IBaseERC20(bShare).mintOnExchange(msg.sender, 100 * 1e18);
+        // TODO: Replace with auction mechanism
     }
 
     // Returns the current annualized interest rate
     function interestRate() public view returns (uint256) {
         uint256 mShareSupply = IERC20(mShare).totalSupply();
-        uint256 bShareSupply = IERC20(mShare).totalSupply();
-        return (mShareSupply * 1e18) / bShareSupply;
+        uint256 bShareSupply = IERC20(bShare).totalSupply();
+        if (bShareSupply > 0) {
+            return (mShareSupply * 1e18) / bShareSupply;
+        } else {
+            return 1 >> 128; // Not well-defined, but interest rate should approach infinity
+        }
     }
 
     // Returns an approximation for the current scale factor
@@ -47,15 +56,15 @@ contract StablecashFactory is IStablecashFactory {
         // Approximate e^(rt) as 1 + rt since we assume r << 1
         // Users can call `update()` if approximation is insufficient
         uint256 growthFactor = 1e18 + ((interestRate() * (block.timestamp - timeOfLastExchange)) / SECONDS_PER_YEAR);
-        return (_initialScaleFactor * growthFactor) / 1e18;
+        return (_startingScaleFactor * growthFactor) / 1e18;
     }
 
-    // Updates the scale factor using continuous compounding formula and updates the time of last exchange
+    // Updates the scale factor using the continuous compounding formula and updates the time of last exchange
     function updateScaleFactor() public {
         // Update scale factor as F(t) = F_0 * e^(rt)
         uint256 exponent = (interestRate() * (block.timestamp - timeOfLastExchange)) / SECONDS_PER_YEAR;
         uint256 growthFactor = PRBMathUD60x18.exp(exponent);
-        _initialScaleFactor = (_initialScaleFactor * growthFactor) / 1e18;
+        _startingScaleFactor = (_startingScaleFactor * growthFactor) / 1e18;
         // Update time of last exchange
         timeOfLastExchange = block.timestamp;
     }

@@ -3,10 +3,13 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "hardhat/console.sol";
+
 import "./interfaces/IStablecashFactory.sol";
 import "./interfaces/IBaseERC20.sol";
 
-contract ScaledERC20 is ERC20 {
+contract ScaledERC20 is ERC20Burnable {
     address public factory;
     address public share;
 
@@ -18,6 +21,8 @@ contract ScaledERC20 is ERC20 {
     ) ERC20(name, symbol) {
         factory = factory_;
         share = share_;
+        // Set the scaled token in the share contract
+        IBaseERC20(share_).setScaledToken(address(this));
     }
 
     function totalSupply() public view virtual override returns (uint256) {
@@ -40,17 +45,23 @@ contract ScaledERC20 is ERC20 {
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
         IBaseERC20(share).transferViaScaledToken(from, to, shareAmount);
+
+        emit Transfer(from, to, amount);
     }
 
     function _mint(address account, uint256 amount) internal override {
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
         IBaseERC20(share).mintViaScaledToken(account, shareAmount);
+
+        emit Transfer(address(0), account, amount);
     }
 
     function _burn(address account, uint256 amount) internal override {
         uint256 scaleFactor = IStablecashFactory(factory).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
         IBaseERC20(share).burnViaScaledToken(account, shareAmount);
+
+        emit Transfer(account, address(0), amount);
     }
 }

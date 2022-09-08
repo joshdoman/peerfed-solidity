@@ -46,7 +46,7 @@ describe("Unit tests", function () {
     shouldBehaveLikeBaseERC20();
   });
 
-  describe("BaseERC20", function () {
+  describe("ScaledERC20", function () {
     beforeEach(async function () {
       const { factory, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
       this.factory = factory;

@@ -7,7 +7,7 @@ import "@prb/math/contracts/PRBMathUD60x18.sol";
 
 import "./BaseERC20.sol";
 import "./ScaledERC20.sol";
-import "./ExchangeHelper.sol";
+import "./StablecashExchange.sol";
 import "./libraries/StablecashExchangeLibrary.sol";
 import "./interfaces/IBaseERC20.sol";
 import "./interfaces/IStablecashOrchestrator.sol";
@@ -36,7 +36,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         mToken = address(new ScaledERC20("Stablecash", "SCH", address(this), mShare));
         bToken = address(new ScaledERC20("Stablecash Bond", "BSCH", address(this), bShare));
         // Create exchange helper
-        exchangeHelper = address(new ExchangeHelper(address(this)));
+        exchangeHelper = address(new StablecashExchange(address(this)));
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
 
@@ -89,7 +89,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         return _exchangeShares(shareIn, shareOut, amountIn, amountOut, msg.sender, to);
     }
 
-    function exchangeSharesViaHelper(
+    function exchangeSharesOverride(
         address shareIn,
         address shareOut,
         uint256 amountIn,

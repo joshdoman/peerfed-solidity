@@ -7,11 +7,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IStablecashOrchestrator.sol";
 import "./interfaces/IScaledERC20.sol";
 
-contract ExchangeHelper {
+contract StablecashExchange {
     address public orchestrator;
 
     modifier ensure(uint256 deadline) {
-        require(deadline >= block.timestamp, "ExchangeHelper: EXPIRED");
+        require(deadline >= block.timestamp, "StablecashExchange: EXPIRED");
         _;
     }
 
@@ -34,7 +34,7 @@ contract ExchangeHelper {
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
         uint256 shareAmountOut;
-        (, shareAmountOut) = IStablecashOrchestrator(orchestrator_).exchangeSharesViaHelper(
+        (, shareAmountOut) = IStablecashOrchestrator(orchestrator_).exchangeSharesOverride(
             tokenIn,
             tokenOut,
             amountIn,
@@ -43,7 +43,7 @@ contract ExchangeHelper {
             to
         );
         amountOut = (shareAmountOut * scaleFactor) / 1e18;
-        require(amountOut >= amountOutMin, "ExchangeHelper: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut >= amountOutMin, "StablecashExchange: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
     function exchangeTokensForExactTokens(
@@ -60,7 +60,7 @@ contract ExchangeHelper {
         amountOut = (amountOut * 1e18) / scaleFactor;
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
-        (uint256 shareAmountIn,) = IStablecashOrchestrator(orchestrator_).exchangeSharesViaHelper(
+        (uint256 shareAmountIn,) = IStablecashOrchestrator(orchestrator_).exchangeSharesOverride(
             tokenIn,
             tokenOut,
             0,
@@ -69,7 +69,7 @@ contract ExchangeHelper {
             to
         );
         amountIn = (shareAmountIn * scaleFactor) / 1e18;
-        require(amountIn >= amountInMax, "ExchangeHelper: EXCESSIVE_INPUT_AMOUNT");
+        require(amountIn >= amountInMax, "StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
     }
 
     function exchangeExactSharesForShares(
@@ -80,7 +80,7 @@ contract ExchangeHelper {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        (,amountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
+        (,amountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesOverride(
             shareIn,
             shareOut,
             amountIn,
@@ -88,7 +88,7 @@ contract ExchangeHelper {
             msg.sender,
             to
         );
-        require(amountOut >= amountOutMin, "StablecashOrchestrator: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut >= amountOutMin, "StablecashExchange: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
     function exchangeSharesForExactShares(
@@ -99,7 +99,7 @@ contract ExchangeHelper {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountIn) {
-        (amountIn, ) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
+        (amountIn, ) = IStablecashOrchestrator(orchestrator).exchangeSharesOverride(
             shareIn,
             shareOut,
             0,
@@ -107,6 +107,6 @@ contract ExchangeHelper {
             msg.sender,
             to
         );
-        require(amountIn <= amountInMax, "StablecashOrchestrator: EXCESSIVE_INPUT_AMOUNT");
+        require(amountIn <= amountInMax, "StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
     }
 }

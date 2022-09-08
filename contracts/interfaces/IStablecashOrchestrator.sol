@@ -20,7 +20,7 @@ interface IStablecashOrchestrator {
         address to
     ) external returns (uint256, uint256);
 
-    function exchangeSharesViaHelper(
+    function exchangeSharesOverride(
         address shareIn,
         address shareOut,
         uint256 amountIn,

@@ -109,7 +109,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         address from,
         address to
     ) internal returns (uint256, uint256) {
-        require(checkTokens(shareIn, shareOut), "StablecashOrchestrator: INVALID_TOKENS");
+        require(validateTokens(shareIn, shareOut), "StablecashOrchestrator: INVALID_TOKENS");
         // Get in and out supply
         uint256 inSupply = IBaseERC20(shareIn).totalSupply();
         uint256 outSupply = IBaseERC20(shareOut).totalSupply();
@@ -144,7 +144,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
     }
 
     // Returns TRUE if both tokens are `mShare` and `bShare`
-    function checkTokens(address tokenA, address tokenB) internal view returns (bool) {
+    function validateTokens(address tokenA, address tokenB) internal view returns (bool) {
         address mShare_ = mShare;
         address bShare_ = bShare;
         return (tokenA == mShare_ && tokenB == bShare_) || (tokenB == mShare_ && tokenA == bShare_);

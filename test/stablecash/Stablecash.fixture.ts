@@ -17,7 +17,9 @@ export async function deployStablecashFixture(): Promise<{
   const orchestratorFactory: StablecashOrchestrator__factory = <StablecashOrchestrator__factory>(
     await ethers.getContractFactory("StablecashOrchestrator")
   );
-  const orchestrator: StablecashOrchestrator = <StablecashOrchestrator>await orchestratorFactory.connect(owner).deploy();
+  const orchestrator: StablecashOrchestrator = <StablecashOrchestrator>(
+    await orchestratorFactory.connect(owner).deploy()
+  );
   await orchestrator.deployed();
 
   const mShareAddress = await orchestrator.mShare();

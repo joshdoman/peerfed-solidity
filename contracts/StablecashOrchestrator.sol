@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@prb/math/contracts/PRBMathUD60x18.sol";
+import "hardhat/console.sol";
 
 import "./BaseERC20.sol";
 import "./ScaledERC20.sol";
@@ -77,18 +78,17 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         uint256 amountOut,
         address to
     ) external {
-        require(allowExchange(shareIn, shareOut), "StablecashFactory: INVALID_TOKENS");
-        require(amountIn > 0 || amountOut > 0, "StablecashFactory: INSUFFICIENT_I/O");
+        require(allowExchange(shareIn, shareOut), "StablecashOrchestrator: INVALID_TOKENS");
+        require(amountIn > 0 || amountOut > 0, "StablecashOrchestrator: MISSING_INPUT_OUTPUT");
 
         uint256 shareInSupply = IBaseERC20(shareIn).totalSupply();
         uint256 shareOutSupply = IBaseERC20(shareOut).totalSupply();
         uint256 invariant_ = invariant(shareInSupply, shareOutSupply);
-        require(amountIn <= shareInSupply, "StablecashFactory: INSUFFICIENT INPUT SUPPLY");
 
         // Update scale factor before executing the exchange
         updateScaleFactor();
 
-        require(to != shareIn && to != shareOut && to != address(this), "StablecashFactory: INVALID_TO");
+        require(to != shareIn && to != shareOut && to != address(this), "StablecashOrchestrator: INVALID_TO");
         if (amountIn > 0 && amountOut > 0) {
             // Sender provided exact in and out amounts. Go ahead and mint and burn.
             IBaseERC20(shareOut).mintOnExchange(to, amountOut);
@@ -97,7 +97,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
             shareInSupply -= amountIn;
             shareOutSupply += amountOut;
             uint256 newInvariant_ = invariant(shareInSupply, shareOutSupply);
-            require(newInvariant_ <= invariant_, "StablecashFactory: INVALID_SWAP");
+            require(newInvariant_ <= invariant_, "StablecashOrchestrator: INVALID_EXCHANGE");
         } else if (amountIn > 0) {
             // Sender provided exact input amount. Go ahead and burn.
             IBaseERC20(shareIn).burnOnExchange(to, amountIn);
@@ -105,7 +105,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
             shareInSupply -= amountIn;
             uint256 sqshareOutSupply;
             unchecked {
-                sqshareOutSupply = invariant_ - (shareInSupply * shareInSupply);
+                sqshareOutSupply = (invariant_ - (shareInSupply * shareInSupply)) / 1e18;
             }
             amountOut = PRBMathUD60x18.sqrt(sqshareOutSupply) - shareOutSupply;
             IBaseERC20(shareOut).mintOnExchange(to, amountOut); // mint necessary out tokens
@@ -114,10 +114,10 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
             IBaseERC20(shareOut).mintOnExchange(to, amountOut);
             // Calculate the needed input amount using the invariant and burn.
             shareOutSupply += amountOut;
-            require(shareOutSupply * shareOutSupply <= invariant_, "StablecashFactory: OUTPUT OUT OF BOUNDS");
+            require(shareOutSupply * shareOutSupply <= invariant_, "StablecashOrchestrator: INVALID_EXCHANGE");
             uint256 sqshareInSupply;
             unchecked {
-                sqshareInSupply = invariant_ - (shareOutSupply * shareOutSupply);
+                sqshareInSupply = (invariant_ - (shareOutSupply * shareOutSupply)) / 1e18;
             }
             amountIn = shareInSupply - PRBMathUD60x18.sqrt(sqshareInSupply);
             IBaseERC20(shareIn).burnOnExchange(to, amountIn); // burn necessary in tokens
@@ -133,7 +133,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         return (tokenA == mShare_ && tokenB == bShare_) || (tokenB == mShare_ && tokenA == bShare_);
     }
 
-    // Sum-of-the-squares invariant
+    // Sum-of-the-squares invariant (returns number with 36 decimals)
     function invariant(uint256 quantity1, uint256 quantity2) internal pure returns (uint256) {
         return (quantity1 * quantity1) + (quantity2 * quantity2);
     }

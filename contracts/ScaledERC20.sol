@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "hardhat/console.sol";
 
 import "./interfaces/IStablecashOrchestrator.sol";
 import "./interfaces/IBaseERC20.sol";

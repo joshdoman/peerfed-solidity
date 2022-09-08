@@ -87,7 +87,7 @@ export function shouldBehaveLikeStablecashOrchestrator(): void {
 
       await expect(
         this.orchestrator.exchangeShares(this.mShare.address, this.bShare.address, 0, 0, owner.address),
-      ).to.be.revertedWith("StablecashOrchestrator: MISSING_INPUT_OUTPUT");
+      ).to.be.revertedWith("StablecashLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
     });
 
     it("Should update the scale factor to the exact value prior to the exchange", async function () {
@@ -138,7 +138,7 @@ export function shouldBehaveLikeStablecashOrchestrator(): void {
       const invalidOutput = sqrt(invariant.div(eth(1))).add(1);
       await expect(
         this.orchestrator.exchangeShares(this.mShare.address, this.bShare.address, 0, invalidOutput, owner.address),
-      ).to.be.revertedWith("StablecashOrchestrator: INVALID_EXCHANGE");
+      ).to.be.revertedWith("StablecashLibrary: INSUFFICIENT_SUPPLY");
     });
 
     it("Should exchange exact amounts where new sum-of-squares is less than invariant", async function () {

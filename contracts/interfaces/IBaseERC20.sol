@@ -5,6 +5,10 @@ pragma solidity 0.8.15;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IBaseERC20 is IERC20 {
+    function orchestrator() external returns (address);
+
+    function scaledToken() external returns (address);
+
     function setScaledToken(address scaledToken_) external;
 
     function transferViaScaledToken(

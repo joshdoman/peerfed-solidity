@@ -8,15 +8,15 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "./interfaces/IBaseERC20.sol";
 
 contract BaseERC20 is ERC20Burnable, IBaseERC20 {
-    address public factory;
+    address public orchestrator;
     address public scaledToken;
 
     constructor(
         string memory name,
         string memory symbol,
-        address factory_
+        address orchestrator_
     ) ERC20(name, symbol) {
-        factory = factory_;
+        orchestrator = orchestrator_;
     }
 
     /**
@@ -66,20 +66,20 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     /**
      * Mints `amount` tokens to `account`.
      *
-     * Requirement: sender must be the `factory` contract.
+     * Requirement: sender must be the `orchestrator` contract.
      */
     function mintOnExchange(address account, uint256 amount) external {
-        require(msg.sender == factory, "Forbidden");
+        require(msg.sender == orchestrator, "Forbidden");
         _mint(account, amount);
     }
 
     /**
      * Burns `amount` tokens from `account`.
      *
-     * Requirement: sender must be the `factory` contract.
+     * Requirement: sender must be the `orchestrator` contract.
      */
     function burnOnExchange(address account, uint256 amount) external {
-        require(msg.sender == factory, "Forbidden");
+        require(msg.sender == orchestrator, "Forbidden");
         _burn(account, amount);
     }
 }

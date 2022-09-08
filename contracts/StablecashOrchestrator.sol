@@ -4,10 +4,11 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@prb/math/contracts/PRBMathUD60x18.sol";
-import "hardhat/console.sol";
 
 import "./BaseERC20.sol";
 import "./ScaledERC20.sol";
+import "./ExchangeHelper.sol";
+import "./libraries/StablecashExchangeLibrary.sol";
 import "./interfaces/IBaseERC20.sol";
 import "./interfaces/IStablecashOrchestrator.sol";
 
@@ -19,6 +20,8 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
 
     address public mToken;
     address public bToken;
+
+    address public exchangeHelper;
 
     uint256 public timeOfLastExchange;
     uint256 private _startingScaleFactor = 1e18;
@@ -32,6 +35,8 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         // Create contracts for money and bonds
         mToken = address(new ScaledERC20("Stablecash", "SCH", address(this), mShare));
         bToken = address(new ScaledERC20("Stablecash Bond", "BSCH", address(this), bShare));
+        // Create exchange helper
+        exchangeHelper = address(new ExchangeHelper(address(this)));
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
 
@@ -61,16 +66,19 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
     }
 
     // Updates the scale factor using the continuous compounding formula and updates the time of last exchange
-    function updateScaleFactor() public {
+    function updateScaleFactor() public returns (uint256 updatedScaleFactor) {
+        // Check if scale factor already updated in current block
+        uint256 timeOfLastExchange_ = timeOfLastExchange;
+        if (block.timestamp == timeOfLastExchange_) return _startingScaleFactor;
         // Update scale factor as F(t) = F_0 * e^(rt)
-        uint256 exponent = (interestRate() * (block.timestamp - timeOfLastExchange)) / SECONDS_PER_YEAR;
+        uint256 exponent = (interestRate() * (block.timestamp - timeOfLastExchange_)) / SECONDS_PER_YEAR;
         uint256 growthFactor = PRBMathUD60x18.exp(exponent);
-        _startingScaleFactor = (_startingScaleFactor * growthFactor) / 1e18;
+        updatedScaleFactor = (_startingScaleFactor * growthFactor) / 1e18;
+        _startingScaleFactor = updatedScaleFactor;
         // Update time of last exchange
         timeOfLastExchange = block.timestamp;
     }
 
-    // Based on the UniswapV2Pair `_swap` function with a constant sum-of-the-squares invariant
     function exchangeShares(
         address shareIn,
         address shareOut,
@@ -78,63 +86,65 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         uint256 amountOut,
         address to
     ) external {
-        require(allowExchange(shareIn, shareOut), "StablecashOrchestrator: INVALID_TOKENS");
-        require(amountIn > 0 || amountOut > 0, "StablecashOrchestrator: MISSING_INPUT_OUTPUT");
+        _exchangeShares(shareIn, shareOut, amountIn, amountOut, msg.sender, to);
+    }
 
-        uint256 shareInSupply = IBaseERC20(shareIn).totalSupply();
-        uint256 shareOutSupply = IBaseERC20(shareOut).totalSupply();
-        uint256 invariant_ = invariant(shareInSupply, shareOutSupply);
+    function exchangeSharesViaHelper(
+        address shareIn,
+        address shareOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address from,
+        address to
+    ) external {
+        require(exchangeHelper == msg.sender, "StablecashOrchestrator: FORBIDDEN");
+        _exchangeShares(shareIn, shareOut, amountIn, amountOut, from, to);
+    }
 
+    function _exchangeShares(
+        address shareIn,
+        address shareOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address from,
+        address to
+    ) internal {
+        require(checkTokens(shareIn, shareOut), "StablecashOrchestrator: INVALID_TOKENS");
+        // Get in and out supply
+        uint256 inSupply = IBaseERC20(shareIn).totalSupply();
+        uint256 outSupply = IBaseERC20(shareOut).totalSupply();
         // Update scale factor before executing the exchange
         updateScaleFactor();
-
         require(to != shareIn && to != shareOut && to != address(this), "StablecashOrchestrator: INVALID_TO");
         if (amountIn > 0 && amountOut > 0) {
             // Sender provided exact in and out amounts. Go ahead and mint and burn.
             IBaseERC20(shareOut).mintOnExchange(to, amountOut);
-            IBaseERC20(shareIn).burnOnExchange(to, amountIn);
+            IBaseERC20(shareIn).burnOnExchange(msg.sender, amountIn);
             // Check if invariant is maintained
-            shareInSupply -= amountIn;
-            shareOutSupply += amountOut;
-            uint256 newInvariant_ = invariant(shareInSupply, shareOutSupply);
-            require(newInvariant_ <= invariant_, "StablecashOrchestrator: INVALID_EXCHANGE");
+            uint256 oldInvariant_ = StablecashExchangeLibrary.invariant(inSupply, outSupply);
+            uint256 newInvariant_ = StablecashExchangeLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
+            require(newInvariant_ <= oldInvariant_, "StablecashOrchestrator: INVALID_EXCHANGE");
         } else if (amountIn > 0) {
             // Sender provided exact input amount. Go ahead and burn.
-            IBaseERC20(shareIn).burnOnExchange(to, amountIn);
-            // Calculate the output amount using the invariant and mint.
-            shareInSupply -= amountIn;
-            uint256 sqshareOutSupply;
-            unchecked {
-                sqshareOutSupply = (invariant_ - (shareInSupply * shareInSupply)) / 1e18;
-            }
-            amountOut = PRBMathUD60x18.sqrt(sqshareOutSupply) - shareOutSupply;
-            IBaseERC20(shareOut).mintOnExchange(to, amountOut); // mint necessary out tokens
+            IBaseERC20(shareIn).burnOnExchange(msg.sender, amountIn);
+            // Calculate the output amount using the invariant and mint necessary shares.
+            amountOut = StablecashExchangeLibrary.getAmountOut(amountIn, inSupply, outSupply);
+            IBaseERC20(shareOut).mintOnExchange(to, amountOut);
         } else {
             // Sender provided exact output amount. Go ahead and mint.
             IBaseERC20(shareOut).mintOnExchange(to, amountOut);
-            // Calculate the needed input amount using the invariant and burn.
-            shareOutSupply += amountOut;
-            require(shareOutSupply * shareOutSupply <= invariant_, "StablecashOrchestrator: INVALID_EXCHANGE");
-            uint256 sqshareInSupply;
-            unchecked {
-                sqshareInSupply = (invariant_ - (shareOutSupply * shareOutSupply)) / 1e18;
-            }
-            amountIn = shareInSupply - PRBMathUD60x18.sqrt(sqshareInSupply);
-            IBaseERC20(shareIn).burnOnExchange(to, amountIn); // burn necessary in tokens
+            // Calculate the needed input amount to satisfy the invariant and burn necessary shares.
+            amountIn = StablecashExchangeLibrary.getAmountIn(amountOut, inSupply, outSupply);
+            IBaseERC20(shareIn).burnOnExchange(msg.sender, amountIn);
         }
 
-        emit Swap(msg.sender, shareIn, shareOut, amountIn, amountOut, to);
+        emit Swap(shareIn, shareOut, amountIn, amountOut, from, to);
     }
 
     // Returns TRUE if both tokens are `mShare` and `bShare`
-    function allowExchange(address tokenA, address tokenB) internal view returns (bool) {
+    function checkTokens(address tokenA, address tokenB) internal view returns (bool) {
         address mShare_ = mShare;
         address bShare_ = bShare;
         return (tokenA == mShare_ && tokenB == bShare_) || (tokenB == mShare_ && tokenA == bShare_);
-    }
-
-    // Sum-of-the-squares invariant (returns number with 36 decimals)
-    function invariant(uint256 quantity1, uint256 quantity2) internal pure returns (uint256) {
-        return (quantity1 * quantity1) + (quantity2 * quantity2);
     }
 }

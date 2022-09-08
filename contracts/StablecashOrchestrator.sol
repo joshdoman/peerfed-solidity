@@ -85,8 +85,8 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         uint256 amountIn,
         uint256 amountOut,
         address to
-    ) external {
-        _exchangeShares(shareIn, shareOut, amountIn, amountOut, msg.sender, to);
+    ) external returns (uint256, uint256) {
+        return _exchangeShares(shareIn, shareOut, amountIn, amountOut, msg.sender, to);
     }
 
     function exchangeSharesViaHelper(
@@ -96,9 +96,9 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         uint256 amountOut,
         address from,
         address to
-    ) external {
+    ) external returns (uint256, uint256) {
         require(exchangeHelper == msg.sender, "StablecashOrchestrator: FORBIDDEN");
-        _exchangeShares(shareIn, shareOut, amountIn, amountOut, from, to);
+        return _exchangeShares(shareIn, shareOut, amountIn, amountOut, from, to);
     }
 
     function _exchangeShares(
@@ -108,7 +108,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         uint256 amountOut,
         address from,
         address to
-    ) internal {
+    ) internal returns (uint256, uint256) {
         require(checkTokens(shareIn, shareOut), "StablecashOrchestrator: INVALID_TOKENS");
         // Get in and out supply
         uint256 inSupply = IBaseERC20(shareIn).totalSupply();
@@ -138,7 +138,9 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
             IBaseERC20(shareIn).burnOnExchange(msg.sender, amountIn);
         }
 
-        emit Swap(shareIn, shareOut, amountIn, amountOut, from, to);
+        emit Exchange(shareIn, shareOut, amountIn, amountOut, from, to);
+
+        return (amountIn, amountOut);
     }
 
     // Returns TRUE if both tokens are `mShare` and `bShare`

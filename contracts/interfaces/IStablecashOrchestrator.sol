@@ -3,7 +3,7 @@
 pragma solidity 0.8.15;
 
 interface IStablecashOrchestrator {
-    event Swap(
+    event Exchange(
         address shareIn,
         address shareOut,
         uint256 amountIn,
@@ -18,7 +18,7 @@ interface IStablecashOrchestrator {
         uint256 amountIn,
         uint256 amountOut,
         address to
-    ) external;
+    ) external returns (uint256, uint256);
 
     function exchangeSharesViaHelper(
         address shareIn,
@@ -27,7 +27,7 @@ interface IStablecashOrchestrator {
         uint256 amountOut,
         address from,
         address to
-    ) external;
+    ) external returns (uint256, uint256);
 
     function interestRate() external view returns (uint256);
 

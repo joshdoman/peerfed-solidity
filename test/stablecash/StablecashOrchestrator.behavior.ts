@@ -220,6 +220,27 @@ export function shouldBehaveLikeStablecashOrchestrator(): void {
       expect(await this.mShare.balanceOf(owner.address)).to.equal(expectedInputBalance);
       expect(await this.bShare.balanceOf(owner.address)).to.equal(expectedOutputBalance);
     });
+
+    it("Should emit Exchange event", async function () {
+      const { owner, addr1 } = this.signers;
+
+      // Calculate invariant
+      const mShareSupply = await this.mShare.totalSupply();
+      const bShareSupply = await this.bShare.totalSupply();
+      const invariant = sumOfSquares(mShareSupply, bShareSupply);
+      // Calculate expected input and output supply
+      const mShareBalance = await this.mShare.balanceOf(owner.address);
+      const bShareBalance = await this.bShare.balanceOf(owner.address);
+      const expectedOutputSupply = mShareSupply.add(100);
+      const expectedInputSupply = sqrt(invariant.sub(square(expectedOutputSupply)).div(eth(1)));
+      // Calculate expected input amount
+      const expectedInputAmount = bShareSupply.sub(expectedInputSupply);
+
+      // Exchange 100 tokens from owner to owner
+      await expect(this.orchestrator.exchangeShares(this.mShare.address, this.bShare.address, 0, 100, addr1.address))
+        .to.emit(this.orchestrator, "Exchange")
+        .withArgs(this.mShare.address, this.bShare.address, expectedInputAmount, 100, owner.address, addr1.address);
+    });
   });
 }
 

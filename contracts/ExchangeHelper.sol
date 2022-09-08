@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./libraries/StablecashExchangeLibrary.sol";
 import "./interfaces/IStablecashOrchestrator.sol";
 import "./interfaces/IScaledERC20.sol";
 
@@ -30,18 +29,18 @@ contract ExchangeHelper {
     ) external ensure(deadline) returns (uint256 amountOut) {
         uint256 scaleFactor = IStablecashOrchestrator(orchestrator).updateScaleFactor();
         uint256 shareAmountIn = (amountIn * 1e18) / scaleFactor;
-        uint256 shareAmountOutMin = (amountOutMin * 1e18) / scaleFactor;
         address shareIn = IScaledERC20(tokenIn).share();
         address shareOut = IScaledERC20(tokenOut).share();
-        uint256 shareAmountOut = _exchangeExactSharesForShares(
+        (, uint256 shareAmountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
             shareIn,
             shareOut,
             shareAmountIn,
-            shareAmountOutMin,
+            0,
             msg.sender,
             to
         );
         amountOut = (shareAmountOut * scaleFactor) / 1e18;
+        require(amountOut >= amountOutMin, "ExchangeHelper: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
     function exchangeTokensForExactTokens(
@@ -54,18 +53,18 @@ contract ExchangeHelper {
     ) external ensure(deadline) returns (uint256 amountIn) {
         uint256 scaleFactor = IStablecashOrchestrator(orchestrator).updateScaleFactor();
         uint256 shareAmountOut = (amountOut * 1e18) / scaleFactor;
-        uint256 shareAmountInMax = (amountInMax * 1e18) / scaleFactor;
         address shareIn = IScaledERC20(tokenIn).share();
         address shareOut = IScaledERC20(tokenOut).share();
-        uint256 shareAmountIn = _exchangeSharesForExactShares(
+        (uint256 shareAmountIn,) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
             shareIn,
             shareOut,
+            0,
             shareAmountOut,
-            shareAmountInMax,
             msg.sender,
             to
         );
         amountIn = (shareAmountIn * scaleFactor) / 1e18;
+        require(amountIn >= amountInMax, "ExchangeHelper: EXCESSIVE_INPUT_AMOUNT");
     }
 
     function exchangeExactSharesForShares(
@@ -76,7 +75,15 @@ contract ExchangeHelper {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        amountOut = _exchangeExactSharesForShares(shareIn, shareOut, amountIn, amountOutMin, msg.sender, to);
+        (,amountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
+            shareIn,
+            shareOut,
+            amountIn,
+            0,
+            msg.sender,
+            to
+        );
+        require(amountOut >= amountOutMin, "StablecashOrchestrator: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
     function exchangeSharesForExactShares(
@@ -87,36 +94,14 @@ contract ExchangeHelper {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountIn) {
-        amountIn = _exchangeSharesForExactShares(shareIn, shareOut, amountOut, amountInMax, msg.sender, to);
-    }
-
-    function _exchangeExactSharesForShares(
-        address shareIn,
-        address shareOut,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address from,
-        address to
-    ) internal returns (uint256 amountOut) {
-        uint256 inSupply = IERC20(shareIn).totalSupply();
-        uint256 outSupply = IERC20(shareOut).totalSupply();
-        amountOut = StablecashExchangeLibrary.getAmountOut(amountIn, inSupply, outSupply);
-        require(amountOut >= amountOutMin, "StablecashOrchestrator: INSUFFICIENT_OUTPUT_AMOUNT");
-        IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(shareIn, shareOut, amountIn, amountOut, from, to);
-    }
-
-    function _exchangeSharesForExactShares(
-        address shareIn,
-        address shareOut,
-        uint256 amountOut,
-        uint256 amountInMax,
-        address from,
-        address to
-    ) internal returns (uint256 amountIn) {
-        uint256 inSupply = IERC20(shareIn).totalSupply();
-        uint256 outSupply = IERC20(shareOut).totalSupply();
-        amountIn = StablecashExchangeLibrary.getAmountIn(amountIn, inSupply, outSupply);
+        (amountIn, ) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
+            shareIn,
+            shareOut,
+            0,
+            amountOut,
+            msg.sender,
+            to
+        );
         require(amountIn <= amountInMax, "StablecashOrchestrator: EXCESSIVE_INPUT_AMOUNT");
-        IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(shareIn, shareOut, amountIn, amountOut, from, to);
     }
 }

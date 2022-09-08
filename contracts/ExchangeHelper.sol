@@ -27,14 +27,17 @@ contract ExchangeHelper {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).updateScaleFactor();
-        uint256 shareAmountIn = (amountIn * 1e18) / scaleFactor;
-        address shareIn = IScaledERC20(tokenIn).share();
-        address shareOut = IScaledERC20(tokenOut).share();
-        (, uint256 shareAmountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
-            shareIn,
-            shareOut,
-            shareAmountIn,
+        address orchestrator_ = orchestrator;
+        uint256 scaleFactor = IStablecashOrchestrator(orchestrator_).updateScaleFactor();
+        // Replace existing variables to avoid stack too deep error
+        amountIn = (amountIn * 1e18) / scaleFactor;
+        tokenIn = IScaledERC20(tokenIn).share();
+        tokenOut = IScaledERC20(tokenOut).share();
+        uint256 shareAmountOut;
+        (, shareAmountOut) = IStablecashOrchestrator(orchestrator_).exchangeSharesViaHelper(
+            tokenIn,
+            tokenOut,
+            amountIn,
             0,
             msg.sender,
             to
@@ -51,15 +54,17 @@ contract ExchangeHelper {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountIn) {
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).updateScaleFactor();
-        uint256 shareAmountOut = (amountOut * 1e18) / scaleFactor;
-        address shareIn = IScaledERC20(tokenIn).share();
-        address shareOut = IScaledERC20(tokenOut).share();
-        (uint256 shareAmountIn,) = IStablecashOrchestrator(orchestrator).exchangeSharesViaHelper(
-            shareIn,
-            shareOut,
+        address orchestrator_ = orchestrator;
+        uint256 scaleFactor = IStablecashOrchestrator(orchestrator_).updateScaleFactor();
+        // Replace existing variables to avoid stack too deep error
+        amountOut = (amountOut * 1e18) / scaleFactor;
+        tokenIn = IScaledERC20(tokenIn).share();
+        tokenOut = IScaledERC20(tokenOut).share();
+        (uint256 shareAmountIn,) = IStablecashOrchestrator(orchestrator_).exchangeSharesViaHelper(
+            tokenIn,
+            tokenOut,
             0,
-            shareAmountOut,
+            amountOut,
             msg.sender,
             to
         );

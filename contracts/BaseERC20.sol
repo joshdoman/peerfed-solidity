@@ -11,12 +11,15 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     address public orchestrator;
     address public scaledToken;
 
+    mapping(address => bool) private _isApproved; // approved for transfering, minting, and burning tokens
+
     constructor(
         string memory name,
         string memory symbol,
         address orchestrator_
     ) ERC20(name, symbol) {
         orchestrator = orchestrator_;
+        _isApproved[orchestrator_] = true;
     }
 
     /**
@@ -27,6 +30,7 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     function setScaledToken(address scaledToken_) external {
         require(scaledToken == address(0), "`scaledToken` already set");
         scaledToken = scaledToken_;
+        _isApproved[scaledToken_] = true;
     }
 
     /**
@@ -34,12 +38,12 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
      *
      * Requirement: sender must be the `scaledToken` contract.
      */
-    function transferViaScaledToken(
+    function transferOverride(
         address from,
         address to,
         uint256 amount
     ) external {
-        require(msg.sender == scaledToken, "Forbidden");
+        require(_isApproved[msg.sender], "Forbidden");
         _transfer(from, to, amount);
     }
 
@@ -48,8 +52,8 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
      *
      * Requirement: sender must be the `scaledToken` contract.
      */
-    function mintViaScaledToken(address account, uint256 amount) external {
-        require(msg.sender == scaledToken, "Forbidden");
+    function mintOverride(address account, uint256 amount) external {
+        require(_isApproved[msg.sender], "Forbidden");
         _mint(account, amount);
     }
 
@@ -58,28 +62,8 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
      *
      * Requirement: sender must be the `scaledToken` contract.
      */
-    function burnViaScaledToken(address account, uint256 amount) external {
-        require(msg.sender == scaledToken, "Forbidden");
-        _burn(account, amount);
-    }
-
-    /**
-     * Mints `amount` tokens to `account`.
-     *
-     * Requirement: sender must be the `orchestrator` contract.
-     */
-    function mintOnExchange(address account, uint256 amount) external {
-        require(msg.sender == orchestrator, "Forbidden");
-        _mint(account, amount);
-    }
-
-    /**
-     * Burns `amount` tokens from `account`.
-     *
-     * Requirement: sender must be the `orchestrator` contract.
-     */
-    function burnOnExchange(address account, uint256 amount) external {
-        require(msg.sender == orchestrator, "Forbidden");
+    function burnOverride(address account, uint256 amount) external {
+        require(_isApproved[msg.sender], "Forbidden");
         _burn(account, amount);
     }
 }

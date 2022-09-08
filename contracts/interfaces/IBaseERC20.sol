@@ -11,17 +11,13 @@ interface IBaseERC20 is IERC20 {
 
     function setScaledToken(address scaledToken_) external;
 
-    function transferViaScaledToken(
+    function transferOverride(
         address from,
         address to,
         uint256 amount
     ) external;
 
-    function mintViaScaledToken(address account, uint256 amount) external;
+    function mintOverride(address account, uint256 amount) external;
 
-    function burnViaScaledToken(address account, uint256 amount) external;
-
-    function mintOnExchange(address account, uint256 amount) external;
-
-    function burnOnExchange(address account, uint256 amount) external;
+    function burnOverride(address account, uint256 amount) external;
 }

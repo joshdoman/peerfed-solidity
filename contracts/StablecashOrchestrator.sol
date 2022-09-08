@@ -41,8 +41,8 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         timeOfLastExchange = block.timestamp;
 
         // TEMPORARY: Assign the total supply of shares to the owner at 1:1 ratio
-        IBaseERC20(mShare).mintOnExchange(msg.sender, 100 * 1e18);
-        IBaseERC20(bShare).mintOnExchange(msg.sender, 100 * 1e18);
+        IBaseERC20(mShare).mintOverride(msg.sender, 100 * 1e18);
+        IBaseERC20(bShare).mintOverride(msg.sender, 100 * 1e18);
         // TODO: Replace with auction mechanism
     }
 
@@ -118,24 +118,24 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         require(to != shareIn && to != shareOut && to != address(this), "StablecashOrchestrator: INVALID_TO");
         if (amountIn > 0 && amountOut > 0) {
             // Sender provided exact in and out amounts. Go ahead and mint and burn.
-            IBaseERC20(shareOut).mintOnExchange(to, amountOut);
-            IBaseERC20(shareIn).burnOnExchange(msg.sender, amountIn);
+            IBaseERC20(shareOut).mintOverride(to, amountOut);
+            IBaseERC20(shareIn).burnOverride(msg.sender, amountIn);
             // Check if invariant is maintained
             uint256 oldInvariant_ = StablecashExchangeLibrary.invariant(inSupply, outSupply);
             uint256 newInvariant_ = StablecashExchangeLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
             require(newInvariant_ <= oldInvariant_, "StablecashOrchestrator: INVALID_EXCHANGE");
         } else if (amountIn > 0) {
             // Sender provided exact input amount. Go ahead and burn.
-            IBaseERC20(shareIn).burnOnExchange(msg.sender, amountIn);
+            IBaseERC20(shareIn).burnOverride(msg.sender, amountIn);
             // Calculate the output amount using the invariant and mint necessary shares.
             amountOut = StablecashExchangeLibrary.getAmountOut(amountIn, inSupply, outSupply);
-            IBaseERC20(shareOut).mintOnExchange(to, amountOut);
+            IBaseERC20(shareOut).mintOverride(to, amountOut);
         } else {
             // Sender provided exact output amount. Go ahead and mint.
-            IBaseERC20(shareOut).mintOnExchange(to, amountOut);
+            IBaseERC20(shareOut).mintOverride(to, amountOut);
             // Calculate the needed input amount to satisfy the invariant and burn necessary shares.
             amountIn = StablecashExchangeLibrary.getAmountIn(amountOut, inSupply, outSupply);
-            IBaseERC20(shareIn).burnOnExchange(msg.sender, amountIn);
+            IBaseERC20(shareIn).burnOverride(msg.sender, amountIn);
         }
 
         emit Exchange(shareIn, shareOut, amountIn, amountOut, from, to);

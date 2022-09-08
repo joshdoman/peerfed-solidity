@@ -43,7 +43,7 @@ contract ScaledERC20 is ERC20Burnable {
     ) internal override {
         uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
-        IBaseERC20(share).transferViaScaledToken(from, to, shareAmount);
+        IBaseERC20(share).transferOverride(from, to, shareAmount);
 
         emit Transfer(from, to, amount);
     }
@@ -51,7 +51,7 @@ contract ScaledERC20 is ERC20Burnable {
     function _mint(address account, uint256 amount) internal override {
         uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
-        IBaseERC20(share).mintViaScaledToken(account, shareAmount);
+        IBaseERC20(share).mintOverride(account, shareAmount);
 
         emit Transfer(address(0), account, amount);
     }
@@ -59,7 +59,7 @@ contract ScaledERC20 is ERC20Burnable {
     function _burn(address account, uint256 amount) internal override {
         uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
-        IBaseERC20(share).burnViaScaledToken(account, shareAmount);
+        IBaseERC20(share).burnOverride(account, shareAmount);
 
         emit Transfer(account, address(0), amount);
     }

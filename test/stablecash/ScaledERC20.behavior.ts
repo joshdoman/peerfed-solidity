@@ -1,17 +1,12 @@
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
 import type { Context } from "mocha";
 
-import type { ScaledERC20, StablecashFactory } from "../../src/types/contracts";
 import { eth } from "./StablecashFactory.behavior";
 
 export function shouldBehaveLikeScaledERC20(): void {
   describe("Supply", function () {
     it("Should calculate total supply using total base supply and current scale factor", async function () {
-      const { owner } = this.signers;
-
       const shareSupply = await this.mShare.totalSupply();
       const expectedTokenSupply = await equivalentTokenAmount(this, shareSupply);
       expect(await this.mToken.totalSupply()).to.equal(expectedTokenSupply);

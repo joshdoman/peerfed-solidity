@@ -54,14 +54,7 @@ contract StablecashExchange is IStablecashExchange {
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
         uint256 shareAmountOut;
-        (, shareAmountOut) = _exchangeShares(
-            tokenIn,
-            tokenOut,
-            amountIn,
-            0,
-            msg.sender,
-            to
-        );
+        (, shareAmountOut) = _exchangeShares(tokenIn, tokenOut, amountIn, 0, msg.sender, to);
         amountOut = (shareAmountOut * scaleFactor) / 1e18;
         require(amountOut >= amountOutMin, "StablecashExchange: INSUFFICIENT_OUTPUT_AMOUNT");
     }
@@ -80,14 +73,7 @@ contract StablecashExchange is IStablecashExchange {
         amountOut = (amountOut * 1e18) / scaleFactor;
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
-        (uint256 shareAmountIn, ) = _exchangeShares(
-            tokenIn,
-            tokenOut,
-            0,
-            amountOut,
-            msg.sender,
-            to
-        );
+        (uint256 shareAmountIn, ) = _exchangeShares(tokenIn, tokenOut, 0, amountOut, msg.sender, to);
         amountIn = (shareAmountIn * scaleFactor) / 1e18;
         require(amountIn <= amountInMax, "StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
     }
@@ -102,14 +88,7 @@ contract StablecashExchange is IStablecashExchange {
     ) external ensure(deadline) returns (uint256 amountOut) {
         // Update scale factor before executing the exchange
         IStablecashOrchestrator(orchestrator).updateScaleFactor();
-        (, amountOut) = _exchangeShares(
-            shareIn,
-            shareOut,
-            amountIn,
-            0,
-            msg.sender,
-            to
-        );
+        (, amountOut) = _exchangeShares(shareIn, shareOut, amountIn, 0, msg.sender, to);
         require(amountOut >= amountOutMin, "StablecashExchange: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
@@ -123,14 +102,7 @@ contract StablecashExchange is IStablecashExchange {
     ) external ensure(deadline) returns (uint256 amountIn) {
         // Update scale factor before executing the exchange
         IStablecashOrchestrator(orchestrator).updateScaleFactor();
-        (amountIn, ) = _exchangeShares(
-            shareIn,
-            shareOut,
-            0,
-            amountOut,
-            msg.sender,
-            to
-        );
+        (amountIn, ) = _exchangeShares(shareIn, shareOut, 0, amountOut, msg.sender, to);
         require(amountIn <= amountInMax, "StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
     }
 

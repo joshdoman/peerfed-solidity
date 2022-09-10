@@ -1,6 +1,6 @@
-import { exp, sqrt } from "@prb/math";
+import { exp } from "@prb/math";
 import { expect } from "chai";
-import { BigNumber, utils } from "ethers";
+import { utils } from "ethers";
 import { ethers } from "hardhat";
 
 export function shouldBehaveLikeStablecashOrchestrator(): void {
@@ -68,14 +68,6 @@ export function shouldBehaveLikeStablecashOrchestrator(): void {
       expect(await this.orchestrator.timeOfLastExchange()).to.equal(await getTime());
     });
   });
-}
-
-function sumOfSquares(q1: BigNumber, q2: BigNumber): BigNumber {
-  return square(q1).add(square(q2));
-}
-
-function square(q: BigNumber): BigNumber {
-  return q.mul(q);
 }
 
 function eth(n: number) {

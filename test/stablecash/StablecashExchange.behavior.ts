@@ -31,7 +31,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
     });
   });
 
-  describe("Exchange Shares", function () {
+  describe("Exact Share Exchange", function () {
     it("Should revert if invalid token address submitted", async function () {
       const { owner } = this.signers;
       const address1 = this.mShare.address;
@@ -93,6 +93,80 @@ export function shouldBehaveLikeStablecashExchange(): void {
       const deadline = (await getTime()) + 100;
       await expect(
         this.exchange.exchangeSharesForExactShares(address1, address2, 100, 50, owner.address, deadline),
+      ).to.be.revertedWith("StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
+    });
+  });
+
+  describe("Exact Token Exchange", function () {
+    it("Should exchange when minimum output satisfied", async function () {
+      const secondsToAdd = 100000;
+      const interestRate = await this.orchestrator.interestRate();
+      const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
+      const currentScaleFactor = await this.orchestrator.scaleFactor();
+      const exponent = interestRate.mul(secondsToAdd).div(secondsPerYear);
+      const growthFactor = exp(exponent);
+      const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
+      // Add desired seconds - 1 (since calling exchange function will add one second)
+      await addTime(secondsToAdd - 1);
+
+      const { owner } = this.signers;
+      const address1 = this.mToken.address;
+      const address2 = this.bToken.address;
+      const deadline = (await getTime()) + 100;
+      const ownerMShareBalance = await this.mShare.balanceOf(owner.address);
+      const ownerBBalance = await this.bToken.balanceOf(owner.address);
+      const shareAmountIn = eth(100).div(expectedScaleFactor);
+      const expectedMShareBalance = ownerMShareBalance.sub(shareAmountIn);
+      const expectedMBalance = expectedMShareBalance.mul(expectedScaleFactor).div(eth(1));
+      const minExpectedBBalance = ownerBBalance.add(50);
+      await this.exchange.exchangeExactTokensForTokens(address1, address2, 100, 50, owner.address, deadline);
+      expect(await this.mToken.balanceOf(owner.address)).to.equal(expectedMBalance);
+      expect(await this.bToken.balanceOf(owner.address)).to.be.above(minExpectedBBalance);
+    });
+
+    it("Should fail when minimum output not satisfied", async function () {
+      const { owner } = this.signers;
+      const address1 = this.mToken.address;
+      const address2 = this.bToken.address;
+      const deadline = (await getTime()) + 100;
+      await expect(
+        this.exchange.exchangeExactTokensForTokens(address1, address2, 100, 150, owner.address, deadline),
+      ).to.be.revertedWith("StablecashExchange: INSUFFICIENT_OUTPUT_AMOUNT");
+    });
+
+    it("Should exchange when maximum input satisfied", async function () {
+      const secondsToAdd = 100000;
+      const interestRate = await this.orchestrator.interestRate();
+      const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
+      const currentScaleFactor = await this.orchestrator.scaleFactor();
+      const exponent = interestRate.mul(secondsToAdd).div(secondsPerYear);
+      const growthFactor = exp(exponent);
+      const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
+      // Add desired seconds - 1 (since calling exchange function will add one second)
+      await addTime(secondsToAdd - 1);
+
+      const { owner } = this.signers;
+      const address1 = this.mToken.address;
+      const address2 = this.bToken.address;
+      const deadline = (await getTime()) + 100;
+      const ownerMBalance = await this.mToken.balanceOf(owner.address);
+      const ownerBShareBalance = await this.bShare.balanceOf(owner.address);
+      const shareAmountOut = eth(100).div(expectedScaleFactor);
+      const expectedBShareBalance = ownerBShareBalance.add(shareAmountOut);
+      const expectedBBalance = expectedBShareBalance.mul(expectedScaleFactor).div(eth(1));
+      const minExpectedMBalance = ownerMBalance.sub(150);
+      await this.exchange.exchangeTokensForExactTokens(address1, address2, 100, 150, owner.address, deadline);
+      expect(await this.mToken.balanceOf(owner.address)).to.be.above(minExpectedMBalance);
+      expect(await this.bToken.balanceOf(owner.address)).to.equal(expectedBBalance);
+    });
+
+    it("Should fail when maximum input not satisfied", async function () {
+      const { owner } = this.signers;
+      const address1 = this.mToken.address;
+      const address2 = this.bToken.address;
+      const deadline = (await getTime()) + 100;
+      await expect(
+        this.exchange.exchangeTokensForExactTokens(address1, address2, 100, 50, owner.address, deadline),
       ).to.be.revertedWith("StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
     });
   });

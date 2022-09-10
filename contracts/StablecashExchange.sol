@@ -83,7 +83,7 @@ contract StablecashExchange {
             to
         );
         amountIn = (shareAmountIn * scaleFactor) / 1e18;
-        require(amountIn >= amountInMax, "StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
+        require(amountIn <= amountInMax, "StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
     }
 
     function exchangeExactSharesForShares(

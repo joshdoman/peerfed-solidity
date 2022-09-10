@@ -11,6 +11,7 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     address public orchestrator;
     address public scaledToken;
     address public exchange;
+    address public auction;
 
     mapping(address => bool) private _isApproved; // approved for transfering, minting, and burning tokens
 
@@ -35,7 +36,7 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     }
 
     /**
-     * Sets the `scaledToken` contract.
+     * Sets the `exchange` contract.
      *
      * Requirement: `scaledToken` cannot already be set.
      */
@@ -43,6 +44,17 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
         require(exchange == address(0), "`exchange` already set");
         exchange = exchange_;
         _isApproved[exchange_] = true;
+    }
+
+    /**
+     * Sets the `auction` contract.
+     *
+     * Requirement: `scaledToken` cannot already be set.
+     */
+    function setAuction(address auction_) external {
+        require(auction == address(0), "`auction` already set");
+        auction = auction_;
+        _isApproved[auction_] = true;
     }
 
     /**

@@ -3,6 +3,14 @@
 pragma solidity 0.8.15;
 
 interface IStablecashOrchestrator {
+    function mShare() external returns (address);
+
+    function bShare() external returns (address);
+
+    function mToken() external returns (address);
+
+    function bToken() external returns (address);
+
     function interestRate() external view returns (uint256);
 
     function scaleFactor() external view returns (uint256);

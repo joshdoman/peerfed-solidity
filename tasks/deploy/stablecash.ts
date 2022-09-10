@@ -2,7 +2,13 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { task } from "hardhat/config";
 import type { TaskArguments } from "hardhat/types";
 
-import type { BaseERC20, ScaledERC20, StablecashExchange, StablecashOrchestrator } from "../../src/types/contracts";
+import type {
+  BaseERC20,
+  ScaledERC20,
+  StablecashAuction,
+  StablecashExchange,
+  StablecashOrchestrator,
+} from "../../src/types/contracts";
 import type { StablecashOrchestrator__factory } from "../../src/types/factories/contracts";
 
 task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments, { ethers }) {
@@ -34,10 +40,14 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
     await ethers.getContractAt("StablecashExchange", exchangeAddress)
   );
 
+  const auctionAddress = await orchestrator.auction();
+  const auction: StablecashAuction = <StablecashAuction>await ethers.getContractAt("StablecashAuction", auctionAddress);
+
   console.log("StablecashOrchestrator deployed to: ", orchestrator.address);
   console.log("mShare deployed to: ", mShare.address);
   console.log("bShare deployed to: ", bShare.address);
   console.log("mToken deployed to: ", mToken.address);
   console.log("bToken deployed to: ", bToken.address);
   console.log("StablecashExchange deployed to: ", exchange.address);
+  console.log("StablecashAuction deployed to: ", auction.address);
 });

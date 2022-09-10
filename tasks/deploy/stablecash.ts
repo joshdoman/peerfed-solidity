@@ -2,7 +2,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { task } from "hardhat/config";
 import type { TaskArguments } from "hardhat/types";
 
-import type { BaseERC20, ScaledERC20, StablecashOrchestrator } from "../../src/types/contracts";
+import type { BaseERC20, ScaledERC20, StablecashExchange, StablecashOrchestrator } from "../../src/types/contracts";
 import type { StablecashOrchestrator__factory } from "../../src/types/factories/contracts";
 
 task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments, { ethers }) {
@@ -29,9 +29,15 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
   const bTokenAddress = await orchestrator.bToken();
   const bToken: ScaledERC20 = <ScaledERC20>await ethers.getContractAt("ScaledERC20", bTokenAddress);
 
+  const exchangeAddress = await orchestrator.exchange();
+  const exchange: StablecashExchange = <StablecashExchange>(
+    await ethers.getContractAt("StablecashExchange", exchangeAddress)
+  );
+
   console.log("StablecashOrchestrator deployed to: ", orchestrator.address);
   console.log("mShare deployed to: ", mShare.address);
   console.log("bShare deployed to: ", bShare.address);
   console.log("mToken deployed to: ", mToken.address);
   console.log("bToken deployed to: ", bToken.address);
+  console.log("StablecashExchange deployed to: ", exchange.address);
 });

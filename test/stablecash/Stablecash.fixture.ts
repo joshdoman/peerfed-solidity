@@ -1,7 +1,7 @@
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { ethers } from "hardhat";
 
-import type { BaseERC20, ScaledERC20, StablecashOrchestrator } from "../../src/types/contracts";
+import type { BaseERC20, ScaledERC20, StablecashExchange, StablecashOrchestrator } from "../../src/types/contracts";
 import type { StablecashOrchestrator__factory } from "../../src/types/factories/contracts";
 
 export async function deployStablecashFixture(): Promise<{
@@ -10,6 +10,7 @@ export async function deployStablecashFixture(): Promise<{
   bShare: BaseERC20;
   mToken: ScaledERC20;
   bToken: ScaledERC20;
+  exchange: StablecashExchange;
 }> {
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
@@ -34,5 +35,10 @@ export async function deployStablecashFixture(): Promise<{
   const bTokenAddress = await orchestrator.bToken();
   const bToken: ScaledERC20 = <ScaledERC20>await ethers.getContractAt("ScaledERC20", bTokenAddress);
 
-  return { orchestrator, mShare, bShare, mToken, bToken };
+  const exchangeAddress = await orchestrator.exchange();
+  const exchange: StablecashExchange = <StablecashExchange>(
+    await ethers.getContractAt("StablecashExchange", exchangeAddress)
+  );
+
+  return { orchestrator, mShare, bShare, mToken, bToken, exchange };
 }

@@ -9,14 +9,28 @@ import "./interfaces/IScaledERC20.sol";
 
 contract StablecashExchange {
     address public orchestrator;
+    address public mShare;
+    address public bShare;
+    address public mToken;
+    address public bToken;
 
     modifier ensure(uint256 deadline) {
         require(deadline >= block.timestamp, "StablecashExchange: EXPIRED");
         _;
     }
 
-    constructor(address orchestrator_) {
+    constructor(
+        address orchestrator_,
+        address mShare_,
+        address bShare_,
+        address mToken_,
+        address bToken_
+    ) {
         orchestrator = orchestrator_;
+        mShare = mShare_;
+        bShare = bShare_;
+        mToken = mToken_;
+        bToken = bToken_;
     }
 
     function exchangeExactTokensForTokens(
@@ -60,7 +74,7 @@ contract StablecashExchange {
         amountOut = (amountOut * 1e18) / scaleFactor;
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
-        (uint256 shareAmountIn,) = IStablecashOrchestrator(orchestrator_).exchangeSharesOverride(
+        (uint256 shareAmountIn, ) = IStablecashOrchestrator(orchestrator_).exchangeSharesOverride(
             tokenIn,
             tokenOut,
             0,
@@ -80,7 +94,7 @@ contract StablecashExchange {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        (,amountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesOverride(
+        (, amountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesOverride(
             shareIn,
             shareOut,
             amountIn,

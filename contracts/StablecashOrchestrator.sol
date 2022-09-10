@@ -21,7 +21,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
     address public mToken;
     address public bToken;
 
-    address public exchangeHelper;
+    address public exchange;
 
     uint256 public timeOfLastExchange;
     uint256 private _startingScaleFactor = 1e18;
@@ -32,11 +32,11 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         // Create contracts for shares of money and shares of bonds
         mShare = address(new BaseERC20("Share of Stablecash Supply", "shSCH", address(this)));
         bShare = address(new BaseERC20("Share of Stablecash Bond Supply", "shBSCH", address(this)));
-        // Create contracts for money and bonds
+        // Create money and bond contracts
         mToken = address(new ScaledERC20("Stablecash", "SCH", address(this), mShare));
         bToken = address(new ScaledERC20("Stablecash Bond", "BSCH", address(this), bShare));
-        // Create exchange helper
-        exchangeHelper = address(new StablecashExchange(address(this)));
+        // Create exchange
+        exchange = address(new StablecashExchange(address(this), mShare, bShare, mToken, bToken));
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
 
@@ -97,7 +97,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         address from,
         address to
     ) external returns (uint256, uint256) {
-        require(exchangeHelper == msg.sender, "StablecashOrchestrator: FORBIDDEN");
+        require(exchange == msg.sender, "StablecashOrchestrator: FORBIDDEN");
         return _exchangeShares(shareIn, shareOut, amountIn, amountOut, from, to);
     }
 
@@ -119,14 +119,14 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         if (amountIn > 0 && amountOut > 0) {
             // Sender provided exact in and out amounts. Go ahead and mint and burn.
             IBaseERC20(shareOut).mintOverride(to, amountOut);
-            IBaseERC20(shareIn).burnOverride(msg.sender, amountIn);
+            IBaseERC20(shareIn).burnOverride(from, amountIn);
             // Check if invariant is maintained
             uint256 oldInvariant_ = StablecashExchangeLibrary.invariant(inSupply, outSupply);
             uint256 newInvariant_ = StablecashExchangeLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
             require(newInvariant_ <= oldInvariant_, "StablecashOrchestrator: INVALID_EXCHANGE");
         } else if (amountIn > 0) {
             // Sender provided exact input amount. Go ahead and burn.
-            IBaseERC20(shareIn).burnOverride(msg.sender, amountIn);
+            IBaseERC20(shareIn).burnOverride(from, amountIn);
             // Calculate the output amount using the invariant and mint necessary shares.
             amountOut = StablecashExchangeLibrary.getAmountOut(amountIn, inSupply, outSupply);
             IBaseERC20(shareOut).mintOverride(to, amountOut);
@@ -135,7 +135,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
             IBaseERC20(shareOut).mintOverride(to, amountOut);
             // Calculate the needed input amount to satisfy the invariant and burn necessary shares.
             amountIn = StablecashExchangeLibrary.getAmountIn(amountOut, inSupply, outSupply);
-            IBaseERC20(shareIn).burnOverride(msg.sender, amountIn);
+            IBaseERC20(shareIn).burnOverride(from, amountIn);
         }
 
         emit Exchange(shareIn, shareOut, amountIn, amountOut, from, to);

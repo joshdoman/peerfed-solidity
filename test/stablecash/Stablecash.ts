@@ -6,6 +6,7 @@ import type { Signers } from "../types";
 import { shouldBehaveLikeBaseERC20 } from "./BaseERC20.behavior";
 import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
 import { deployStablecashFixture } from "./Stablecash.fixture";
+import { shouldBehaveLikeStablecashExchange } from "./StablecashExchange.behavior";
 import { shouldBehaveLikeStablecashOrchestrator } from "./StablecashOrchestrator.behavior";
 
 describe("Unit tests", function () {
@@ -57,5 +58,21 @@ describe("Unit tests", function () {
     });
 
     shouldBehaveLikeScaledERC20();
+  });
+
+  describe("StablecashExchange", function () {
+    beforeEach(async function () {
+      const { orchestrator, mShare, bShare, mToken, bToken, exchange } = await this.loadFixture(
+        deployStablecashFixture,
+      );
+      this.orchestrator = orchestrator;
+      this.mShare = mShare;
+      this.bShare = bShare;
+      this.mToken = mToken;
+      this.bToken = bToken;
+      this.exchange = exchange;
+    });
+
+    shouldBehaveLikeStablecashExchange();
   });
 });

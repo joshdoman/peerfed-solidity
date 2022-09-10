@@ -9,6 +9,8 @@ interface IBaseERC20 is IERC20 {
 
     function scaledToken() external returns (address);
 
+    function setExchange(address exchange_) external;
+
     function setScaledToken(address scaledToken_) external;
 
     function transferOverride(

@@ -5,9 +5,12 @@ pragma solidity 0.8.15;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interfaces/IStablecashOrchestrator.sol";
+import "./interfaces/IBaseERC20.sol";
 import "./interfaces/IScaledERC20.sol";
+import "./interfaces/IStablecashExchange.sol";
+import "./libraries/StablecashExchangeLibrary.sol";
 
-contract StablecashExchange {
+contract StablecashExchange is IStablecashExchange {
     address public orchestrator;
     address public mShare;
     address public bShare;
@@ -31,6 +34,9 @@ contract StablecashExchange {
         bShare = bShare_;
         mToken = mToken_;
         bToken = bToken_;
+        // Set this address as the exchange
+        IBaseERC20(mShare_).setExchange(address(this));
+        IBaseERC20(bShare_).setExchange(address(this));
     }
 
     function exchangeExactTokensForTokens(
@@ -41,14 +47,14 @@ contract StablecashExchange {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        address orchestrator_ = orchestrator;
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator_).updateScaleFactor();
+        // Update scale factor so that conversion is correct
+        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).updateScaleFactor();
         // Replace existing variables to avoid stack too deep error
         amountIn = (amountIn * 1e18) / scaleFactor;
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
         uint256 shareAmountOut;
-        (, shareAmountOut) = IStablecashOrchestrator(orchestrator_).exchangeSharesOverride(
+        (, shareAmountOut) = _exchangeShares(
             tokenIn,
             tokenOut,
             amountIn,
@@ -68,13 +74,13 @@ contract StablecashExchange {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountIn) {
-        address orchestrator_ = orchestrator;
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator_).updateScaleFactor();
+        // Update scale factor so that conversion is correct
+        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).updateScaleFactor();
         // Replace existing variables to avoid stack too deep error
         amountOut = (amountOut * 1e18) / scaleFactor;
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
-        (uint256 shareAmountIn, ) = IStablecashOrchestrator(orchestrator_).exchangeSharesOverride(
+        (uint256 shareAmountIn, ) = _exchangeShares(
             tokenIn,
             tokenOut,
             0,
@@ -94,7 +100,9 @@ contract StablecashExchange {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        (, amountOut) = IStablecashOrchestrator(orchestrator).exchangeSharesOverride(
+        // Update scale factor before executing the exchange
+        IStablecashOrchestrator(orchestrator).updateScaleFactor();
+        (, amountOut) = _exchangeShares(
             shareIn,
             shareOut,
             amountIn,
@@ -113,7 +121,9 @@ contract StablecashExchange {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountIn) {
-        (amountIn, ) = IStablecashOrchestrator(orchestrator).exchangeSharesOverride(
+        // Update scale factor before executing the exchange
+        IStablecashOrchestrator(orchestrator).updateScaleFactor();
+        (amountIn, ) = _exchangeShares(
             shareIn,
             shareOut,
             0,
@@ -122,5 +132,65 @@ contract StablecashExchange {
             to
         );
         require(amountIn <= amountInMax, "StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
+    }
+
+    function exchangeShares(
+        address shareIn,
+        address shareOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address to
+    ) external returns (uint256, uint256) {
+        // Update scale factor before executing the exchange
+        IStablecashOrchestrator(orchestrator).updateScaleFactor();
+        return _exchangeShares(shareIn, shareOut, amountIn, amountOut, msg.sender, to);
+    }
+
+    function _exchangeShares(
+        address shareIn,
+        address shareOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address from,
+        address to
+    ) internal returns (uint256, uint256) {
+        require(validateShares(shareIn, shareOut), "StablecashExchange: INVALID_TOKENS");
+        // Get supply of shareIn and shareOut
+        uint256 inSupply = IBaseERC20(shareIn).totalSupply();
+        uint256 outSupply = IBaseERC20(shareOut).totalSupply();
+
+        require(to != shareIn && to != shareOut, "StablecashExchange: INVALID_TO");
+        if (amountIn > 0 && amountOut > 0) {
+            // Sender provided exact in and out amounts. Go ahead and mint and burn.
+            IBaseERC20(shareOut).mintOverride(to, amountOut);
+            IBaseERC20(shareIn).burnOverride(from, amountIn);
+            // Check if invariant is maintained
+            uint256 oldInvariant_ = StablecashExchangeLibrary.invariant(inSupply, outSupply);
+            uint256 newInvariant_ = StablecashExchangeLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
+            require(newInvariant_ <= oldInvariant_, "StablecashExchange: INVALID_EXCHANGE");
+        } else if (amountIn > 0) {
+            // Sender provided exact input amount. Go ahead and burn.
+            IBaseERC20(shareIn).burnOverride(from, amountIn);
+            // Calculate the output amount using the invariant and mint necessary shares.
+            amountOut = StablecashExchangeLibrary.getAmountOut(amountIn, inSupply, outSupply);
+            IBaseERC20(shareOut).mintOverride(to, amountOut);
+        } else {
+            // Sender provided exact output amount. Go ahead and mint.
+            IBaseERC20(shareOut).mintOverride(to, amountOut);
+            // Calculate the needed input amount to satisfy the invariant and burn necessary shares.
+            amountIn = StablecashExchangeLibrary.getAmountIn(amountOut, inSupply, outSupply);
+            IBaseERC20(shareIn).burnOverride(from, amountIn);
+        }
+
+        emit Exchange(shareIn, shareOut, amountIn, amountOut, from, to);
+
+        return (amountIn, amountOut);
+    }
+
+    // Returns TRUE if both tokens are `mShare` and `bShare`
+    function validateShares(address tokenA, address tokenB) internal view returns (bool) {
+        address mShare_ = mShare;
+        address bShare_ = bShare;
+        return (tokenA == mShare_ && tokenB == bShare_) || (tokenB == mShare_ && tokenA == bShare_);
     }
 }

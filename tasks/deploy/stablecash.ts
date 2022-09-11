@@ -5,7 +5,7 @@ import type { TaskArguments } from "hardhat/types";
 import type {
   BaseERC20,
   ScaledERC20,
-  StablecashAuction,
+  StablecashAuctionHouse,
   StablecashExchange,
   StablecashOrchestrator,
 } from "../../src/types/contracts";
@@ -41,7 +41,7 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
   );
 
   const auctionAddress = await orchestrator.auction();
-  const auction: StablecashAuction = <StablecashAuction>await ethers.getContractAt("StablecashAuction", auctionAddress);
+  const auction: StablecashAuctionHouse = <StablecashAuctionHouse>await ethers.getContractAt("StablecashAuctionHouse", auctionAddress);
 
   console.log("StablecashOrchestrator deployed to: ", orchestrator.address);
   console.log("mShare deployed to: ", mShare.address);
@@ -49,5 +49,5 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
   console.log("mToken deployed to: ", mToken.address);
   console.log("bToken deployed to: ", bToken.address);
   console.log("StablecashExchange deployed to: ", exchange.address);
-  console.log("StablecashAuction deployed to: ", auction.address);
+  console.log("StablecashAuctionHouse deployed to: ", auction.address);
 });

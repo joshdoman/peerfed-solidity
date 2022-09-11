@@ -7,7 +7,7 @@ import "@prb/math/contracts/PRBMathUD60x18.sol";
 
 import "./BaseERC20.sol";
 import "./ScaledERC20.sol";
-import "./StablecashAuction.sol";
+import "./StablecashAuctionHouse.sol";
 import "./StablecashExchange.sol";
 import "./libraries/StablecashExchangeLibrary.sol";
 import "./interfaces/IBaseERC20.sol";
@@ -46,7 +46,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         IBaseERC20(bShare).mintOverride(msg.sender, 100 * 1e18);
         // TODO: Replace with auction mechanism
         // Create auction
-        auction = address(new StablecashAuction(address(this), mShare, bShare));
+        auction = address(new StablecashAuctionHouse(address(this), mShare, bShare));
     }
 
     // Returns the current annualized interest rate

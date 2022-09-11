@@ -17,12 +17,10 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
 
     it("Should create the first auction", async function () {
       const auction = await this.auctionHouse.auction();
-      const INITIAL_ISSUANCE = await this.auctionHouse.INITIAL_ISSUANCE();
-      expect(auction["invariantAmount"]).to.equal(INITIAL_ISSUANCE);
       expect(auction["startTime"]).to.equal(await getTime());
       expect(auction["bidAmount"]).to.equal(0);
       expect(auction["bidder"]).to.equal(constants.AddressZero);
-      expect(auction["number"]).to.equal(1);
+      expect(auction["number"]).to.equal(0);
     });
   });
 
@@ -102,7 +100,7 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       const bidAmount = eth(1);
       await expect(await this.auctionHouse.bid({ value: bidAmount }))
         .to.emit(this.auctionHouse, "AuctionBid")
-        .withArgs(auction["number"], auction["invariantAmount"], owner.address, bidAmount);
+        .withArgs(auction["number"], owner.address, bidAmount);
     });
   });
 
@@ -118,51 +116,7 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       );
     });
 
-    it("Should not change invariant if no bids are made", async function () {
-      const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
-      // End the auction
-      await setTime(endTime.toNumber());
-      // Calculate invariant prior to settling the auction
-      const mShareSupply = await this.mShare.totalSupply();
-      const bShareSupply = await this.bShare.totalSupply();
-      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply));
-      // Settle the auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
-      // Calculate invariant after settling the auction
-      const newMShareSupply = await this.mShare.totalSupply();
-      const newBShareSupply = await this.bShare.totalSupply();
-      const newInvariant = sqrt(sumOfSquares(newMShareSupply, newBShareSupply));
-      // New invariant should equal prior invariant
-      expect(newInvariant).to.equal(invariant);
-    });
-
-    it("Should increase invariant by invariant amount after a bid", async function () {
-      const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
-      // Bid 1 ETH
-      await this.auctionHouse.bid({ value: eth(1) });
-      // End the auction
-      await setTime(endTime.toNumber());
-      // Calculate invariant prior to settling the auction
-      const mShareSupply = await this.mShare.totalSupply();
-      const bShareSupply = await this.bShare.totalSupply();
-      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply));
-      // Settle the auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
-      // Calculate invariant after settling the auction
-      const newMShareSupply = await this.mShare.totalSupply();
-      const newBShareSupply = await this.bShare.totalSupply();
-      const newInvariant = sqrt(sumOfSquares(newMShareSupply, newBShareSupply));
-      // New invariant should be less than or equal to prior invariant plus invariant amount
-      expect(newInvariant).to.be.at.most(invariant.add(auction["invariantAmount"]));
-      // Spread between invariant plus the invariant amount and new invariant should be less than 0.001e18
-      expect(invariant.add(auction["invariantAmount"]).sub(newInvariant)).to.be.at.most(eth(0.001));
-    });
-
-    it("Should mint mShares and bShares correctly", async function () {
+    it("Should mint the auction house balance to the winning bidder", async function () {
       const { owner } = this.signers;
 
       const auction = await this.auctionHouse.auction();
@@ -172,22 +126,17 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
       await setTime(endTime.toNumber());
-      // Calculate invariant prior to settling the auction
-      const mShareSupply = await this.mShare.totalSupply();
-      const bShareSupply = await this.bShare.totalSupply();
-      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply));
-      // Get the share balance prior to settlign the auction
+      // Get the auction house's share balance prior to settling the auction
+      const mAmount = await this.mShare.balanceOf(this.auctionHouse.address);
+      const bAmount = await this.bShare.balanceOf(this.auctionHouse.address);
+      // Get the owner's share balance prior to settling the auction
       const mShareBalance = await this.mShare.balanceOf(owner.address);
       const bShareBalance = await this.bShare.balanceOf(owner.address);
       // Settle the auction
       await this.auctionHouse.settleCurrentAndCreateNewAuction();
-      // Calculate the expected change in the share balances
-      const invariantAmount = auction["invariantAmount"];
-      const expectedMChange = mShareSupply.mul(invariantAmount).div(invariant);
-      const expectedBChange = bShareSupply.mul(invariantAmount).div(invariant);
-      // Verify the share balances changed correctly
-      expect(await this.mShare.balanceOf(owner.address)).to.equal(mShareBalance.add(expectedMChange));
-      expect(await this.bShare.balanceOf(owner.address)).to.equal(bShareBalance.add(expectedBChange));
+      // Check if the owner's balance increased by expected amount
+      expect(await this.mShare.balanceOf(owner.address)).to.equal(mShareBalance.add(mAmount));
+      expect(await this.bShare.balanceOf(owner.address)).to.equal(bShareBalance.add(bAmount));
     });
 
     it("Should emit AuctionSettled event", async function () {
@@ -199,10 +148,13 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
       await setTime(endTime.toNumber());
+      // Get the auction house's share balance prior to settling the auction
+      const mAmount = await this.mShare.balanceOf(this.auctionHouse.address);
+      const bAmount = await this.bShare.balanceOf(this.auctionHouse.address);
       // Verify the AuctionSettled event is emitted correctly
       await expect(await this.auctionHouse.settleCurrentAndCreateNewAuction())
         .to.emit(this.auctionHouse, "AuctionSettled")
-        .withArgs(auction["number"], auction["invariantAmount"], owner.address, eth(1));
+        .withArgs(auction["number"], mAmount, bAmount, owner.address, eth(1));
     });
   });
 
@@ -247,7 +199,7 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       expect(newAuction["startTime"]).to.equal(await getTime());
     });
 
-    it("Should correctly calculate the invariant issuance", async function () {
+    it("Should correctly calculate the invariant issuance amount", async function () {
       const INITIAL_ISSUANCE = await this.auctionHouse.INITIAL_ISSUANCE();
       const AUCTIONS_PER_HALVING = await this.auctionHouse.AUCTIONS_PER_HALVING();
       expect(await this.auctionHouse.getInvariantIssuance(1)).equal(INITIAL_ISSUANCE);
@@ -259,23 +211,7 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       expect(await this.auctionHouse.getInvariantIssuance(AUCTIONS_PER_HALVING.mul(2))).equal(INITIAL_ISSUANCE.div(4));
     });
 
-    it("Should roll invariant amount if prior auction did not have bids", async function () {
-      const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
-      // End the auction
-      await setTime(endTime.toNumber());
-      // Settle and create new auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
-      // Get updated auction
-      const newAuction = await this.auctionHouse.auction();
-      const issuance = await this.auctionHouse.getInvariantIssuance(newAuction["number"]);
-      // Expected invariant amount up for auction should equal issuance plus prior amount
-      const expectedInvariantAmount = auction["invariantAmount"].add(issuance);
-      expect(newAuction["invariantAmount"]).to.equal(expectedInvariantAmount);
-    });
-
-    it("Should correctly set invariant amount if prior auction had bids", async function () {
+    it("Should increase invariant by issuance amount", async function () {
       const auction = await this.auctionHouse.auction();
       const DURATION = await this.auctionHouse.DURATION();
       const endTime = auction["startTime"].add(DURATION);
@@ -283,12 +219,89 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
       await setTime(endTime.toNumber());
-      // Settle and create new auction
+      // Calculate invariant prior to settling the auction
+      const mShareSupply = await this.mShare.totalSupply();
+      const bShareSupply = await this.bShare.totalSupply();
+      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply));
+      // Settle the auction
       await this.auctionHouse.settleCurrentAndCreateNewAuction();
-      // Get updated auction
-      const newAuction = await this.auctionHouse.auction();
-      const issuance = await this.auctionHouse.getInvariantIssuance(newAuction["number"]);
-      expect(newAuction["invariantAmount"]).to.equal(issuance);
+      // Calculate invariant after settling the auction
+      const newMShareSupply = await this.mShare.totalSupply();
+      const newBShareSupply = await this.bShare.totalSupply();
+      const newInvariant = sqrt(sumOfSquares(newMShareSupply, newBShareSupply));
+      // Get amount of invariant issuance for the new auction
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      // Spread between invariant plus issuance and new invariant should be less than 0.001e18
+      expect(invariant.add(issuance).sub(newInvariant)).to.be.at.most(eth(0.001));
+    });
+
+    it("Should not change the interest rate", async function () {
+      const auction = await this.auctionHouse.auction();
+      const DURATION = await this.auctionHouse.DURATION();
+      const endTime = auction["startTime"].add(DURATION);
+      // Bid 1 ETH
+      await this.auctionHouse.bid({ value: eth(1) });
+      // End the auction
+      await setTime(endTime.toNumber());
+      // Get the interest rate prior to creating the auction
+      const interestRate = await this.orchestrator.interestRate();
+      // Settle the auction
+      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      // Compare the new interest rate
+      const newInterestRate = await this.orchestrator.interestRate();
+      if (newInterestRate.gt(interestRate)) {
+        expect(newInterestRate.sub(interestRate)).to.be.at.most(eth(0.00001));
+      } else {
+        expect(interestRate.sub(newInterestRate)).to.be.at.most(eth(0.00001));
+      }
+      expect(newInterestRate).to.equal(interestRate);
+    });
+
+    it("Should roll auction house balance and issue correct amount if prior auction was not won", async function () {
+      const auction = await this.auctionHouse.auction();
+      const DURATION = await this.auctionHouse.DURATION();
+      const endTime = auction["startTime"].add(DURATION);
+      // End the auction
+      await setTime(endTime.toNumber());
+      // Get the auction house share balance prior to settling the auction
+      const mBalance = await this.mShare.balanceOf(this.auctionHouse.address);
+      const bBalance = await this.bShare.balanceOf(this.auctionHouse.address);
+      // Calculate invariant prior to settling the auction
+      const mShareSupply = await this.mShare.totalSupply();
+      const bShareSupply = await this.bShare.totalSupply();
+      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply).div(eth(1)));
+      // Calculate the amount of mShares and bShares to mint
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      const mAmount = mShareSupply.mul(issuance).div(invariant);
+      const bAmount = bShareSupply.mul(issuance).div(invariant);
+      // Settle the auction
+      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      // Compare the new auction house share balance
+      expect(await this.mShare.balanceOf(this.auctionHouse.address)).to.equal(mBalance.add(mAmount));
+      expect(await this.bShare.balanceOf(this.auctionHouse.address)).to.equal(bBalance.add(bAmount));
+    });
+
+    it("Should issue correct amount to auction house if prior auction was won", async function () {
+      const auction = await this.auctionHouse.auction();
+      const DURATION = await this.auctionHouse.DURATION();
+      const endTime = auction["startTime"].add(DURATION);
+      // Bid 1 ETH
+      await this.auctionHouse.bid({ value: eth(1) });
+      // End the auction
+      await setTime(endTime.toNumber());
+      // Calculate invariant prior to settling the auction
+      const mShareSupply = await this.mShare.totalSupply();
+      const bShareSupply = await this.bShare.totalSupply();
+      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply).div(eth(1)));
+      // Calculate the amount of mShares and bShares to mint
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      const mAmount = mShareSupply.mul(issuance).div(invariant);
+      const bAmount = bShareSupply.mul(issuance).div(invariant);
+      // Settle the auction
+      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      // Compare the new auction house share balance
+      expect(await this.mShare.balanceOf(this.auctionHouse.address)).to.equal(mAmount);
+      expect(await this.bShare.balanceOf(this.auctionHouse.address)).to.equal(bAmount);
     });
 
     it("Should emit AuctionCreated event", async function () {
@@ -299,14 +312,21 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
       await setTime(endTime.toNumber());
+      // Calculate invariant prior to settling the auction
+      const mShareSupply = await this.mShare.totalSupply();
+      const bShareSupply = await this.bShare.totalSupply();
+      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply).div(eth(1)));
+      // Calculate the amount of mShares and bShares to mint
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      const mAmount = mShareSupply.mul(issuance).div(invariant);
+      const bAmount = bShareSupply.mul(issuance).div(invariant);
       // Verify the AuctionSettled event is emitted correctly
       const newAuctionNumber = auction["number"].add(1);
-      const newInvariantAmount = await this.auctionHouse.getInvariantIssuance(newAuctionNumber);
       const newStartTime = (await getTime()) + 1; // Calling function will increment time by 1
       const newEndTime = newStartTime + DURATION.toNumber();
       await expect(await this.auctionHouse.settleCurrentAndCreateNewAuction())
         .to.emit(this.auctionHouse, "AuctionCreated")
-        .withArgs(newAuctionNumber, newInvariantAmount, newStartTime, newEndTime);
+        .withArgs(newAuctionNumber, mAmount, bAmount, newStartTime, newEndTime);
     });
   });
 }

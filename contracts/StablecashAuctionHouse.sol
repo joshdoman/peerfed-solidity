@@ -58,21 +58,18 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         // Set this address as the auction house
         IBaseERC20(mShare_).setAuction(address(this));
         IBaseERC20(bShare_).setAuction(address(this));
-        // Create genesis supply
-        IBaseERC20(mShare_).mintOverride(address(this), INITIAL_ISSUANCE);
-        IBaseERC20(bShare_).mintOverride(address(this), INITIAL_ISSUANCE);
-        // Create the first auction (number = 1, remaining amount from previous auction = 0)
-        _createAuction(1, 0);
+        // Create the first auction
+        _createAuction(0);
     }
 
     /**
      * @notice Settle the current auction, mint the new tokens, and create the next auction.
      */
     function settleCurrentAndCreateNewAuction() external {
-        (uint64 auctionNumber, uint256 remainingInvariantAmount) = _settleAuction();
+        uint64 auctionNumber = _settleAuction();
         if (auctionNumber >> 32 == 0) {
             // Create the next auction if the auction number is less than 2^32 (to avoid overflow)
-            _createAuction(auctionNumber + 1, remainingInvariantAmount);
+            _createAuction(auctionNumber + 1);
         }
     }
 
@@ -101,62 +98,74 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         auction.bidAmount = msg.value;
         auction.bidder = payable(msg.sender);
 
-        emit AuctionBid(_auction.number, _auction.invariantAmount, msg.sender, msg.value);
+        emit AuctionBid(_auction.number, msg.sender, msg.value);
     }
 
     /**
      * @notice Create an auction, adding to the remaining invariant amount
      * @dev Store the auction details in the relevant state variable and emit an AuctionCreated event.
      */
-    function _createAuction(uint64 auctionNumber, uint256 remainingInvariantAmount) internal {
-        uint256 startTime = block.timestamp;
-        uint256 endTime = block.timestamp + DURATION;
+    function _createAuction(uint64 auctionNumber) internal {
+        (uint256 mAmount, uint256 bAmount) = _premintAuction(auctionNumber);
+        auction = Auction({ startTime: block.timestamp, bidAmount: 0, bidder: payable(0), number: auctionNumber });
 
-        uint256 invariantAmount_ = remainingInvariantAmount + getInvariantIssuance(auctionNumber);
-        auction = Auction({
-            invariantAmount: invariantAmount_,
-            startTime: startTime,
-            bidAmount: 0,
-            bidder: payable(0),
-            number: auctionNumber
-        });
-
-        emit AuctionCreated(auctionNumber, invariantAmount_, startTime, endTime);
+        emit AuctionCreated(auctionNumber, mAmount, bAmount, block.timestamp, block.timestamp + DURATION);
     }
 
     /**
      * @notice Settle an auction, finalizing the bid and paying out to the owner.
      * @dev If there are no bids, returns the invariant amount. Otherwise, returns zero.
      */
-    function _settleAuction() internal returns (uint64 auctionNumber, uint256 remainingInvariantAmount) {
+    function _settleAuction() internal returns (uint64 auctionNumber) {
         IStablecashAuctionHouse.Auction memory _auction = auction;
 
         require(block.timestamp >= _auction.startTime + DURATION, "StablecashAuctionHouse: AUCTION_HAS_NOT_ENDED");
 
-        if (_auction.bidder != address(0)) {
-            // Mint the correct number of shares to the winning bidder
-            address mShare_ = mShare;
-            address bShare_ = bShare;
-            uint256 mSupply = IBaseERC20(mShare_).totalSupply();
-            uint256 bSupply = IBaseERC20(bShare_).totalSupply();
-            // Calculate the amount of mShares and bShares to issue so that the scale factor does not change
-            // and the invariant increases by the invariant amount
-            (uint256 mAmount, uint256 bAmount) = StablecashAuctionLibrary.issuanceAmounts(
-                mSupply,
-                bSupply,
-                _auction.invariantAmount
-            );
-            IBaseERC20(mShare_).mintOverride(_auction.bidder, mAmount);
-            IBaseERC20(bShare_).mintOverride(_auction.bidder, bAmount);
-        } else {
-            // Set the remaining invariant amount
-            remainingInvariantAmount = _auction.invariantAmount;
-        }
-
         // Set the auction number
         auctionNumber = _auction.number;
 
-        emit AuctionSettled(_auction.number, _auction.invariantAmount, _auction.bidder, _auction.bidAmount);
+        // Gets the share balance of the auction house
+        address mShare_ = mShare;
+        address bShare_ = bShare;
+        uint256 mAmount = IBaseERC20(mShare_).balanceOf(address(this));
+        uint256 bAmount = IBaseERC20(bShare_).balanceOf(address(this));
+
+        if (_auction.bidder != address(0)) {
+            // Transfer the auction house share balance to the winning bidder
+            IBaseERC20(mShare_).transfer(_auction.bidder, mAmount);
+            IBaseERC20(bShare_).transfer(_auction.bidder, bAmount);
+        }
+
+        emit AuctionSettled(_auction.number, mAmount, bAmount, _auction.bidder, _auction.bidAmount);
+    }
+
+    /**
+     * @notice Premints the amount of new mShares and bShares available at auction and returns the balance
+     * of mShares and bShares held by the auction house.
+     * @dev Premints sent to the auction house, which may have non-zero balance if prior auction did not
+     * clear.
+     */
+    function _premintAuction(uint64 auctionNumber) internal returns (uint256 mAmount, uint256 bAmount) {
+        // Get the amount of invariant to be issued
+        uint256 invariantIssuanceAmount = getInvariantIssuance(auctionNumber);
+        // Get the supply of mShare and bShare
+        address mShare_ = mShare;
+        address bShare_ = bShare;
+        uint256 mSupply = IBaseERC20(mShare_).totalSupply();
+        uint256 bSupply = IBaseERC20(bShare_).totalSupply();
+        // Calculate the amount of mShares and bShares to issue so that the scale factor does not change
+        // and the invariant increases by the invariant amount
+        (uint256 newMShares, uint256 newBShares) = StablecashAuctionLibrary.issuanceAmounts(
+            mSupply,
+            bSupply,
+            invariantIssuanceAmount
+        );
+        // Mint mShares and bShares to the auction house
+        IBaseERC20(mShare_).mintOverride(address(this), newMShares);
+        IBaseERC20(bShare_).mintOverride(address(this), newBShares);
+        // Return the mShare and bShare balance of the auction house
+        mAmount = IBaseERC20(mShare_).balanceOf(address(this));
+        bAmount = IBaseERC20(bShare_).balanceOf(address(this));
     }
 
     /**

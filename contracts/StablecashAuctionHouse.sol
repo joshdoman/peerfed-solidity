@@ -97,6 +97,7 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         }
 
         // Update the bid amount and bidder
+        // @dev Re-entrancy not a concern because caller must transfer more value than refund amount
         auction.bidAmount = msg.value;
         auction.bidder = payable(msg.sender);
 

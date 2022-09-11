@@ -15,11 +15,14 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
 
+  // WETH address (Goerli)
+  const wethAddress = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6";
+
   const orchestratorFactory: StablecashOrchestrator__factory = <StablecashOrchestrator__factory>(
     await ethers.getContractFactory("StablecashOrchestrator")
   );
   const orchestrator: StablecashOrchestrator = <StablecashOrchestrator>(
-    await orchestratorFactory.connect(owner).deploy()
+    await orchestratorFactory.connect(owner).deploy(wethAddress)
   );
   await orchestrator.deployed();
 
@@ -44,10 +47,6 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
   const auctionHouse: StablecashAuctionHouse = <StablecashAuctionHouse>(
     await ethers.getContractAt("StablecashAuctionHouse", auctionHouseAddress)
   );
-
-  // Set WETH address
-  const wethAddress = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"; // GOERLI
-  await auctionHouse.setWETH(wethAddress);
 
   console.log("StablecashOrchestrator deployed to: ", orchestrator.address);
   console.log("mShare deployed to: ", mShare.address);

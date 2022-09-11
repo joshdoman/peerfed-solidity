@@ -21,13 +21,15 @@ interface IStablecashAuctionHouse {
         uint256 bidAmount;
         // The address of the current highest bid
         address payable bidder;
+        // The auction number (starts at 1)
+        uint64 number;
     }
 
-    event AuctionCreated(uint256 indexed invariantAmount, uint256 startTime, uint256 endTime);
+    event AuctionCreated(uint64 indexed auctionNumber, uint256 invariantAmount, uint256 startTime, uint256 endTime);
 
-    event AuctionBid(uint256 indexed invariantAmount, address sender, uint256 value);
+    event AuctionBid(uint64 indexed auctionNumber, uint256 invariantAmount, address sender, uint256 value);
 
-    event AuctionSettled(uint256 indexed invariantAmount, address winner, uint256 amount);
+    event AuctionSettled(uint64 indexed auctionNumber, uint256 invariantAmount, address winner, uint256 amount);
 
     function settleCurrentAndCreateNewAuction() external;
 

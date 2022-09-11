@@ -29,7 +29,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
 
     uint256 public constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
 
-    constructor() {
+    constructor(address weth_) {
         // Create contracts for shares of money and shares of bonds
         mShare = address(new BaseERC20("Share of Stablecash Supply", "shSCH", address(this)));
         bShare = address(new BaseERC20("Share of Stablecash Bond Supply", "shBSCH", address(this)));
@@ -46,7 +46,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         IBaseERC20(bShare).mintOverride(msg.sender, 100 * 1e18);
         // TODO: Replace with auction mechanism
         // Create auction
-        auction = address(new StablecashAuctionHouse(address(this), mShare, bShare));
+        auction = address(new StablecashAuctionHouse(address(this), mShare, bShare, weth_));
     }
 
     // Returns the current annualized interest rate

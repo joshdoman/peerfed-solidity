@@ -22,11 +22,14 @@ export async function deployStablecashFixture(): Promise<{
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
 
+  // WETH address (Goerli)
+  const wethAddress = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6";
+
   const orchestratorFactory: StablecashOrchestrator__factory = <StablecashOrchestrator__factory>(
     await ethers.getContractFactory("StablecashOrchestrator")
   );
   const orchestrator: StablecashOrchestrator = <StablecashOrchestrator>(
-    await orchestratorFactory.connect(owner).deploy()
+    await orchestratorFactory.connect(owner).deploy(wethAddress)
   );
   await orchestrator.deployed();
 

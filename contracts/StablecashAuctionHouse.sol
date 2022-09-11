@@ -38,9 +38,9 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     address public weth;
 
     uint256 private constant DURATION = 10 minutes;
-    uint256 private constant MIN_BID_INCREMENT_PERCENTAGE = 2; // 2%
+    uint256 private constant MIN_BID_INCREMENT_PERCENTAGE = 1; // 1%
     uint256 private constant INITIAL_ISSUANCE = 50 * 1e18;
-    uint256 public constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
+    uint64 private constant AUCTIONS_PER_HALVING = 210000;
 
     // The date the auction house was created
     uint256 public createdAt;
@@ -51,33 +51,29 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     constructor(
         address orchestrator_,
         address mShare_,
-        address bShare_
+        address bShare_,
+        address weth_
     ) {
         orchestrator = orchestrator_;
         mShare = mShare_;
         bShare = bShare_;
+        weth = weth_;
         // Set this address as the exchange
         IBaseERC20(mShare_).setAuction(address(this));
         IBaseERC20(bShare_).setAuction(address(this));
-        // Create the first auction
-        _createAuction(0);
-    }
-
-    /**
-     * @notice Returns the number of invariant coins issued every 10 minutes
-     * @dev Equals `INITIAL_ISSUANCE` divided by 2^(# of 4-year halvings)
-     */
-    function currentIssuanceRate() public view returns (uint256) {
-        uint256 halvings = (block.timestamp - createdAt) / (4 * SECONDS_PER_YEAR);
-        return INITIAL_ISSUANCE / (1 << halvings);
+        // Create the first auction (number = 0, remaining amount from previous auction = 0)
+        _createAuction(0, 0);
     }
 
     /**
      * @notice Settle the current auction, mint the new tokens, and create the next auction.
      */
     function settleCurrentAndCreateNewAuction() external {
-        uint256 remainingInvariantAmount = _settleAuction();
-        _createAuction(remainingInvariantAmount);
+        (uint64 auctionNumber, uint256 remainingInvariantAmount) = _settleAuction();
+        if (auctionNumber >> 32 == 0) {
+            // Create the next auction if the auction number is less than 2^32 (to avoid overflow)
+            _createAuction(auctionNumber + 1, remainingInvariantAmount);
+        }
     }
 
     /**
@@ -104,33 +100,34 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         auction.bidAmount = msg.value;
         auction.bidder = payable(msg.sender);
 
-        emit AuctionBid(_auction.invariantAmount, msg.sender, msg.value);
+        emit AuctionBid(_auction.number, _auction.invariantAmount, msg.sender, msg.value);
     }
 
     /**
      * @notice Create an auction, adding to the remaining invariant amount
      * @dev Store the auction details in the relevant state variable and emit an AuctionCreated event.
      */
-    function _createAuction(uint256 remainingInvariantAmount) internal {
+    function _createAuction(uint64 auctionNumber, uint256 remainingInvariantAmount) internal {
         uint256 startTime = block.timestamp;
         uint256 endTime = block.timestamp + DURATION;
 
-        uint256 invariantAmount_ = remainingInvariantAmount + currentIssuanceRate();
+        uint256 invariantAmount_ = remainingInvariantAmount + _getInvariantIssuance(auctionNumber);
         auction = Auction({
             invariantAmount: invariantAmount_,
             startTime: startTime,
             bidAmount: 0,
-            bidder: payable(0)
+            bidder: payable(0),
+            number: auctionNumber
         });
 
-        emit AuctionCreated(invariantAmount_, startTime, endTime);
+        emit AuctionCreated(auctionNumber, invariantAmount_, startTime, endTime);
     }
 
     /**
      * @notice Settle an auction, finalizing the bid and paying out to the owner.
      * @dev If there are no bids, returns the invariant amount. Otherwise, returns zero.
      */
-    function _settleAuction() internal returns (uint256 remainingInvariantAmount) {
+    function _settleAuction() internal returns (uint64 auctionNumber, uint256 remainingInvariantAmount) {
         IStablecashAuctionHouse.Auction memory _auction = auction;
 
         require(block.timestamp >= _auction.startTime + DURATION, "AUCTION_HAS_NOT_ENDED");
@@ -149,10 +146,23 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
             IBaseERC20(mShare_).mintOverride(_auction.bidder, mAmount);
             IBaseERC20(bShare_).mintOverride(_auction.bidder, bAmount);
         } else {
+            // Set the remaining invariant amount
             remainingInvariantAmount = _auction.invariantAmount;
         }
 
-        emit AuctionSettled(_auction.invariantAmount, _auction.bidder, _auction.bidAmount);
+        // Set the auction number
+        auctionNumber = _auction.number;
+
+        emit AuctionSettled(_auction.number, _auction.invariantAmount, _auction.bidder, _auction.bidAmount);
+    }
+
+    /**
+     * @notice Returns the number of invariant coins issued every 10 minutes
+     * @dev Equals `INITIAL_ISSUANCE` divided by 2^(# of halvings)
+     */
+    function _getInvariantIssuance(uint64 auctionNumber) public pure returns (uint256) {
+        uint64 halvings = auctionNumber / AUCTIONS_PER_HALVING;
+        return INITIAL_ISSUANCE >> halvings;
     }
 
     /**
@@ -173,14 +183,5 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     function _safeTransferETH(address to, uint256 value) internal returns (bool) {
         (bool success, ) = to.call{ value: value, gas: 30_000 }(new bytes(0));
         return success;
-    }
-
-    /**
-     * @notice Sets WETH address
-     * @dev Can only be called once - should be called after contract creation
-     */
-    function setWETH(address weth_) external {
-        require(weth == address(0), "FORBIDDEN: `weth` already set");
-        weth = weth_;
     }
 }

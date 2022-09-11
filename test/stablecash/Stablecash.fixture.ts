@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import type {
   BaseERC20,
   ScaledERC20,
-  StablecashAuction,
+  StablecashAuctionHouse,
   StablecashExchange,
   StablecashOrchestrator,
 } from "../../src/types/contracts";
@@ -17,7 +17,7 @@ export async function deployStablecashFixture(): Promise<{
   mToken: ScaledERC20;
   bToken: ScaledERC20;
   exchange: StablecashExchange;
-  auction: StablecashAuction;
+  auctionHouse: StablecashAuctionHouse;
 }> {
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
@@ -47,8 +47,10 @@ export async function deployStablecashFixture(): Promise<{
     await ethers.getContractAt("StablecashExchange", exchangeAddress)
   );
 
-  const auctionAddress = await orchestrator.auction();
-  const auction: StablecashAuction = <StablecashAuction>await ethers.getContractAt("StablecashAuction", auctionAddress);
+  const auctionHouseAddress = await orchestrator.auction();
+  const auctionHouse: StablecashAuctionHouse = <StablecashAuctionHouse>(
+    await ethers.getContractAt("StablecashAuctionHouse", auctionHouseAddress)
+  );
 
-  return { orchestrator, mShare, bShare, mToken, bToken, exchange, auction };
+  return { orchestrator, mShare, bShare, mToken, bToken, exchange, auctionHouse };
 }

@@ -87,10 +87,10 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     function bid() external payable {
         IStablecashAuctionHouse.Auction memory _auction = auction;
 
-        require(block.timestamp < _auction.startTime + DURATION, 'StablecashAuctionHouse: AUCTION_EXPIRED');
+        require(block.timestamp < _auction.startTime + DURATION, "StablecashAuctionHouse: AUCTION_EXPIRED");
         require(
             msg.value >= _auction.bidAmount + ((_auction.bidAmount * MIN_BID_INCREMENT_PERCENTAGE) / 100),
-            'StablecashAuctionHouse: INSUFFICIENT_BID'
+            "StablecashAuctionHouse: INSUFFICIENT_BID"
         );
 
         address payable lastBidder = _auction.bidder;

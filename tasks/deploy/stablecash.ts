@@ -40,8 +40,14 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
     await ethers.getContractAt("StablecashExchange", exchangeAddress)
   );
 
-  const auctionAddress = await orchestrator.auction();
-  const auction: StablecashAuctionHouse = <StablecashAuctionHouse>await ethers.getContractAt("StablecashAuctionHouse", auctionAddress);
+  const auctionHouseAddress = await orchestrator.auction();
+  const auctionHouse: StablecashAuctionHouse = <StablecashAuctionHouse>(
+    await ethers.getContractAt("StablecashAuctionHouse", auctionHouseAddress)
+  );
+
+  // Set WETH address
+  const wethAddress = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"; // GOERLI
+  await auctionHouse.setWETH(wethAddress);
 
   console.log("StablecashOrchestrator deployed to: ", orchestrator.address);
   console.log("mShare deployed to: ", mShare.address);
@@ -49,5 +55,5 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
   console.log("mToken deployed to: ", mToken.address);
   console.log("bToken deployed to: ", bToken.address);
   console.log("StablecashExchange deployed to: ", exchange.address);
-  console.log("StablecashAuctionHouse deployed to: ", auction.address);
+  console.log("StablecashAuctionHouse deployed to: ", auctionHouse.address);
 });

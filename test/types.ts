@@ -18,7 +18,7 @@ declare module "mocha" {
     mToken: ScaledERC20;
     bToken: ScaledERC20;
     exchange: StablecashExchange;
-    auction: StablecashAuctionHouse;
+    auctionHouse: StablecashAuctionHouse;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;
   }

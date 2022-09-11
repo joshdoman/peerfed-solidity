@@ -31,8 +31,10 @@ export function shouldBehaveLikeStablecashExchange(): void {
 
     it("Should update the scale factor to the exact value prior to the exchange", async function () {
       const { owner } = this.signers;
-
-      const secondsToAdd = 100000;
+      // Update the scale factor (to account for time accrued during initial auctions for the owner)
+      await this.orchestrator.updateScaleFactor();
+      // Add 100 seconcds and verify the new scale factor is updated
+      const secondsToAdd = 100;
       const interestRate = await this.orchestrator.interestRate();
       const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
       const currentScaleFactor = await this.orchestrator.scaleFactor();
@@ -255,7 +257,10 @@ export function shouldBehaveLikeStablecashExchange(): void {
 
   describe("Exact Token Exchange", function () {
     it("Should exchange when minimum output satisfied", async function () {
-      const secondsToAdd = 100000;
+      // Update the scale factor (to account for time accrued during initial auctions for the owner)
+      await this.orchestrator.updateScaleFactor();
+      // Add 100 seconds and get expected growth factor at that time
+      const secondsToAdd = 100;
       const interestRate = await this.orchestrator.interestRate();
       const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
       const currentScaleFactor = await this.orchestrator.scaleFactor();
@@ -291,7 +296,10 @@ export function shouldBehaveLikeStablecashExchange(): void {
     });
 
     it("Should exchange when maximum input satisfied", async function () {
-      const secondsToAdd = 100000;
+      // Update the scale factor (to account for time accrued during initial auctions for the owner)
+      await this.orchestrator.updateScaleFactor();
+      // Add 100 seconds and get expected growth factor at that time
+      const secondsToAdd = 100;
       const interestRate = await this.orchestrator.interestRate();
       const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
       const currentScaleFactor = await this.orchestrator.scaleFactor();
@@ -328,7 +336,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
   });
 }
 
-function sumOfSquares(q1: BigNumber, q2: BigNumber): BigNumber {
+export function sumOfSquares(q1: BigNumber, q2: BigNumber): BigNumber {
   return square(q1).add(square(q2));
 }
 

@@ -22,7 +22,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
     address public bToken;
 
     address public exchange;
-    address public auction;
+    address public auctionHouse;
 
     uint256 public timeOfLastExchange;
     uint256 private _startingScaleFactor = 1e18;
@@ -40,13 +40,8 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         exchange = address(new StablecashExchange(address(this), mShare, bShare, mToken, bToken));
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
-
-        // TEMPORARY: Assign the total supply of shares to the owner at 1:1 ratio
-        IBaseERC20(mShare).mintOverride(msg.sender, 100 * 1e18);
-        IBaseERC20(bShare).mintOverride(msg.sender, 100 * 1e18);
-        // TODO: Replace with auction mechanism
-        // Create auction
-        auction = address(new StablecashAuctionHouse(address(this), mShare, bShare, weth_));
+        // Create auction house
+        auctionHouse = address(new StablecashAuctionHouse(address(this), mShare, bShare, weth_));
     }
 
     // Returns the current annualized interest rate

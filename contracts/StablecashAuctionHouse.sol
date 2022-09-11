@@ -37,13 +37,10 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
 
     address public weth;
 
-    uint256 private constant DURATION = 10 minutes;
-    uint256 private constant MIN_BID_INCREMENT_PERCENTAGE = 1; // 1%
-    uint256 private constant INITIAL_ISSUANCE = 50 * 1e18;
-    uint64 private constant AUCTIONS_PER_HALVING = 210000;
-
-    // The date the auction house was created
-    uint256 public createdAt;
+    uint256 public constant DURATION = 10 minutes;
+    uint256 public constant MIN_BID_INCREMENT_PERCENTAGE = 1; // 1%
+    uint256 public constant INITIAL_ISSUANCE = 50 * 1e18;
+    uint64 public constant AUCTIONS_PER_HALVING = 210000;
 
     // The active auction
     IStablecashAuctionHouse.Auction public auction;
@@ -58,11 +55,14 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         mShare = mShare_;
         bShare = bShare_;
         weth = weth_;
-        // Set this address as the exchange
+        // Set this address as the auction house
         IBaseERC20(mShare_).setAuction(address(this));
         IBaseERC20(bShare_).setAuction(address(this));
-        // Create the first auction (number = 0, remaining amount from previous auction = 0)
-        _createAuction(0, 0);
+        // Create genesis supply
+        IBaseERC20(mShare_).mintOverride(address(this), INITIAL_ISSUANCE);
+        IBaseERC20(bShare_).mintOverride(address(this), INITIAL_ISSUANCE);
+        // Create the first auction (number = 1, remaining amount from previous auction = 0)
+        _createAuction(1, 0);
     }
 
     /**
@@ -83,7 +83,7 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     function bid() external payable {
         IStablecashAuctionHouse.Auction memory _auction = auction;
 
-        require(block.timestamp < _auction.startTime + DURATION, "StablecashAuctionHouse: AUCTION_EXPIRED");
+        require(block.timestamp < _auction.startTime + DURATION, "StablecashAuctionHouse: AUCTION_ENDED");
         require(
             msg.value >= _auction.bidAmount + ((_auction.bidAmount * MIN_BID_INCREMENT_PERCENTAGE) / 100),
             "StablecashAuctionHouse: INSUFFICIENT_BID"
@@ -111,7 +111,7 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         uint256 startTime = block.timestamp;
         uint256 endTime = block.timestamp + DURATION;
 
-        uint256 invariantAmount_ = remainingInvariantAmount + _getInvariantIssuance(auctionNumber);
+        uint256 invariantAmount_ = remainingInvariantAmount + getInvariantIssuance(auctionNumber);
         auction = Auction({
             invariantAmount: invariantAmount_,
             startTime: startTime,
@@ -130,19 +130,21 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     function _settleAuction() internal returns (uint64 auctionNumber, uint256 remainingInvariantAmount) {
         IStablecashAuctionHouse.Auction memory _auction = auction;
 
-        require(block.timestamp >= _auction.startTime + DURATION, "AUCTION_HAS_NOT_ENDED");
+        require(block.timestamp >= _auction.startTime + DURATION, "StablecashAuctionHouse: AUCTION_HAS_NOT_ENDED");
 
         if (_auction.bidder != address(0)) {
+            // Mint the correct number of shares to the winning bidder
             address mShare_ = mShare;
             address bShare_ = bShare;
             uint256 mSupply = IBaseERC20(mShare_).totalSupply();
             uint256 bSupply = IBaseERC20(bShare_).totalSupply();
+            // Calculate the amount of mShares and bShares to issue so that the scale factor does not change
+            // and the invariant increases by the invariant amount
             (uint256 mAmount, uint256 bAmount) = StablecashAuctionLibrary.issuanceAmounts(
                 mSupply,
                 bSupply,
                 _auction.invariantAmount
             );
-
             IBaseERC20(mShare_).mintOverride(_auction.bidder, mAmount);
             IBaseERC20(bShare_).mintOverride(_auction.bidder, bAmount);
         } else {
@@ -160,7 +162,7 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
      * @notice Returns the number of invariant coins issued every 10 minutes
      * @dev Equals `INITIAL_ISSUANCE` divided by 2^(# of halvings)
      */
-    function _getInvariantIssuance(uint64 auctionNumber) public pure returns (uint256) {
+    function getInvariantIssuance(uint64 auctionNumber) public pure returns (uint256) {
         uint64 halvings = auctionNumber / AUCTIONS_PER_HALVING;
         return INITIAL_ISSUANCE >> halvings;
     }

@@ -1,4 +1,5 @@
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { utils } from "ethers";
 import { ethers } from "hardhat";
 
 import type {
@@ -50,10 +51,31 @@ export async function deployStablecashFixture(): Promise<{
     await ethers.getContractAt("StablecashExchange", exchangeAddress)
   );
 
-  const auctionHouseAddress = await orchestrator.auction();
+  const auctionHouseAddress = await orchestrator.auctionHouse();
   const auctionHouse: StablecashAuctionHouse = <StablecashAuctionHouse>(
     await ethers.getContractAt("StablecashAuctionHouse", auctionHouseAddress)
   );
 
   return { orchestrator, mShare, bShare, mToken, bToken, exchange, auctionHouse };
+}
+
+export async function deployOwnerBalanceFixture(auctionHouse: StablecashAuctionHouse): Promise<void> {
+  // Owner wins an auction
+  const auction = await auctionHouse.auction();
+  const DURATION = await auctionHouse.DURATION();
+  const endTime = auction["startTime"].add(DURATION);
+  // Bid 1 ETH
+  await auctionHouse.bid({ value: eth(1) });
+  // End the auction
+  await setTime(endTime.toNumber());
+  // Settle the auction and create a new one
+  await auctionHouse.settleCurrentAndCreateNewAuction();
+}
+
+function eth(n: number) {
+  return utils.parseEther(n.toString());
+}
+
+async function setTime(newTime: number): Promise<void> {
+  await ethers.provider.send("evm_mine", [newTime]);
 }

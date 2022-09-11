@@ -43,7 +43,7 @@ task("deploy:Stablecash").setAction(async function (taskArguments: TaskArguments
     await ethers.getContractAt("StablecashExchange", exchangeAddress)
   );
 
-  const auctionHouseAddress = await orchestrator.auction();
+  const auctionHouseAddress = await orchestrator.auctionHouse();
   const auctionHouse: StablecashAuctionHouse = <StablecashAuctionHouse>(
     await ethers.getContractAt("StablecashAuctionHouse", auctionHouseAddress)
   );

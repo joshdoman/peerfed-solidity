@@ -3,11 +3,7 @@
 pragma solidity 0.8.15;
 
 interface IStablecashOrchestrator {
-    event ScaleFactorUpdated(
-        address indexed sender,
-        uint256 updatedScaleFactor,
-        uint256 updatedAt
-    );
+    event ScaleFactorUpdated(address indexed sender, uint256 updatedScaleFactor, uint256 updatedAt);
 
     function mShare() external returns (address);
 

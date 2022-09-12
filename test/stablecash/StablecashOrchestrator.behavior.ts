@@ -55,21 +55,22 @@ export function shouldBehaveLikeStablecashOrchestrator(): void {
     });
 
     it("Should emit ScaleFactorUpdated event", async function () {
-        const { owner } = this.signers;
+      const { owner } = this.signers;
 
-        const secondsToAdd = 100000;
-        const interestRate = await this.orchestrator.interestRate();
-        const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
-        const currentScaleFactor = await this.orchestrator.scaleFactor();
-        const exponent = interestRate.mul(secondsToAdd).div(secondsPerYear);
-        const growthFactor = exp(exponent);
-        const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
-        // Add desired seconds - 1 (since calling updateScaleFactor will add one second)
-        const updatedAt = (await getTime()) + secondsToAdd;
-        await setTime(updatedAt - 1);
+      const secondsToAdd = 100000;
+      const interestRate = await this.orchestrator.interestRate();
+      const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
+      const currentScaleFactor = await this.orchestrator.scaleFactor();
+      const exponent = interestRate.mul(secondsToAdd).div(secondsPerYear);
+      const growthFactor = exp(exponent);
+      const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
+      // Add desired seconds - 1 (since calling updateScaleFactor will add one second)
+      const updatedAt = (await getTime()) + secondsToAdd;
+      await setTime(updatedAt - 1);
 
       // Exchange 100 tokens from owner to owner
-      await expect(await this.orchestrator.updateScaleFactor()).to.emit(this.orchestrator, "ScaleFactorUpdated")
+      await expect(await this.orchestrator.updateScaleFactor())
+        .to.emit(this.orchestrator, "ScaleFactorUpdated")
         .withArgs(owner.address, expectedScaleFactor, updatedAt);
     });
   });

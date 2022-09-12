@@ -21,10 +21,6 @@ export function shouldBehaveLikeStablecashOrchestrator(): void {
       const expectedInterestRate = mShareSupply.mul(eth(1)).div(bShareSupply);
       expect(await this.orchestrator.interestRate()).to.equal(expectedInterestRate);
     });
-
-    it("Should update the interest rate after an exchange", async function () {
-      // TODO: Implement
-    });
   });
 
   describe("Scale Factor", function () {
@@ -56,6 +52,25 @@ export function shouldBehaveLikeStablecashOrchestrator(): void {
       await addTime(100000);
       await this.orchestrator.updateScaleFactor();
       expect(await this.orchestrator.timeOfLastExchange()).to.equal(await getTime());
+    });
+
+    it("Should emit ScaleFactorUpdated event", async function () {
+        const { owner } = this.signers;
+
+        const secondsToAdd = 100000;
+        const interestRate = await this.orchestrator.interestRate();
+        const secondsPerYear = await this.orchestrator.SECONDS_PER_YEAR();
+        const currentScaleFactor = await this.orchestrator.scaleFactor();
+        const exponent = interestRate.mul(secondsToAdd).div(secondsPerYear);
+        const growthFactor = exp(exponent);
+        const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
+        // Add desired seconds - 1 (since calling updateScaleFactor will add one second)
+        const updatedAt = (await getTime()) + secondsToAdd;
+        await setTime(updatedAt - 1);
+
+      // Exchange 100 tokens from owner to owner
+      await expect(await this.orchestrator.updateScaleFactor()).to.emit(this.orchestrator, "ScaleFactorUpdated")
+        .withArgs(owner.address, expectedScaleFactor, updatedAt);
     });
   });
 }

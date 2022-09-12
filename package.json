@@ -1,10 +1,10 @@
 {
-  "name": "@prb/hardhat-template",
-  "description": "Hardhat-based template for developing Solidity smart contracts",
+  "name": "@stablecash-solidity/contracts",
+  "description": "A solidity implementation of the stablecash protocol",
   "version": "1.0.0",
   "author": {
-    "name": "Paul Razvan Berg",
-    "url": "https://github.com/paulrberg"
+    "name": "Josh Doman",
+    "url": "https://github.com/joshdoman"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.3",

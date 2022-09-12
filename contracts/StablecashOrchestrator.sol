@@ -44,14 +44,16 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         auctionHouse = address(new StablecashAuctionHouse(address(this), mShare, bShare, weth_));
     }
 
-    // Returns the current annualized interest rate
+    // Returns the current annualized interest rate w/ 18 decimals (r = M / B)
     function interestRate() public view returns (uint256) {
         uint256 mShareSupply = IERC20(mShare).totalSupply();
         uint256 bShareSupply = IERC20(bShare).totalSupply();
         if (bShareSupply > 0) {
             return (mShareSupply * 1e18) / bShareSupply;
         } else {
-            return 1 >> 128; // Not well-defined, but interest rate should approach infinity
+            // Not well-defined at B = 0, but interest rate should approach infinity
+            // NOTE: This will never be called because the auction house will always hold some pre-minted bonds
+            return 1 << 64;
         }
     }
 
@@ -75,5 +77,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         _startingScaleFactor = updatedScaleFactor;
         // Update time of last exchange
         timeOfLastExchange = block.timestamp;
+        // Emit UpdateScaleFactor event
+        emit ScaleFactorUpdated(msg.sender, updatedScaleFactor, block.timestamp);
     }
 }

@@ -329,6 +329,56 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
         .withArgs(newAuctionNumber, mAmount, bAmount, newStartTime, newEndTime);
     });
   });
+
+  describe("Exchange", function () {
+    it("Should revert if sender is not the top bidder", async function () {
+      const mShare = this.mShare.address;
+      const bShare = this.bShare.address;
+      const mToken = this.mToken.address;
+      const bToken = this.bToken.address;
+      const deadline = (await getTime()) + 1;
+      await expect(
+        this.auctionHouse.exchangeExactTokensForTokens(mToken, bToken, eth(1), eth(1), deadline),
+      ).to.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(
+        this.auctionHouse.exchangeTokensForExactTokens(mToken, bToken, eth(1), eth(1), deadline),
+      ).to.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(
+        this.auctionHouse.exchangeExactSharesForShares(mShare, bShare, eth(1), eth(1), deadline),
+      ).to.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(
+        this.auctionHouse.exchangeSharesForExactShares(mShare, bShare, eth(1), eth(1), deadline),
+      ).to.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(this.auctionHouse.exchangeShares(mShare, bShare, eth(1), eth(1))).to.be.revertedWith(
+        "StablecashAuctionHouse: RESTRICTED_TO_BIDDER",
+      );
+    });
+
+    it("Should execute exchange if sender is the top bidder", async function () {
+      await this.auctionHouse.bid({ value: eth(1) });
+
+      const mShare = this.mShare.address;
+      const bShare = this.bShare.address;
+      const mToken = this.mToken.address;
+      const bToken = this.bToken.address;
+      const deadline = (await getTime()) + 1;
+      await expect(
+        this.auctionHouse.exchangeExactTokensForTokens(mToken, bToken, eth(1), eth(1), deadline),
+      ).to.not.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(
+        this.auctionHouse.exchangeTokensForExactTokens(mToken, bToken, eth(1), eth(1), deadline),
+      ).to.not.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(
+        this.auctionHouse.exchangeExactSharesForShares(mShare, bShare, eth(1), eth(1), deadline),
+      ).to.not.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(
+        this.auctionHouse.exchangeSharesForExactShares(mShare, bShare, eth(1), eth(1), deadline),
+      ).to.not.be.revertedWith("StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+      await expect(this.auctionHouse.exchangeShares(mShare, bShare, eth(1), eth(1))).to.not.be.revertedWith(
+        "StablecashAuctionHouse: RESTRICTED_TO_BIDDER",
+      );
+    });
+  });
 }
 
 function eth(n: number) {

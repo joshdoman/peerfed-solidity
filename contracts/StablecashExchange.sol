@@ -11,11 +11,11 @@ import "./interfaces/IStablecashExchange.sol";
 import "./libraries/StablecashExchangeLibrary.sol";
 
 contract StablecashExchange is IStablecashExchange {
-    address public orchestrator;
-    address public mShare;
-    address public bShare;
-    address public mToken;
-    address public bToken;
+    address public immutable orchestrator;
+    address public immutable mShare;
+    address public immutable bShare;
+    address public immutable mToken;
+    address public immutable bToken;
 
     modifier ensure(uint256 deadline) {
         require(deadline >= block.timestamp, "StablecashExchange: EXPIRED");

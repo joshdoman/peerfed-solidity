@@ -16,20 +16,20 @@ import "./interfaces/IStablecashOrchestrator.sol";
 contract StablecashOrchestrator is IStablecashOrchestrator {
     using PRBMathUD60x18 for uint256;
 
-    address public mShare;
-    address public bShare;
-    address public mToken;
-    address public bToken;
+    address public immutable mShare;
+    address public immutable bShare;
+    address public immutable mToken;
+    address public immutable bToken;
 
-    address public exchange;
-    address public auctionHouse;
+    address public immutable exchange;
+    address public immutable auctionHouse;
 
     uint256 public timeOfLastExchange;
     uint256 private _startingScaleFactor = 1e18;
 
     uint256 public constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
 
-    constructor(address weth_) {
+    constructor(address weth) {
         // Create contracts for shares of money and shares of bonds
         mShare = address(new BaseERC20("Share of Stablecash Supply", "shSCH", address(this)));
         bShare = address(new BaseERC20("Share of Stablecash Bond Supply", "shBSCH", address(this)));
@@ -41,7 +41,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
         // Create auction house
-        auctionHouse = address(new StablecashAuctionHouse(address(this), mShare, bShare, weth_));
+        auctionHouse = address(new StablecashAuctionHouse(address(this), mShare, bShare, exchange, weth));
     }
 
     // Returns the current annualized interest rate w/ 18 decimals (r = M / B)
@@ -52,8 +52,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
             return (mShareSupply * 1e18) / bShareSupply;
         } else {
             // Not well-defined at B = 0, but interest rate should approach infinity
-            // NOTE: This will never be called because the auction house will always hold some pre-minted bonds
-            return 1 << 64;
+            return 1 << 128;
         }
     }
 

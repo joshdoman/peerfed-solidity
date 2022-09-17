@@ -13,6 +13,10 @@ interface IStablecashOrchestrator {
 
     function bToken() external returns (address);
 
+    function exchange() external returns (address);
+
+    function auctionHouse() external returns (address);
+
     function interestRate() external view returns (uint256);
 
     function scaleFactor() external view returns (uint256);

@@ -9,8 +9,8 @@ import "./interfaces/IStablecashOrchestrator.sol";
 import "./interfaces/IBaseERC20.sol";
 
 contract ScaledERC20 is ERC20Burnable {
-    address public orchestrator;
-    address public share;
+    address public immutable orchestrator;
+    address public immutable share;
 
     constructor(
         string memory name,

@@ -2,8 +2,9 @@
 
 pragma solidity 0.8.15;
 
-import "./interfaces/IStablecashOrchestrator.sol";
 import "./interfaces/IBaseERC20.sol";
+import "./interfaces/IStablecashOrchestrator.sol";
+import "./interfaces/IStablecashExchange.sol";
 import "./interfaces/IStablecashAuctionHouse.sol";
 import "./interfaces/IWETH.sol";
 import "./libraries/StablecashAuctionLibrary.sol";
@@ -31,11 +32,11 @@ import "./libraries/StablecashAuctionLibrary.sol";
 // auction. The reserve price is set at zero.
 //
 contract StablecashAuctionHouse is IStablecashAuctionHouse {
-    address public orchestrator;
-    address public mShare;
-    address public bShare;
-
-    address public weth;
+    address public immutable orchestrator;
+    address public immutable mShare;
+    address public immutable bShare;
+    address public immutable exchange;
+    address public immutable weth;
 
     uint256 public constant DURATION = 10 minutes;
     uint256 public constant MIN_BID_INCREMENT_PERCENTAGE = 1; // 1%
@@ -49,11 +50,13 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         address orchestrator_,
         address mShare_,
         address bShare_,
+        address exchange_,
         address weth_
     ) {
         orchestrator = orchestrator_;
         mShare = mShare_;
         bShare = bShare_;
+        exchange = exchange_;
         weth = weth_;
         // Set this address as the auction house
         IBaseERC20(mShare_).setAuction(address(this));
@@ -142,8 +145,10 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     /**
      * @notice Premints the amount of new mShares and bShares available at auction and returns the balance
      * of mShares and bShares held by the auction house.
-     * @dev Premints sent to the auction house, which may have non-zero balance if prior auction did not
-     * clear.
+     * @dev Preminting updates the exchange invariant, which is required so that the invariant at settlement
+     * equals the intended value.
+     * @dev Premints are sent to the auction house, which may have non-zero balance if prior auction did not
+     * settle.
      */
     function _premintAuction(uint64 auctionNumber) internal returns (uint256 mAmount, uint256 bAmount) {
         // Get the amount of invariant to be issued
@@ -195,5 +200,91 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     function _safeTransferETH(address to, uint256 value) internal returns (bool) {
         (bool success, ) = to.call{ value: value, gas: 30_000 }(new bytes(0));
         return success;
+    }
+
+    /** --------- EXCHANGE WRAPPERS ---------
+     * @notice Allows the current top bidder to execute exchanges with the auction house's balance sheet
+     */
+
+    function exchangeExactTokensForTokens(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        uint256 deadline
+    ) external returns (uint256 amountOut) {
+        require(msg.sender == auction.bidder, "StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+        amountOut = IStablecashExchange(exchange).exchangeExactTokensForTokens(
+            tokenIn,
+            tokenOut,
+            amountIn,
+            amountOutMin,
+            address(this),
+            deadline
+        );
+    }
+
+    function exchangeTokensForExactTokens(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountOut,
+        uint256 amountInMax,
+        uint256 deadline
+    ) external returns (uint256 amountIn) {
+        require(msg.sender == auction.bidder, "StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+        amountIn = IStablecashExchange(exchange).exchangeTokensForExactTokens(
+            tokenIn,
+            tokenOut,
+            amountOut,
+            amountInMax,
+            address(this),
+            deadline
+        );
+    }
+
+    function exchangeExactSharesForShares(
+        address shareIn,
+        address shareOut,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        uint256 deadline
+    ) external returns (uint256 amountOut) {
+        require(msg.sender == auction.bidder, "StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+        amountOut = IStablecashExchange(exchange).exchangeExactSharesForShares(
+            shareIn,
+            shareOut,
+            amountIn,
+            amountOutMin,
+            address(this),
+            deadline
+        );
+    }
+
+    function exchangeSharesForExactShares(
+        address shareIn,
+        address shareOut,
+        uint256 amountOut,
+        uint256 amountInMax,
+        uint256 deadline
+    ) external returns (uint256 amountIn) {
+        require(msg.sender == auction.bidder, "StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+        amountIn = IStablecashExchange(exchange).exchangeSharesForExactShares(
+            shareIn,
+            shareOut,
+            amountOut,
+            amountInMax,
+            address(this),
+            deadline
+        );
+    }
+
+    function exchangeShares(
+        address shareIn,
+        address shareOut,
+        uint256 amountIn,
+        uint256 amountOut
+    ) external returns (uint256, uint256) {
+        require(msg.sender == auction.bidder, "StablecashAuctionHouse: RESTRICTED_TO_BIDDER");
+        return IStablecashExchange(exchange).exchangeShares(shareIn, shareOut, amountIn, amountOut, address(this));
     }
 }

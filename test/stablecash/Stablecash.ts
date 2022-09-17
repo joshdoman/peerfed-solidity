@@ -89,10 +89,14 @@ describe("Unit tests", function () {
 
   describe("StablecashAuctionHouse", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, auctionHouse } = await this.loadFixture(deployStablecashFixture);
+      const { orchestrator, mShare, bShare, mToken, bToken, auctionHouse } = await this.loadFixture(
+        deployStablecashFixture,
+      );
       this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
+      this.mToken = mToken;
+      this.bToken = bToken;
       this.auctionHouse = auctionHouse;
     });
 

@@ -6,7 +6,7 @@ import type {
   BaseERC20,
   ScaledERC20,
   PeerFedAuctionHouse,
-  PeerFedExchange,
+  PeerFedConverter,
   PeerFedOrchestrator,
 } from "../../src/types/contracts";
 import type { PeerFedOrchestrator__factory } from "../../src/types/factories/contracts";
@@ -17,7 +17,7 @@ export async function deployPeerFedFixture(): Promise<{
   bShare: BaseERC20;
   mToken: ScaledERC20;
   bToken: ScaledERC20;
-  exchange: PeerFedExchange;
+  converter: PeerFedConverter;
   auctionHouse: PeerFedAuctionHouse;
 }> {
   const signers: SignerWithAddress[] = await ethers.getSigners();
@@ -46,9 +46,9 @@ export async function deployPeerFedFixture(): Promise<{
   const bTokenAddress = await orchestrator.bToken();
   const bToken: ScaledERC20 = <ScaledERC20>await ethers.getContractAt("ScaledERC20", bTokenAddress);
 
-  const exchangeAddress = await orchestrator.exchange();
-  const exchange: PeerFedExchange = <PeerFedExchange>(
-    await ethers.getContractAt("PeerFedExchange", exchangeAddress)
+  const converterAddress = await orchestrator.converter();
+  const converter: PeerFedConverter = <PeerFedConverter>(
+    await ethers.getContractAt("PeerFedConverter", converterAddress)
   );
 
   const auctionHouseAddress = await orchestrator.auctionHouse();
@@ -56,7 +56,7 @@ export async function deployPeerFedFixture(): Promise<{
     await ethers.getContractAt("PeerFedAuctionHouse", auctionHouseAddress)
   );
 
-  return { orchestrator, mShare, bShare, mToken, bToken, exchange, auctionHouse };
+  return { orchestrator, mShare, bShare, mToken, bToken, converter, auctionHouse };
 }
 
 export async function deployOwnerBalanceFixture(auctionHouse: PeerFedAuctionHouse): Promise<void> {

@@ -3,33 +3,33 @@ import { expect } from "chai";
 import { BigNumber, utils } from "ethers";
 import { ethers } from "hardhat";
 
-export function shouldBehaveLikePeerFedExchange(): void {
-  describe("Exchange", function () {
+export function shouldBehaveLikePeerFedConverter(): void {
+  describe("Convert", function () {
     it("Should revert if invalid token address submitted", async function () {
       const { owner } = this.signers;
 
       await expect(
-        this.exchange.exchangeShares(this.mToken.address, this.bToken.address, 100, 100, owner.address),
-      ).to.be.revertedWith("PeerFedExchange: INVALID_TOKENS");
+        this.converter.convertShares(this.mToken.address, this.bToken.address, 100, 100, owner.address),
+      ).to.be.revertedWith("PeerFedConverter: INVALID_TOKENS");
 
       await expect(
-        this.exchange.exchangeShares(this.mToken.address, this.bShare.address, 100, 100, owner.address),
-      ).to.be.revertedWith("PeerFedExchange: INVALID_TOKENS");
+        this.converter.convertShares(this.mToken.address, this.bShare.address, 100, 100, owner.address),
+      ).to.be.revertedWith("PeerFedConverter: INVALID_TOKENS");
 
       await expect(
-        this.exchange.exchangeShares(this.mShare.address, this.bToken.address, 100, 100, owner.address),
-      ).to.be.revertedWith("PeerFedExchange: INVALID_TOKENS");
+        this.converter.convertShares(this.mShare.address, this.bToken.address, 100, 100, owner.address),
+      ).to.be.revertedWith("PeerFedConverter: INVALID_TOKENS");
     });
 
     it("Should revert if no input or output amount is provided", async function () {
       const { owner } = this.signers;
 
       await expect(
-        this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 0, 0, owner.address),
+        this.converter.convertShares(this.mShare.address, this.bShare.address, 0, 0, owner.address),
       ).to.be.revertedWith("PeerFedLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
     });
 
-    it("Should update the scale factor to the exact value prior to the exchange", async function () {
+    it("Should update the scale factor to the exact value prior to the conversion", async function () {
       const { owner } = this.signers;
       // Update the scale factor (to account for time accrued during initial auctions for the owner)
       await this.orchestrator.updateScaleFactor();
@@ -43,27 +43,27 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
       // Add desired seconds - 1 (since calling updateScaleFactor will add one second)
       await addTime(secondsToAdd - 1);
-      await this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 0, owner.address);
+      await this.converter.convertShares(this.mShare.address, this.bShare.address, 100, 0, owner.address);
       expect(await this.orchestrator.scaleFactor()).to.equal(expectedScaleFactor);
-      expect(await this.orchestrator.timeOfLastExchange()).to.equal(await getTime());
+      expect(await this.orchestrator.timeOfLastConversion()).to.equal(await getTime());
     });
 
     it("Should revert if invalid to", async function () {
       await expect(
-        this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 0, this.mShare.address),
-      ).to.be.revertedWith("PeerFedExchange: INVALID_TO");
+        this.converter.convertShares(this.mShare.address, this.bShare.address, 100, 0, this.mShare.address),
+      ).to.be.revertedWith("PeerFedConverter: INVALID_TO");
 
       await expect(
-        this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 0, this.bShare.address),
-      ).to.be.revertedWith("PeerFedExchange: INVALID_TO");
+        this.converter.convertShares(this.mShare.address, this.bShare.address, 100, 0, this.bShare.address),
+      ).to.be.revertedWith("PeerFedConverter: INVALID_TO");
     });
 
-    it("Should revert if invalid exact exchange", async function () {
+    it("Should revert if invalid exact conversion", async function () {
       const { owner } = this.signers;
 
       await expect(
-        this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 100, owner.address),
-      ).to.be.revertedWith("PeerFedExchange: INVALID_EXCHANGE");
+        this.converter.convertShares(this.mShare.address, this.bShare.address, 100, 100, owner.address),
+      ).to.be.revertedWith("PeerFedConverter: INVALID_CONVERSION");
     });
 
     it("Should revert if invalid output amount", async function () {
@@ -74,21 +74,21 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const invariant = sumOfSquares(mShareSupply, bShareSupply);
       const invalidOutput = sqrt(invariant.div(eth(1))).add(1);
       await expect(
-        this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 0, invalidOutput, owner.address),
+        this.converter.convertShares(this.mShare.address, this.bShare.address, 0, invalidOutput, owner.address),
       ).to.be.revertedWith("PeerFedLibrary: INSUFFICIENT_SUPPLY");
     });
 
-    it("Should exchange exact amounts where new sum-of-squares is less than invariant", async function () {
+    it("Should convert exact amounts where new sum-of-squares is less than invariant", async function () {
       const { owner } = this.signers;
 
       const mShareBalance = await this.mShare.balanceOf(owner.address);
       const bShareBalance = await this.bShare.balanceOf(owner.address);
-      await this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 50, owner.address);
+      await this.converter.convertShares(this.mShare.address, this.bShare.address, 100, 50, owner.address);
       expect(await this.mShare.balanceOf(owner.address)).to.equal(mShareBalance.add(-100));
       expect(await this.bShare.balanceOf(owner.address)).to.equal(bShareBalance.add(50));
     });
 
-    it("Should exchange exact amounts where new sum-of-squares equals invariant", async function () {
+    it("Should convert exact amounts where new sum-of-squares equals invariant", async function () {
       const { owner } = this.signers;
       const inputAmount = 100;
       // Calculate invariant
@@ -104,8 +104,8 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const expectedInputBalance = mShareBalance.add(-inputAmount);
       const desiredOutputAmount = expectedOutputSupply.sub(bShareSupply);
       const expectedOutputBalance = bShareBalance.add(desiredOutputAmount);
-      // Execute exchange
-      await this.exchange.exchangeShares(
+      // Execute conversion
+      await this.converter.convertShares(
         this.mShare.address,
         this.bShare.address,
         inputAmount,
@@ -116,7 +116,7 @@ export function shouldBehaveLikePeerFedExchange(): void {
       expect(await this.bShare.balanceOf(owner.address)).to.equal(expectedOutputBalance);
     });
 
-    it("Should exchange correct amount when input amount provided", async function () {
+    it("Should convert correct amount when input amount provided", async function () {
       const { owner } = this.signers;
       // Calculate invariant
       const mShareSupply = await this.mShare.totalSupply();
@@ -131,13 +131,13 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const expectedInputBalance = mShareBalance.add(-100);
       const expectedOutputAmount = expectedOutputSupply.sub(bShareSupply);
       const expectedOutputBalance = bShareBalance.add(expectedOutputAmount);
-      // Execute exchange
-      await this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 0, owner.address);
+      // Execute conversion
+      await this.converter.convertShares(this.mShare.address, this.bShare.address, 100, 0, owner.address);
       expect(await this.mShare.balanceOf(owner.address)).to.equal(expectedInputBalance);
       expect(await this.bShare.balanceOf(owner.address)).to.equal(expectedOutputBalance);
     });
 
-    it("Should exchange correct amount when output amount provided", async function () {
+    it("Should convert correct amount when output amount provided", async function () {
       const { owner } = this.signers;
       // Calculate invariant
       const mShareSupply = await this.mShare.totalSupply();
@@ -152,13 +152,13 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const expectedInputAmount = bShareSupply.sub(expectedInputSupply);
       const expectedInputBalance = mShareBalance.sub(expectedInputAmount);
       const expectedOutputBalance = bShareBalance.add(100);
-      // Execute exchange
-      await this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 0, 100, owner.address);
+      // Execute conversion
+      await this.converter.convertShares(this.mShare.address, this.bShare.address, 0, 100, owner.address);
       expect(await this.mShare.balanceOf(owner.address)).to.equal(expectedInputBalance);
       expect(await this.bShare.balanceOf(owner.address)).to.equal(expectedOutputBalance);
     });
 
-    it("Should emit Exchange event", async function () {
+    it("Should emit Conversion event", async function () {
       const { owner, addr1 } = this.signers;
 
       // Calculate invariant
@@ -171,9 +171,9 @@ export function shouldBehaveLikePeerFedExchange(): void {
       // Calculate expected input amount
       const expectedInputAmount = bShareSupply.sub(expectedInputSupply);
 
-      // Exchange 100 tokens from owner to owner
-      await expect(this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 0, 100, addr1.address))
-        .to.emit(this.exchange, "Exchange")
+      // Convert 100 tokens from owner to owner
+      await expect(this.converter.convertShares(this.mShare.address, this.bShare.address, 0, 100, addr1.address))
+        .to.emit(this.converter, "Conversion")
         .withArgs(this.mShare.address, this.bShare.address, expectedInputAmount, 100, owner.address, addr1.address);
     });
   });
@@ -188,25 +188,25 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const address4 = this.bToken.address;
       const deadline = (await getTime()) - 1;
       await expect(
-        this.exchange.exchangeExactSharesForShares(address1, address2, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
+        this.converter.convertExactSharesForShares(address1, address2, 100, 100, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: EXPIRED");
 
       await expect(
-        this.exchange.exchangeSharesForExactShares(address1, address2, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
+        this.converter.convertSharesForExactShares(address1, address2, 100, 100, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: EXPIRED");
 
       await expect(
-        this.exchange.exchangeExactTokensForTokens(address3, address4, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
+        this.converter.convertExactTokensForTokens(address3, address4, 100, 100, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: EXPIRED");
 
       await expect(
-        this.exchange.exchangeTokensForExactTokens(address3, address4, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
+        this.converter.convertTokensForExactTokens(address3, address4, 100, 100, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: EXPIRED");
     });
   });
 
-  describe("Exact Share Exchange", function () {
-    it("Should exchange when minimum output satisfied", async function () {
+  describe("Exact Share Conversion", function () {
+    it("Should convert when minimum output satisfied", async function () {
       const { owner } = this.signers;
       const address1 = this.mShare.address;
       const address2 = this.bShare.address;
@@ -215,7 +215,7 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const ownerBBalance = await this.bShare.balanceOf(owner.address);
       const expectedMBalance = ownerMBalance.sub(100);
       const minExpectedBBalance = ownerBBalance.add(50);
-      await this.exchange.exchangeExactSharesForShares(address1, address2, 100, 50, owner.address, deadline);
+      await this.converter.convertExactSharesForShares(address1, address2, 100, 50, owner.address, deadline);
       expect(await this.mShare.balanceOf(owner.address)).to.equal(expectedMBalance);
       expect(await this.bShare.balanceOf(owner.address)).to.be.above(minExpectedBBalance);
     });
@@ -226,11 +226,11 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const address2 = this.bShare.address;
       const deadline = (await getTime()) + 100;
       await expect(
-        this.exchange.exchangeExactSharesForShares(address1, address2, 100, 150, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: INSUFFICIENT_OUTPUT_AMOUNT");
+        this.converter.convertExactSharesForShares(address1, address2, 100, 150, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: INSUFFICIENT_OUTPUT_AMOUNT");
     });
 
-    it("Should exchange when maximum input satisfied", async function () {
+    it("Should convert when maximum input satisfied", async function () {
       const { owner } = this.signers;
       const address1 = this.mShare.address;
       const address2 = this.bShare.address;
@@ -239,7 +239,7 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const ownerBBalance = await this.bShare.balanceOf(owner.address);
       const minExpectedMBalance = ownerMBalance.sub(150);
       const expectedBBalance = ownerBBalance.add(100);
-      await this.exchange.exchangeSharesForExactShares(address1, address2, 100, 150, owner.address, deadline);
+      await this.converter.convertSharesForExactShares(address1, address2, 100, 150, owner.address, deadline);
       expect(await this.mShare.balanceOf(owner.address)).to.be.above(minExpectedMBalance);
       expect(await this.bShare.balanceOf(owner.address)).to.equal(expectedBBalance);
     });
@@ -250,13 +250,13 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const address2 = this.bShare.address;
       const deadline = (await getTime()) + 100;
       await expect(
-        this.exchange.exchangeSharesForExactShares(address1, address2, 100, 50, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: EXCESSIVE_INPUT_AMOUNT");
+        this.converter.convertSharesForExactShares(address1, address2, 100, 50, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: EXCESSIVE_INPUT_AMOUNT");
     });
   });
 
-  describe("Exact Token Exchange", function () {
-    it("Should exchange when minimum output satisfied", async function () {
+  describe("Exact Token Conversion", function () {
+    it("Should convert when minimum output satisfied", async function () {
       // Update the scale factor (to account for time accrued during initial auctions for the owner)
       await this.orchestrator.updateScaleFactor();
       // Add 100 seconds and get expected growth factor at that time
@@ -267,7 +267,7 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const exponent = interestRate.mul(secondsToAdd).div(secondsPerYear);
       const growthFactor = exp(exponent);
       const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
-      // Add desired seconds - 1 (since calling exchange function will add one second)
+      // Add desired seconds - 1 (since calling convert function will add one second)
       await addTime(secondsToAdd - 1);
 
       const { owner } = this.signers;
@@ -280,7 +280,7 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const expectedMShareBalance = ownerMShareBalance.sub(shareAmountIn);
       const expectedMBalance = expectedMShareBalance.mul(expectedScaleFactor).div(eth(1));
       const minExpectedBBalance = ownerBBalance.add(50);
-      await this.exchange.exchangeExactTokensForTokens(address1, address2, 100, 50, owner.address, deadline);
+      await this.converter.convertExactTokensForTokens(address1, address2, 100, 50, owner.address, deadline);
       expect(await this.mToken.balanceOf(owner.address)).to.equal(expectedMBalance);
       expect(await this.bToken.balanceOf(owner.address)).to.be.above(minExpectedBBalance);
     });
@@ -291,11 +291,11 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const address2 = this.bToken.address;
       const deadline = (await getTime()) + 100;
       await expect(
-        this.exchange.exchangeExactTokensForTokens(address1, address2, 100, 150, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: INSUFFICIENT_OUTPUT_AMOUNT");
+        this.converter.convertExactTokensForTokens(address1, address2, 100, 150, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: INSUFFICIENT_OUTPUT_AMOUNT");
     });
 
-    it("Should exchange when maximum input satisfied", async function () {
+    it("Should convert when maximum input satisfied", async function () {
       // Update the scale factor (to account for time accrued during initial auctions for the owner)
       await this.orchestrator.updateScaleFactor();
       // Add 100 seconds and get expected growth factor at that time
@@ -306,7 +306,7 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const exponent = interestRate.mul(secondsToAdd).div(secondsPerYear);
       const growthFactor = exp(exponent);
       const expectedScaleFactor = currentScaleFactor.mul(growthFactor).div(eth(1));
-      // Add desired seconds - 1 (since calling exchange function will add one second)
+      // Add desired seconds - 1 (since calling convert function will add one second)
       await addTime(secondsToAdd - 1);
 
       const { owner } = this.signers;
@@ -319,7 +319,7 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const expectedBShareBalance = ownerBShareBalance.add(shareAmountOut);
       const expectedBBalance = expectedBShareBalance.mul(expectedScaleFactor).div(eth(1));
       const minExpectedMBalance = ownerMBalance.sub(150);
-      await this.exchange.exchangeTokensForExactTokens(address1, address2, 100, 150, owner.address, deadline);
+      await this.converter.convertTokensForExactTokens(address1, address2, 100, 150, owner.address, deadline);
       expect(await this.mToken.balanceOf(owner.address)).to.be.above(minExpectedMBalance);
       expect(await this.bToken.balanceOf(owner.address)).to.equal(expectedBBalance);
     });
@@ -330,8 +330,8 @@ export function shouldBehaveLikePeerFedExchange(): void {
       const address2 = this.bToken.address;
       const deadline = (await getTime()) + 100;
       await expect(
-        this.exchange.exchangeTokensForExactTokens(address1, address2, 100, 50, owner.address, deadline),
-      ).to.be.revertedWith("PeerFedExchange: EXCESSIVE_INPUT_AMOUNT");
+        this.converter.convertTokensForExactTokens(address1, address2, 100, 50, owner.address, deadline),
+      ).to.be.revertedWith("PeerFedConverter: EXCESSIVE_INPUT_AMOUNT");
     });
   });
 }

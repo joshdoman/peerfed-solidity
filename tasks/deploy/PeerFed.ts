@@ -6,7 +6,7 @@ import type {
   BaseERC20,
   ScaledERC20,
   PeerFedAuctionHouse,
-  PeerFedExchange,
+  PeerFedConverter,
   PeerFedOrchestrator,
 } from "../../src/types/contracts";
 import type { PeerFedOrchestrator__factory } from "../../src/types/factories/contracts";
@@ -38,9 +38,9 @@ task("deploy:PeerFed").setAction(async function (taskArguments: TaskArguments, {
   const bTokenAddress = await orchestrator.bToken();
   const bToken: ScaledERC20 = <ScaledERC20>await ethers.getContractAt("ScaledERC20", bTokenAddress);
 
-  const exchangeAddress = await orchestrator.exchange();
-  const exchange: PeerFedExchange = <PeerFedExchange>(
-    await ethers.getContractAt("PeerFedExchange", exchangeAddress)
+  const converterAddress = await orchestrator.converter();
+  const converter: PeerFedConverter = <PeerFedConverter>(
+    await ethers.getContractAt("PeerFedConverter", converterAddress)
   );
 
   const auctionHouseAddress = await orchestrator.auctionHouse();
@@ -53,6 +53,6 @@ task("deploy:PeerFed").setAction(async function (taskArguments: TaskArguments, {
   console.log("bShare deployed to: ", bShare.address);
   console.log("mToken deployed to: ", mToken.address);
   console.log("bToken deployed to: ", bToken.address);
-  console.log("PeerFedExchange deployed to: ", exchange.address);
+  console.log("PeerFedConverter deployed to: ", converter.address);
   console.log("PeerFedAuctionHouse deployed to: ", auctionHouse.address);
 });

@@ -7,10 +7,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IPeerFedOrchestrator.sol";
 import "./interfaces/IBaseERC20.sol";
 import "./interfaces/IScaledERC20.sol";
-import "./interfaces/IPeerFedExchange.sol";
-import "./libraries/PeerFedExchangeLibrary.sol";
+import "./interfaces/IPeerFedConverter.sol";
+import "./libraries/PeerFedConversionLibrary.sol";
 
-contract PeerFedExchange is IPeerFedExchange {
+contract PeerFedConverter is IPeerFedConverter {
     address public immutable orchestrator;
     address public immutable mShare;
     address public immutable bShare;
@@ -18,7 +18,7 @@ contract PeerFedExchange is IPeerFedExchange {
     address public immutable bToken;
 
     modifier ensure(uint256 deadline) {
-        require(deadline >= block.timestamp, "PeerFedExchange: EXPIRED");
+        require(deadline >= block.timestamp, "PeerFedConverter: EXPIRED");
         _;
     }
 
@@ -34,12 +34,12 @@ contract PeerFedExchange is IPeerFedExchange {
         bShare = bShare_;
         mToken = mToken_;
         bToken = bToken_;
-        // Set this address as the exchange
-        IBaseERC20(mShare_).setExchange(address(this));
-        IBaseERC20(bShare_).setExchange(address(this));
+        // Set this address as the converter
+        IBaseERC20(mShare_).setConverter(address(this));
+        IBaseERC20(bShare_).setConverter(address(this));
     }
 
-    function exchangeExactTokensForTokens(
+    function convertExactTokensForTokens(
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
@@ -54,12 +54,12 @@ contract PeerFedExchange is IPeerFedExchange {
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
         uint256 shareAmountOut;
-        (, shareAmountOut) = _exchangeShares(tokenIn, tokenOut, amountIn, 0, msg.sender, to);
+        (, shareAmountOut) = _convertShares(tokenIn, tokenOut, amountIn, 0, msg.sender, to);
         amountOut = (shareAmountOut * scaleFactor) / 1e18;
-        require(amountOut >= amountOutMin, "PeerFedExchange: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut >= amountOutMin, "PeerFedConverter: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
-    function exchangeTokensForExactTokens(
+    function convertTokensForExactTokens(
         address tokenIn,
         address tokenOut,
         uint256 amountOut,
@@ -73,12 +73,12 @@ contract PeerFedExchange is IPeerFedExchange {
         amountOut = (amountOut * 1e18) / scaleFactor;
         tokenIn = IScaledERC20(tokenIn).share();
         tokenOut = IScaledERC20(tokenOut).share();
-        (uint256 shareAmountIn, ) = _exchangeShares(tokenIn, tokenOut, 0, amountOut, msg.sender, to);
+        (uint256 shareAmountIn, ) = _convertShares(tokenIn, tokenOut, 0, amountOut, msg.sender, to);
         amountIn = (shareAmountIn * scaleFactor) / 1e18;
-        require(amountIn <= amountInMax, "PeerFedExchange: EXCESSIVE_INPUT_AMOUNT");
+        require(amountIn <= amountInMax, "PeerFedConverter: EXCESSIVE_INPUT_AMOUNT");
     }
 
-    function exchangeExactSharesForShares(
+    function convertExactSharesForShares(
         address shareIn,
         address shareOut,
         uint256 amountIn,
@@ -86,13 +86,13 @@ contract PeerFedExchange is IPeerFedExchange {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        // Update scale factor before executing the exchange
+        // Update scale factor before executing the converter
         IPeerFedOrchestrator(orchestrator).updateScaleFactor();
-        (, amountOut) = _exchangeShares(shareIn, shareOut, amountIn, 0, msg.sender, to);
-        require(amountOut >= amountOutMin, "PeerFedExchange: INSUFFICIENT_OUTPUT_AMOUNT");
+        (, amountOut) = _convertShares(shareIn, shareOut, amountIn, 0, msg.sender, to);
+        require(amountOut >= amountOutMin, "PeerFedConverter: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
-    function exchangeSharesForExactShares(
+    function convertSharesForExactShares(
         address shareIn,
         address shareOut,
         uint256 amountOut,
@@ -100,25 +100,25 @@ contract PeerFedExchange is IPeerFedExchange {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountIn) {
-        // Update scale factor before executing the exchange
+        // Update scale factor before executing the conversion
         IPeerFedOrchestrator(orchestrator).updateScaleFactor();
-        (amountIn, ) = _exchangeShares(shareIn, shareOut, 0, amountOut, msg.sender, to);
-        require(amountIn <= amountInMax, "PeerFedExchange: EXCESSIVE_INPUT_AMOUNT");
+        (amountIn, ) = _convertShares(shareIn, shareOut, 0, amountOut, msg.sender, to);
+        require(amountIn <= amountInMax, "PeerFedConverter: EXCESSIVE_INPUT_AMOUNT");
     }
 
-    function exchangeShares(
+    function convertShares(
         address shareIn,
         address shareOut,
         uint256 amountIn,
         uint256 amountOut,
         address to
     ) external returns (uint256, uint256) {
-        // Update scale factor before executing the exchange
+        // Update scale factor before executing the conversion
         IPeerFedOrchestrator(orchestrator).updateScaleFactor();
-        return _exchangeShares(shareIn, shareOut, amountIn, amountOut, msg.sender, to);
+        return _convertShares(shareIn, shareOut, amountIn, amountOut, msg.sender, to);
     }
 
-    function _exchangeShares(
+    function _convertShares(
         address shareIn,
         address shareOut,
         uint256 amountIn,
@@ -126,35 +126,35 @@ contract PeerFedExchange is IPeerFedExchange {
         address from,
         address to
     ) internal returns (uint256, uint256) {
-        require(validateShares(shareIn, shareOut), "PeerFedExchange: INVALID_TOKENS");
+        require(validateShares(shareIn, shareOut), "PeerFedConverter: INVALID_TOKENS");
         // Get supply of shareIn and shareOut
         uint256 inSupply = IBaseERC20(shareIn).totalSupply();
         uint256 outSupply = IBaseERC20(shareOut).totalSupply();
 
-        require(to != shareIn && to != shareOut, "PeerFedExchange: INVALID_TO");
+        require(to != shareIn && to != shareOut, "PeerFedConverter: INVALID_TO");
         if (amountIn > 0 && amountOut > 0) {
             // Sender provided exact in and out amounts. Go ahead and mint and burn.
             IBaseERC20(shareOut).mintOverride(to, amountOut);
             IBaseERC20(shareIn).burnOverride(from, amountIn);
             // Check if invariant is maintained
-            uint256 oldInvariant_ = PeerFedExchangeLibrary.invariant(inSupply, outSupply);
-            uint256 newInvariant_ = PeerFedExchangeLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
-            require(newInvariant_ <= oldInvariant_, "PeerFedExchange: INVALID_EXCHANGE");
+            uint256 oldInvariant_ = PeerFedConversionLibrary.invariant(inSupply, outSupply);
+            uint256 newInvariant_ = PeerFedConversionLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
+            require(newInvariant_ <= oldInvariant_, "PeerFedConverter: INVALID_CONVERSION");
         } else if (amountIn > 0) {
             // Sender provided exact input amount. Go ahead and burn.
             IBaseERC20(shareIn).burnOverride(from, amountIn);
             // Calculate the output amount using the invariant and mint necessary shares.
-            amountOut = PeerFedExchangeLibrary.getAmountOut(amountIn, inSupply, outSupply);
+            amountOut = PeerFedConversionLibrary.getAmountOut(amountIn, inSupply, outSupply);
             IBaseERC20(shareOut).mintOverride(to, amountOut);
         } else {
             // Sender provided exact output amount. Go ahead and mint.
             IBaseERC20(shareOut).mintOverride(to, amountOut);
             // Calculate the needed input amount to satisfy the invariant and burn necessary shares.
-            amountIn = PeerFedExchangeLibrary.getAmountIn(amountOut, inSupply, outSupply);
+            amountIn = PeerFedConversionLibrary.getAmountIn(amountOut, inSupply, outSupply);
             IBaseERC20(shareIn).burnOverride(from, amountIn);
         }
 
-        emit Exchange(shareIn, shareOut, amountIn, amountOut, from, to);
+        emit Conversion(shareIn, shareOut, amountIn, amountOut, from, to);
 
         return (amountIn, amountOut);
     }

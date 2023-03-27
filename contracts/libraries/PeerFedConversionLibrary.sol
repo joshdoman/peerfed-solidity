@@ -5,7 +5,7 @@ pragma solidity 0.8.15;
 import "@prb/math/contracts/PRBMathUD60x18.sol";
 
 // Based on UniswapV2Library
-library PeerFedExchangeLibrary {
+library PeerFedConversionLibrary {
     using PRBMathUD60x18 for uint256;
 
     // returns sum-of-the-squares of two quantities

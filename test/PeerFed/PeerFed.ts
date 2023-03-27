@@ -7,7 +7,7 @@ import { shouldBehaveLikeBaseERC20 } from "./BaseERC20.behavior";
 import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
 import { deployOwnerBalanceFixture, deployPeerFedFixture } from "./PeerFed.fixture";
 import { shouldBehaveLikePeerFedAuctionHouse } from "./PeerFedAuctionHouse.behavior";
-import { shouldBehaveLikePeerFedExchange } from "./PeerFedExchange.behavior";
+import { shouldBehaveLikePeerFedConverter } from "./PeerFedConverter.behavior";
 import { shouldBehaveLikePeerFedOrchestrator } from "./PeerFedOrchestrator.behavior";
 
 describe("Unit tests", function () {
@@ -69,9 +69,9 @@ describe("Unit tests", function () {
     shouldBehaveLikeScaledERC20();
   });
 
-  describe("PeerFedExchange", function () {
+  describe("PeerFedConverter", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken, exchange, auctionHouse } = await this.loadFixture(
+      const { orchestrator, mShare, bShare, mToken, bToken, converter, auctionHouse } = await this.loadFixture(
         deployPeerFedFixture,
       );
       this.orchestrator = orchestrator;
@@ -79,12 +79,12 @@ describe("Unit tests", function () {
       this.bShare = bShare;
       this.mToken = mToken;
       this.bToken = bToken;
-      this.exchange = exchange;
+      this.converter = converter;
 
       await deployOwnerBalanceFixture(auctionHouse);
     });
 
-    shouldBehaveLikePeerFedExchange();
+    shouldBehaveLikePeerFedConverter();
   });
 
   describe("PeerFedAuctionHouse", function () {

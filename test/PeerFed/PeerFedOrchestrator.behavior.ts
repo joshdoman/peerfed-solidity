@@ -9,8 +9,8 @@ export function shouldBehaveLikePeerFedOrchestrator(): void {
       expect(await this.orchestrator.scaleFactor()).to.equal(eth(1));
     });
 
-    it("Should set the time of last exchange to now", async function () {
-      expect(await this.orchestrator.timeOfLastExchange()).to.equal(await getTime());
+    it("Should set the time of last conversion to now", async function () {
+      expect(await this.orchestrator.timeOfLastConversion()).to.equal(await getTime());
     });
   });
 
@@ -48,10 +48,10 @@ export function shouldBehaveLikePeerFedOrchestrator(): void {
       expect(await this.orchestrator.scaleFactor()).to.equal(expectedScaleFactor);
     });
 
-    it("Should update the time of last exchange after updating the scale factor exactly", async function () {
+    it("Should update the time of last conversion after updating the scale factor exactly", async function () {
       await addTime(100000);
       await this.orchestrator.updateScaleFactor();
-      expect(await this.orchestrator.timeOfLastExchange()).to.equal(await getTime());
+      expect(await this.orchestrator.timeOfLastConversion()).to.equal(await getTime());
     });
 
     it("Should emit ScaleFactorUpdated event", async function () {
@@ -68,7 +68,7 @@ export function shouldBehaveLikePeerFedOrchestrator(): void {
       const updatedAt = (await getTime()) + secondsToAdd;
       await setTime(updatedAt - 1);
 
-      // Exchange 100 tokens from owner to owner
+      // Convert 100 tokens from owner to owner
       await expect(await this.orchestrator.updateScaleFactor())
         .to.emit(this.orchestrator, "ScaleFactorUpdated")
         .withArgs(owner.address, expectedScaleFactor, updatedAt);

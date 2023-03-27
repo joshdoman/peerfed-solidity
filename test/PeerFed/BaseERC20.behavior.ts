@@ -66,9 +66,9 @@ export function shouldBehaveLikeBaseERC20(): void {
   //     expect(await this.flatcoin.swapper()).to.equal(this.flatcoinTotal.address);
   //   });
   //
-  //   it("Should set the exchange as the flatcoinTotal and flatcoinBond swapper", async function () {
-  //     expect(await this.flatcoinTotal.swapper()).to.equal(this.exchange.address);
-  //     expect(await this.flatcoinBond.swapper()).to.equal(this.exchange.address);
+  //   it("Should set the converter as the flatcoinTotal and flatcoinBond swapper", async function () {
+  //     expect(await this.flatcoinTotal.swapper()).to.equal(this.converter.address);
+  //     expect(await this.flatcoinBond.swapper()).to.equal(this.converter.address);
   //   });
   //
   //   it("Should forbid resetting the swapper address", async function () {

@@ -4,7 +4,7 @@ import type {
   BaseERC20,
   ScaledERC20,
   PeerFedAuctionHouse,
-  PeerFedExchange,
+  PeerFedConverter,
   PeerFedOrchestrator,
 } from "../src/types/contracts";
 
@@ -17,7 +17,7 @@ declare module "mocha" {
     bShare: BaseERC20;
     mToken: ScaledERC20;
     bToken: ScaledERC20;
-    exchange: PeerFedExchange;
+    converter: PeerFedConverter;
     auctionHouse: PeerFedAuctionHouse;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { constants, utils } from "ethers";
 import { ethers } from "hardhat";
 
-import { sumOfSquares } from "./PeerFedExchange.behavior";
+import { sumOfSquares } from "./PeerFedConverter.behavior";
 
 export function shouldBehaveLikePeerFedAuctionHouse(): void {
   describe("Deployment", function () {

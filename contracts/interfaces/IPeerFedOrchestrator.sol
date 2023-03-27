@@ -13,7 +13,7 @@ interface IPeerFedOrchestrator {
 
     function bToken() external returns (address);
 
-    function exchange() external returns (address);
+    function converter() external returns (address);
 
     function auctionHouse() external returns (address);
 

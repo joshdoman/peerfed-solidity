@@ -137,7 +137,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
     /**
      * @notice Premints the amount of new mShares and bShares available at auction and returns the balance
      * of mShares and bShares held by the auction house.
-     * @dev Preminting updates the exchange invariant, which is required so that the invariant at settlement
+     * @dev Preminting updates the conversion invariant, which is required so that the invariant at settlement
      * equals the intended value.
      * @dev Premints are sent to the auction house, which may have non-zero balance if prior auction did not
      * settle.

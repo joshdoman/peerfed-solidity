@@ -10,7 +10,7 @@ import "./interfaces/IBaseERC20.sol";
 contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     address public orchestrator;
     address public scaledToken;
-    address public exchange;
+    address public converter;
     address public auction;
 
     mapping(address => bool) private _isApproved; // approved for transfering, minting, and burning tokens
@@ -36,14 +36,14 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     }
 
     /**
-     * Sets the `exchange` contract.
+     * Sets the `converter` contract.
      *
      * Requirement: `scaledToken` cannot already be set.
      */
-    function setExchange(address exchange_) external {
-        require(exchange == address(0), "`exchange` already set");
-        exchange = exchange_;
-        _isApproved[exchange_] = true;
+    function setConverter(address converter_) external {
+        require(converter == address(0), "`converter` already set");
+        converter = converter_;
+        _isApproved[converter_] = true;
     }
 
     /**

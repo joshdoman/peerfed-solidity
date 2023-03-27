@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.15;
 
-interface IPeerFedExchange {
-    event Exchange(
+interface IPeerFedConverter {
+    event Conversion(
         address shareIn,
         address shareOut,
         uint256 amountIn,
@@ -12,7 +12,7 @@ interface IPeerFedExchange {
         address indexed to
     );
 
-    function exchangeExactTokensForTokens(
+    function convertExactTokensForTokens(
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
@@ -21,7 +21,7 @@ interface IPeerFedExchange {
         uint256 deadline
     ) external returns (uint256);
 
-    function exchangeTokensForExactTokens(
+    function convertTokensForExactTokens(
         address tokenIn,
         address tokenOut,
         uint256 amountOut,
@@ -30,7 +30,7 @@ interface IPeerFedExchange {
         uint256 deadline
     ) external returns (uint256);
 
-    function exchangeExactSharesForShares(
+    function convertExactSharesForShares(
         address shareIn,
         address shareOut,
         uint256 amountIn,
@@ -39,7 +39,7 @@ interface IPeerFedExchange {
         uint256 deadline
     ) external returns (uint256);
 
-    function exchangeSharesForExactShares(
+    function convertSharesForExactShares(
         address shareIn,
         address shareOut,
         uint256 amountOut,
@@ -48,7 +48,7 @@ interface IPeerFedExchange {
         uint256 deadline
     ) external returns (uint256);
 
-    function exchangeShares(
+    function convertShares(
         address shareIn,
         address shareOut,
         uint256 amountIn,

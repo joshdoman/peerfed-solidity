@@ -11,7 +11,7 @@ interface IBaseERC20 is IERC20 {
 
     function setScaledToken(address scaledToken_) external;
 
-    function setExchange(address exchange_) external;
+    function setConverter(address converter_) external;
 
     function setAuction(address auction_) external;
 

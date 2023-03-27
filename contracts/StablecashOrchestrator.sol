@@ -38,10 +38,10 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         bToken = address(new ScaledERC20("Stablecash Bond", "BSCH", address(this), bShare));
         // Create exchange
         exchange = address(new StablecashExchange(address(this), mShare, bShare, mToken, bToken));
+        // Create auction house
+        auctionHouse = address(new StablecashAuctionHouse(mShare, bShare, weth));
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
-        // Create auction house
-        auctionHouse = address(new StablecashAuctionHouse(address(this), mShare, bShare, exchange, weth));
     }
 
     // Returns the current annualized interest rate w/ 18 decimals (r = M / B)
@@ -51,7 +51,7 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
         if (bShareSupply > 0) {
             return (mShareSupply * 1e18) / bShareSupply;
         } else {
-            // Not well-defined at B = 0, but interest rate should approach infinity
+            // Interest rate is not well-defined when B = 0, but should approach infinity
             return 1 << 128;
         }
     }

@@ -95,8 +95,6 @@ describe("Unit tests", function () {
       this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
-      this.mToken = mToken;
-      this.bToken = bToken;
       this.auctionHouse = auctionHouse;
     });
 

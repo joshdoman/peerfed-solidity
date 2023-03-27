@@ -5,7 +5,7 @@ pragma solidity 0.8.15;
 import "@prb/math/contracts/PRBMathUD60x18.sol";
 
 // Based on UniswapV2Library
-library StablecashExchangeLibrary {
+library PeerFedExchangeLibrary {
     using PRBMathUD60x18 for uint256;
 
     // returns sum-of-the-squares of two quantities
@@ -19,8 +19,8 @@ library StablecashExchangeLibrary {
         uint256 supplyIn,
         uint256 supplyOut
     ) internal pure returns (uint256 amountOut) {
-        require(amountIn > 0, "StablecashLibrary: INSUFFICIENT_INPUT_AMOUNT");
-        require(amountIn < supplyIn, "StablecashLibrary: INSUFFICIENT_SUPPLY");
+        require(amountIn > 0, "PeerFedLibrary: INSUFFICIENT_INPUT_AMOUNT");
+        require(amountIn < supplyIn, "PeerFedLibrary: INSUFFICIENT_SUPPLY");
         uint256 invariant_ = invariant(supplyIn, supplyOut);
         supplyIn -= amountIn;
         uint256 sqOutSupply;
@@ -36,10 +36,10 @@ library StablecashExchangeLibrary {
         uint256 supplyIn,
         uint256 supplyOut
     ) internal pure returns (uint256 amountIn) {
-        require(amountOut > 0, "StablecashLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut > 0, "PeerFedLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
         uint256 invariant_ = invariant(supplyIn, supplyOut);
         supplyOut += amountOut;
-        require(supplyOut * supplyOut <= invariant_, "StablecashLibrary: INSUFFICIENT_SUPPLY");
+        require(supplyOut * supplyOut <= invariant_, "PeerFedLibrary: INSUFFICIENT_SUPPLY");
         uint256 sqInSupply;
         unchecked {
             sqInSupply = (invariant_ - (supplyOut * supplyOut)) / 1e18;

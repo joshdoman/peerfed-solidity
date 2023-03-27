@@ -3,9 +3,9 @@
 pragma solidity 0.8.15;
 
 import "@prb/math/contracts/PRBMathUD60x18.sol";
-import "./StablecashExchangeLibrary.sol";
+import "./PeerFedExchangeLibrary.sol";
 
-library StablecashAuctionLibrary {
+library PeerFedAuctionLibrary {
     using PRBMathUD60x18 for uint256;
 
     // Returns (Q1 * C / K, Q2 * C / K), where Q1^2 + Q2^2 = K^2 and K > 0
@@ -24,7 +24,7 @@ library StablecashAuctionLibrary {
         uint256 quantity2,
         uint256 invariantIssuance
     ) internal pure returns (uint256 issuance1, uint256 issuance2) {
-        uint256 invariantSquared = StablecashExchangeLibrary.invariant(quantity1, quantity2);
+        uint256 invariantSquared = PeerFedExchangeLibrary.invariant(quantity1, quantity2);
         uint256 invariant = PRBMathUD60x18.sqrt(invariantSquared / 1e18);
         if (invariant > 0) {
             // dQ1 = Q1 * C / K, dQ2 = Q2 * C / K

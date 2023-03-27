@@ -3,22 +3,22 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 import type {
   BaseERC20,
   ScaledERC20,
-  StablecashAuctionHouse,
-  StablecashExchange,
-  StablecashOrchestrator,
+  PeerFedAuctionHouse,
+  PeerFedExchange,
+  PeerFedOrchestrator,
 } from "../src/types/contracts";
 
 type Fixture<T> = () => Promise<T>;
 
 declare module "mocha" {
   export interface Context {
-    orchestrator: StablecashOrchestrator;
+    orchestrator: PeerFedOrchestrator;
     mShare: BaseERC20;
     bShare: BaseERC20;
     mToken: ScaledERC20;
     bToken: ScaledERC20;
-    exchange: StablecashExchange;
-    auctionHouse: StablecashAuctionHouse;
+    exchange: PeerFedExchange;
+    auctionHouse: PeerFedAuctionHouse;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;
   }

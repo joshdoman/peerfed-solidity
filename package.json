@@ -1,6 +1,6 @@
 {
-  "name": "@stablecash-solidity/contracts",
-  "description": "A solidity implementation of the stablecash protocol",
+  "name": "@peerfed.sol/contracts",
+  "description": "A Solidity implementation of the PeerFed protocol",
   "version": "1.0.0",
   "author": {
     "name": "Josh Doman",
@@ -79,7 +79,7 @@
     "commit": "git-cz",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
     "coverage": "hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"test/**/*.ts\" && yarn typechain",
-    "deploy": "hardhat deploy:Stablecash",
+    "deploy": "hardhat deploy:PeerFed",
     "lint": "yarn lint:sol && yarn lint:ts && yarn prettier:check",
     "lint:sol": "solhint --config ./.solhint.json --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint --config ./.eslintrc.yml --ignore-path ./.eslintignore --ext .js,.ts .",
@@ -94,6 +94,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.1",
-    "@prb/math": "^2.5.0"
+    "@prb/math": "^2.5.0",
+    "web3": "^1.9.0"
   }
 }

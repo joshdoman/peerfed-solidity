@@ -7,13 +7,13 @@ import "@prb/math/contracts/PRBMathUD60x18.sol";
 
 import "./BaseERC20.sol";
 import "./ScaledERC20.sol";
-import "./StablecashAuctionHouse.sol";
-import "./StablecashExchange.sol";
-import "./libraries/StablecashExchangeLibrary.sol";
+import "./PeerFedAuctionHouse.sol";
+import "./PeerFedExchange.sol";
+import "./libraries/PeerFedExchangeLibrary.sol";
 import "./interfaces/IBaseERC20.sol";
-import "./interfaces/IStablecashOrchestrator.sol";
+import "./interfaces/IPeerFedOrchestrator.sol";
 
-contract StablecashOrchestrator is IStablecashOrchestrator {
+contract PeerFedOrchestrator is IPeerFedOrchestrator {
     using PRBMathUD60x18 for uint256;
 
     address public immutable mShare;
@@ -31,15 +31,15 @@ contract StablecashOrchestrator is IStablecashOrchestrator {
 
     constructor(address weth) {
         // Create contracts for shares of money and shares of bonds
-        mShare = address(new BaseERC20("Share of Stablecash Supply", "shSCH", address(this)));
-        bShare = address(new BaseERC20("Share of Stablecash Bond Supply", "shBSCH", address(this)));
+        mShare = address(new BaseERC20("Share of PeerFed Supply", "shSCH", address(this)));
+        bShare = address(new BaseERC20("Share of PeerFed Bond Supply", "shBSCH", address(this)));
         // Create money and bond contracts
-        mToken = address(new ScaledERC20("Stablecash", "SCH", address(this), mShare));
-        bToken = address(new ScaledERC20("Stablecash Bond", "BSCH", address(this), bShare));
+        mToken = address(new ScaledERC20("PeerFed", "SCH", address(this), mShare));
+        bToken = address(new ScaledERC20("PeerFed Bond", "BSCH", address(this), bShare));
         // Create exchange
-        exchange = address(new StablecashExchange(address(this), mShare, bShare, mToken, bToken));
+        exchange = address(new PeerFedExchange(address(this), mShare, bShare, mToken, bToken));
         // Create auction house
-        auctionHouse = address(new StablecashAuctionHouse(mShare, bShare, weth));
+        auctionHouse = address(new PeerFedAuctionHouse(mShare, bShare, weth));
         // Set time of last exchange to current timestamp
         timeOfLastExchange = block.timestamp;
     }

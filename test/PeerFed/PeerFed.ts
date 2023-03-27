@@ -5,10 +5,10 @@ import { ethers } from "hardhat";
 import type { Signers } from "../types";
 import { shouldBehaveLikeBaseERC20 } from "./BaseERC20.behavior";
 import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
-import { deployOwnerBalanceFixture, deployStablecashFixture } from "./Stablecash.fixture";
-import { shouldBehaveLikeStablecashAuctionHouse } from "./StablecashAuctionHouse.behavior";
-import { shouldBehaveLikeStablecashExchange } from "./StablecashExchange.behavior";
-import { shouldBehaveLikeStablecashOrchestrator } from "./StablecashOrchestrator.behavior";
+import { deployOwnerBalanceFixture, deployPeerFedFixture } from "./PeerFed.fixture";
+import { shouldBehaveLikePeerFedAuctionHouse } from "./PeerFedAuctionHouse.behavior";
+import { shouldBehaveLikePeerFedExchange } from "./PeerFedExchange.behavior";
+import { shouldBehaveLikePeerFedOrchestrator } from "./PeerFedOrchestrator.behavior";
 
 describe("Unit tests", function () {
   before(async function () {
@@ -22,9 +22,9 @@ describe("Unit tests", function () {
     this.loadFixture = loadFixture;
   });
 
-  describe("StablecashOrchestrator", function () {
+  describe("PeerFedOrchestrator", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployStablecashFixture);
+      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployPeerFedFixture);
       this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
@@ -32,13 +32,13 @@ describe("Unit tests", function () {
       this.bToken = bToken;
     });
 
-    shouldBehaveLikeStablecashOrchestrator();
+    shouldBehaveLikePeerFedOrchestrator();
   });
 
   describe("BaseERC20", function () {
     beforeEach(async function () {
       const { orchestrator, mShare, bShare, mToken, bToken, auctionHouse } = await this.loadFixture(
-        deployStablecashFixture,
+        deployPeerFedFixture,
       );
       this.orchestrator = orchestrator;
       this.mShare = mShare;
@@ -55,7 +55,7 @@ describe("Unit tests", function () {
   describe("ScaledERC20", function () {
     beforeEach(async function () {
       const { orchestrator, mShare, bShare, mToken, bToken, auctionHouse } = await this.loadFixture(
-        deployStablecashFixture,
+        deployPeerFedFixture,
       );
       this.orchestrator = orchestrator;
       this.mShare = mShare;
@@ -69,10 +69,10 @@ describe("Unit tests", function () {
     shouldBehaveLikeScaledERC20();
   });
 
-  describe("StablecashExchange", function () {
+  describe("PeerFedExchange", function () {
     beforeEach(async function () {
       const { orchestrator, mShare, bShare, mToken, bToken, exchange, auctionHouse } = await this.loadFixture(
-        deployStablecashFixture,
+        deployPeerFedFixture,
       );
       this.orchestrator = orchestrator;
       this.mShare = mShare;
@@ -84,13 +84,13 @@ describe("Unit tests", function () {
       await deployOwnerBalanceFixture(auctionHouse);
     });
 
-    shouldBehaveLikeStablecashExchange();
+    shouldBehaveLikePeerFedExchange();
   });
 
-  describe("StablecashAuctionHouse", function () {
+  describe("PeerFedAuctionHouse", function () {
     beforeEach(async function () {
       const { orchestrator, mShare, bShare, mToken, bToken, auctionHouse } = await this.loadFixture(
-        deployStablecashFixture,
+        deployPeerFedFixture,
       );
       this.orchestrator = orchestrator;
       this.mShare = mShare;
@@ -98,6 +98,6 @@ describe("Unit tests", function () {
       this.auctionHouse = auctionHouse;
     });
 
-    shouldBehaveLikeStablecashAuctionHouse();
+    shouldBehaveLikePeerFedAuctionHouse();
   });
 });

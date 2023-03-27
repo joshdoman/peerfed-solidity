@@ -5,20 +5,20 @@ import { ethers } from "hardhat";
 import type {
   BaseERC20,
   ScaledERC20,
-  StablecashAuctionHouse,
-  StablecashExchange,
-  StablecashOrchestrator,
+  PeerFedAuctionHouse,
+  PeerFedExchange,
+  PeerFedOrchestrator,
 } from "../../src/types/contracts";
-import type { StablecashOrchestrator__factory } from "../../src/types/factories/contracts";
+import type { PeerFedOrchestrator__factory } from "../../src/types/factories/contracts";
 
-export async function deployStablecashFixture(): Promise<{
-  orchestrator: StablecashOrchestrator;
+export async function deployPeerFedFixture(): Promise<{
+  orchestrator: PeerFedOrchestrator;
   mShare: BaseERC20;
   bShare: BaseERC20;
   mToken: ScaledERC20;
   bToken: ScaledERC20;
-  exchange: StablecashExchange;
-  auctionHouse: StablecashAuctionHouse;
+  exchange: PeerFedExchange;
+  auctionHouse: PeerFedAuctionHouse;
 }> {
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
@@ -26,10 +26,10 @@ export async function deployStablecashFixture(): Promise<{
   // WETH address (Goerli)
   const wethAddress = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6";
 
-  const orchestratorFactory: StablecashOrchestrator__factory = <StablecashOrchestrator__factory>(
-    await ethers.getContractFactory("StablecashOrchestrator")
+  const orchestratorFactory: PeerFedOrchestrator__factory = <PeerFedOrchestrator__factory>(
+    await ethers.getContractFactory("PeerFedOrchestrator")
   );
-  const orchestrator: StablecashOrchestrator = <StablecashOrchestrator>(
+  const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>(
     await orchestratorFactory.connect(owner).deploy(wethAddress)
   );
   await orchestrator.deployed();
@@ -47,19 +47,19 @@ export async function deployStablecashFixture(): Promise<{
   const bToken: ScaledERC20 = <ScaledERC20>await ethers.getContractAt("ScaledERC20", bTokenAddress);
 
   const exchangeAddress = await orchestrator.exchange();
-  const exchange: StablecashExchange = <StablecashExchange>(
-    await ethers.getContractAt("StablecashExchange", exchangeAddress)
+  const exchange: PeerFedExchange = <PeerFedExchange>(
+    await ethers.getContractAt("PeerFedExchange", exchangeAddress)
   );
 
   const auctionHouseAddress = await orchestrator.auctionHouse();
-  const auctionHouse: StablecashAuctionHouse = <StablecashAuctionHouse>(
-    await ethers.getContractAt("StablecashAuctionHouse", auctionHouseAddress)
+  const auctionHouse: PeerFedAuctionHouse = <PeerFedAuctionHouse>(
+    await ethers.getContractAt("PeerFedAuctionHouse", auctionHouseAddress)
   );
 
   return { orchestrator, mShare, bShare, mToken, bToken, exchange, auctionHouse };
 }
 
-export async function deployOwnerBalanceFixture(auctionHouse: StablecashAuctionHouse): Promise<void> {
+export async function deployOwnerBalanceFixture(auctionHouse: PeerFedAuctionHouse): Promise<void> {
   // Owner wins an auction
   const auction = await auctionHouse.auction();
   const DURATION = await auctionHouse.DURATION();

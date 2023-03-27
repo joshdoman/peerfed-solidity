@@ -3,22 +3,22 @@ import { expect } from "chai";
 import { BigNumber, utils } from "ethers";
 import { ethers } from "hardhat";
 
-export function shouldBehaveLikeStablecashExchange(): void {
+export function shouldBehaveLikePeerFedExchange(): void {
   describe("Exchange", function () {
     it("Should revert if invalid token address submitted", async function () {
       const { owner } = this.signers;
 
       await expect(
         this.exchange.exchangeShares(this.mToken.address, this.bToken.address, 100, 100, owner.address),
-      ).to.be.revertedWith("StablecashExchange: INVALID_TOKENS");
+      ).to.be.revertedWith("PeerFedExchange: INVALID_TOKENS");
 
       await expect(
         this.exchange.exchangeShares(this.mToken.address, this.bShare.address, 100, 100, owner.address),
-      ).to.be.revertedWith("StablecashExchange: INVALID_TOKENS");
+      ).to.be.revertedWith("PeerFedExchange: INVALID_TOKENS");
 
       await expect(
         this.exchange.exchangeShares(this.mShare.address, this.bToken.address, 100, 100, owner.address),
-      ).to.be.revertedWith("StablecashExchange: INVALID_TOKENS");
+      ).to.be.revertedWith("PeerFedExchange: INVALID_TOKENS");
     });
 
     it("Should revert if no input or output amount is provided", async function () {
@@ -26,7 +26,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
 
       await expect(
         this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 0, 0, owner.address),
-      ).to.be.revertedWith("StablecashLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
+      ).to.be.revertedWith("PeerFedLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
     });
 
     it("Should update the scale factor to the exact value prior to the exchange", async function () {
@@ -51,11 +51,11 @@ export function shouldBehaveLikeStablecashExchange(): void {
     it("Should revert if invalid to", async function () {
       await expect(
         this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 0, this.mShare.address),
-      ).to.be.revertedWith("StablecashExchange: INVALID_TO");
+      ).to.be.revertedWith("PeerFedExchange: INVALID_TO");
 
       await expect(
         this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 0, this.bShare.address),
-      ).to.be.revertedWith("StablecashExchange: INVALID_TO");
+      ).to.be.revertedWith("PeerFedExchange: INVALID_TO");
     });
 
     it("Should revert if invalid exact exchange", async function () {
@@ -63,7 +63,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
 
       await expect(
         this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 100, 100, owner.address),
-      ).to.be.revertedWith("StablecashExchange: INVALID_EXCHANGE");
+      ).to.be.revertedWith("PeerFedExchange: INVALID_EXCHANGE");
     });
 
     it("Should revert if invalid output amount", async function () {
@@ -75,7 +75,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
       const invalidOutput = sqrt(invariant.div(eth(1))).add(1);
       await expect(
         this.exchange.exchangeShares(this.mShare.address, this.bShare.address, 0, invalidOutput, owner.address),
-      ).to.be.revertedWith("StablecashLibrary: INSUFFICIENT_SUPPLY");
+      ).to.be.revertedWith("PeerFedLibrary: INSUFFICIENT_SUPPLY");
     });
 
     it("Should exchange exact amounts where new sum-of-squares is less than invariant", async function () {
@@ -189,19 +189,19 @@ export function shouldBehaveLikeStablecashExchange(): void {
       const deadline = (await getTime()) - 1;
       await expect(
         this.exchange.exchangeExactSharesForShares(address1, address2, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: EXPIRED");
+      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
 
       await expect(
         this.exchange.exchangeSharesForExactShares(address1, address2, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: EXPIRED");
+      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
 
       await expect(
         this.exchange.exchangeExactTokensForTokens(address3, address4, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: EXPIRED");
+      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
 
       await expect(
         this.exchange.exchangeTokensForExactTokens(address3, address4, 100, 100, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: EXPIRED");
+      ).to.be.revertedWith("PeerFedExchange: EXPIRED");
     });
   });
 
@@ -227,7 +227,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
       const deadline = (await getTime()) + 100;
       await expect(
         this.exchange.exchangeExactSharesForShares(address1, address2, 100, 150, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: INSUFFICIENT_OUTPUT_AMOUNT");
+      ).to.be.revertedWith("PeerFedExchange: INSUFFICIENT_OUTPUT_AMOUNT");
     });
 
     it("Should exchange when maximum input satisfied", async function () {
@@ -251,7 +251,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
       const deadline = (await getTime()) + 100;
       await expect(
         this.exchange.exchangeSharesForExactShares(address1, address2, 100, 50, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
+      ).to.be.revertedWith("PeerFedExchange: EXCESSIVE_INPUT_AMOUNT");
     });
   });
 
@@ -292,7 +292,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
       const deadline = (await getTime()) + 100;
       await expect(
         this.exchange.exchangeExactTokensForTokens(address1, address2, 100, 150, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: INSUFFICIENT_OUTPUT_AMOUNT");
+      ).to.be.revertedWith("PeerFedExchange: INSUFFICIENT_OUTPUT_AMOUNT");
     });
 
     it("Should exchange when maximum input satisfied", async function () {
@@ -331,7 +331,7 @@ export function shouldBehaveLikeStablecashExchange(): void {
       const deadline = (await getTime()) + 100;
       await expect(
         this.exchange.exchangeTokensForExactTokens(address1, address2, 100, 50, owner.address, deadline),
-      ).to.be.revertedWith("StablecashExchange: EXCESSIVE_INPUT_AMOUNT");
+      ).to.be.revertedWith("PeerFedExchange: EXCESSIVE_INPUT_AMOUNT");
     });
   });
 }

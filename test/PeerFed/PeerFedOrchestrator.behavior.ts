@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { utils } from "ethers";
 import { ethers } from "hardhat";
 
-export function shouldBehaveLikeStablecashOrchestrator(): void {
+export function shouldBehaveLikePeerFedOrchestrator(): void {
   describe("Deployment", function () {
     it("Should set the starting scale factor equal to one", async function () {
       expect(await this.orchestrator.scaleFactor()).to.equal(eth(1));

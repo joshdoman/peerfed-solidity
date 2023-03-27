@@ -5,7 +5,7 @@ pragma solidity 0.8.15;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-import "./interfaces/IStablecashOrchestrator.sol";
+import "./interfaces/IPeerFedOrchestrator.sol";
 import "./interfaces/IBaseERC20.sol";
 
 contract ScaledERC20 is ERC20Burnable {
@@ -26,13 +26,13 @@ contract ScaledERC20 is ERC20Burnable {
 
     function totalSupply() public view virtual override returns (uint256) {
         uint256 shareOutstanding = IBaseERC20(share).totalSupply();
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
+        uint256 scaleFactor = IPeerFedOrchestrator(orchestrator).scaleFactor();
         return (shareOutstanding * scaleFactor) / 1e18;
     }
 
     function balanceOf(address account) public view virtual override returns (uint256) {
         uint256 shareBalance = IBaseERC20(share).balanceOf(account);
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
+        uint256 scaleFactor = IPeerFedOrchestrator(orchestrator).scaleFactor();
         return (shareBalance * scaleFactor) / 1e18;
     }
 
@@ -41,7 +41,7 @@ contract ScaledERC20 is ERC20Burnable {
         address to,
         uint256 amount
     ) internal override {
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
+        uint256 scaleFactor = IPeerFedOrchestrator(orchestrator).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
         IBaseERC20(share).transferOverride(from, to, shareAmount);
 
@@ -49,7 +49,7 @@ contract ScaledERC20 is ERC20Burnable {
     }
 
     function _mint(address account, uint256 amount) internal override {
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
+        uint256 scaleFactor = IPeerFedOrchestrator(orchestrator).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
         IBaseERC20(share).mintOverride(account, shareAmount);
 
@@ -57,7 +57,7 @@ contract ScaledERC20 is ERC20Burnable {
     }
 
     function _burn(address account, uint256 amount) internal override {
-        uint256 scaleFactor = IStablecashOrchestrator(orchestrator).scaleFactor();
+        uint256 scaleFactor = IPeerFedOrchestrator(orchestrator).scaleFactor();
         uint256 shareAmount = (amount * 1e18) / scaleFactor;
         IBaseERC20(share).burnOverride(account, shareAmount);
 

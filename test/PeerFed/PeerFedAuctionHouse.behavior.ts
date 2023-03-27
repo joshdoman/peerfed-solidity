@@ -3,9 +3,9 @@ import { expect } from "chai";
 import { constants, utils } from "ethers";
 import { ethers } from "hardhat";
 
-import { sumOfSquares } from "./StablecashExchange.behavior";
+import { sumOfSquares } from "./PeerFedExchange.behavior";
 
-export function shouldBehaveLikeStablecashAuctionHouse(): void {
+export function shouldBehaveLikePeerFedAuctionHouse(): void {
   describe("Deployment", function () {
     it("Should assign the total initial supply of shares to the auction house", async function () {
       const auctionMShareBalance = await this.mShare.balanceOf(this.auctionHouse.address);
@@ -31,7 +31,7 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       const endTime = auction["startTime"].add(DURATION);
       // End the auction
       await setTime(endTime.toNumber() + 1);
-      await expect(this.auctionHouse.bid()).to.be.revertedWith("StablecashAuctionHouse: AUCTION_ENDED");
+      await expect(this.auctionHouse.bid()).to.be.revertedWith("PeerFedAuctionHouse: AUCTION_ENDED");
     });
 
     it("Should accept bid if no prior bids", async function () {
@@ -73,14 +73,14 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       await this.auctionHouse.bid({ value: eth(1) }); // Bid 1 ETH
       await expect(
         this.auctionHouse.bid({ value: eth(0.5) }), // Bid 0.5 ETH
-      ).to.be.revertedWith("StablecashAuctionHouse: INSUFFICIENT_BID");
+      ).to.be.revertedWith("PeerFedAuctionHouse: INSUFFICIENT_BID");
     });
 
     it("Should revert if bid amount is equals previous bid", async function () {
       await this.auctionHouse.bid({ value: eth(1) }); // Bid 1 ETH
       await expect(
         this.auctionHouse.bid({ value: eth(1) }), // Bid 1 ETH
-      ).to.be.revertedWith("StablecashAuctionHouse: INSUFFICIENT_BID");
+      ).to.be.revertedWith("PeerFedAuctionHouse: INSUFFICIENT_BID");
     });
 
     it("Should revert if bid amount is less that minimum bid increment over prior bid", async function () {
@@ -91,7 +91,7 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       const secondBid = priorBid.add(priorBid.mul(MIN_BID_INCREMENT_PERCENTAGE).div(100).div(2));
       await expect(
         this.auctionHouse.bid({ value: secondBid }), // Bid 1.005 ETH
-      ).to.be.revertedWith("StablecashAuctionHouse: INSUFFICIENT_BID");
+      ).to.be.revertedWith("PeerFedAuctionHouse: INSUFFICIENT_BID");
     });
 
     it("Should emit AuctionBid event", async function () {
@@ -112,7 +112,7 @@ export function shouldBehaveLikeStablecashAuctionHouse(): void {
       // Set time just prior to auction ending (calling function will add one second, do decrement 2)
       await setTime(endTime.toNumber() - 2);
       await expect(this.auctionHouse.settleCurrentAndCreateNewAuction()).to.be.revertedWith(
-        "StablecashAuctionHouse: AUCTION_HAS_NOT_ENDED",
+        "PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED",
       );
     });
 

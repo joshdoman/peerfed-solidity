@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.15;
 
-interface IStablecashExchange {
+interface IPeerFedExchange {
     event Exchange(
         address shareIn,
         address shareOut,

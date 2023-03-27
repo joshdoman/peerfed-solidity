@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0
 
-/// @title Interface for StablecashAuctionHouse.sol
+/// @title Interface for PeerFedAuctionHouse.sol
 
 pragma solidity ^0.8.6;
 
 // LICENSE
-// IStablecashAuctionHouse.sol is a modified version of Noun's DAO INounsAuctionHouse.sol
+// IPeerFedAuctionHouse.sol is a modified version of Noun's DAO INounsAuctionHouse.sol
 // https://github.com/nounsDAO/nouns-monorepo/blob/0a96001abe99751afa20c41a00adb8e5e32e6fda/packages/
 //  nouns-contracts/contracts/interfaces/INounsAuctionHouse.sol
 //
 // INounsAuctionHouse.sol source code Copyright Nounder's DAO licensed under the GPL-3.0 license.
 
-interface IStablecashAuctionHouse {
+interface IPeerFedAuctionHouse {
     struct Auction {
         // The time that the auction started
         uint256 startTime;

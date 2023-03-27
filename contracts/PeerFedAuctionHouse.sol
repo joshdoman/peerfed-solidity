@@ -3,12 +3,12 @@
 pragma solidity 0.8.15;
 
 import "./interfaces/IBaseERC20.sol";
-import "./interfaces/IStablecashAuctionHouse.sol";
+import "./interfaces/IPeerFedAuctionHouse.sol";
 import "./interfaces/IWETH.sol";
-import "./libraries/StablecashAuctionLibrary.sol";
+import "./libraries/PeerFedAuctionLibrary.sol";
 
 // LICENSE
-// StablecashAuction.sol is a modified version of Noun's DAO NounsAuctionHouse.sol, which itself is a modified
+// PeerFedAuction.sol is a modified version of Noun's DAO NounsAuctionHouse.sol, which itself is a modified
 // version of Zora's AuctionHouse.sol
 // https://github.com/ourzora/auction-house/blob/54a12ec1a6cf562e49f0a4917990474b11350a2d/contracts/AuctionHouse.sol
 // https://github.com/nounsDAO/nouns-monorepo/blob/0a96001abe99751afa20c41a00adb8e5e32e6fda/packages/
@@ -29,7 +29,7 @@ import "./libraries/StablecashAuctionLibrary.sol";
 // If the auction is not completed, the remaining balance rolls over to the next
 // auction. The reserve price is set at zero.
 //
-contract StablecashAuctionHouse is IStablecashAuctionHouse {
+contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
     address public immutable mShare;
     address public immutable bShare;
     address public immutable weth;
@@ -40,7 +40,7 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
     uint64 public constant AUCTIONS_PER_HALVING = 210000;
 
     // The active auction
-    IStablecashAuctionHouse.Auction public auction;
+    IPeerFedAuctionHouse.Auction public auction;
 
     constructor(
         address mShare_,
@@ -73,12 +73,12 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
      * @dev This contract only accepts payment in ETH.
      */
     function bid() external payable {
-        IStablecashAuctionHouse.Auction memory _auction = auction;
+        IPeerFedAuctionHouse.Auction memory _auction = auction;
 
-        require(block.timestamp < _auction.startTime + DURATION, "StablecashAuctionHouse: AUCTION_ENDED");
+        require(block.timestamp < _auction.startTime + DURATION, "PeerFedAuctionHouse: AUCTION_ENDED");
         require(
             msg.value >= _auction.bidAmount + ((_auction.bidAmount * MIN_BID_INCREMENT_PERCENTAGE) / 100),
-            "StablecashAuctionHouse: INSUFFICIENT_BID"
+            "PeerFedAuctionHouse: INSUFFICIENT_BID"
         );
 
         address payable lastBidder = _auction.bidder;
@@ -112,9 +112,9 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
      * @dev If there are no bids, returns the invariant amount. Otherwise, returns zero.
      */
     function _settleAuction() internal returns (uint64 auctionNumber) {
-        IStablecashAuctionHouse.Auction memory _auction = auction;
+        IPeerFedAuctionHouse.Auction memory _auction = auction;
 
-        require(block.timestamp >= _auction.startTime + DURATION, "StablecashAuctionHouse: AUCTION_HAS_NOT_ENDED");
+        require(block.timestamp >= _auction.startTime + DURATION, "PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED");
 
         // Set the auction number
         auctionNumber = _auction.number;
@@ -152,7 +152,7 @@ contract StablecashAuctionHouse is IStablecashAuctionHouse {
         uint256 bSupply = IBaseERC20(bShare_).totalSupply();
         // Calculate the amount of mShares and bShares to issue so that the scale factor does not change
         // and the invariant increases by the invariant amount
-        (uint256 newMShares, uint256 newBShares) = StablecashAuctionLibrary.issuanceAmounts(
+        (uint256 newMShares, uint256 newBShares) = PeerFedAuctionLibrary.issuanceAmounts(
             mSupply,
             bSupply,
             invariantIssuanceAmount

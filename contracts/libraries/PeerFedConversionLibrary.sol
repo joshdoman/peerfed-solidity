@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.15;
 
-import "@prb/math/contracts/PRBMathUD60x18.sol";
+import { PRBMathUD60x18 } from "@prb/math/contracts/PRBMathUD60x18.sol";
 
 // Based on UniswapV2Library
 library PeerFedConversionLibrary {

@@ -4,10 +4,10 @@ import { ethers } from "hardhat";
 
 import type {
   BaseERC20,
-  ScaledERC20,
   PeerFedAuctionHouse,
   PeerFedConverter,
   PeerFedOrchestrator,
+  ScaledERC20,
 } from "../../src/types/contracts";
 import type { PeerFedOrchestrator__factory } from "../../src/types/factories/contracts";
 

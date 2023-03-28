@@ -2,16 +2,16 @@
 
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@prb/math/contracts/PRBMathUD60x18.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { PRBMathUD60x18 } from "@prb/math/contracts/PRBMathUD60x18.sol";
 
-import "./BaseERC20.sol";
-import "./ScaledERC20.sol";
-import "./PeerFedAuctionHouse.sol";
-import "./PeerFedConverter.sol";
-import "./libraries/PeerFedConversionLibrary.sol";
-import "./interfaces/IBaseERC20.sol";
-import "./interfaces/IPeerFedOrchestrator.sol";
+import { BaseERC20 } from "./BaseERC20.sol";
+import { ScaledERC20 } from "./ScaledERC20.sol";
+import { PeerFedAuctionHouse } from "./PeerFedAuctionHouse.sol";
+import { PeerFedConverter } from "./PeerFedConverter.sol";
+import { PeerFedConversionLibrary } from "./libraries/PeerFedConversionLibrary.sol";
+import { IBaseERC20 } from "./interfaces/IBaseERC20.sol";
+import { IPeerFedOrchestrator } from "./interfaces/IPeerFedOrchestrator.sol";
 
 contract PeerFedOrchestrator is IPeerFedOrchestrator {
     using PRBMathUD60x18 for uint256;
@@ -31,11 +31,11 @@ contract PeerFedOrchestrator is IPeerFedOrchestrator {
 
     constructor(address weth) {
         // Create contracts for shares of money and shares of bonds
-        mShare = address(new BaseERC20("Share of PeerFed Supply", "shSCH", address(this)));
-        bShare = address(new BaseERC20("Share of PeerFed Bond Supply", "shBSCH", address(this)));
+        mShare = address(new BaseERC20("Share of Cash Supply", "sCASH", address(this)));
+        bShare = address(new BaseERC20("Share of Bond Supply", "sBOND", address(this)));
         // Create money and bond contracts
-        mToken = address(new ScaledERC20("PeerFed", "SCH", address(this), mShare));
-        bToken = address(new ScaledERC20("PeerFed Bond", "BSCH", address(this), bShare));
+        mToken = address(new ScaledERC20("Cash", "CASH", address(this), mShare));
+        bToken = address(new ScaledERC20("Bond", "BOND", address(this), bShare));
         // Create converter
         converter = address(new PeerFedConverter(address(this), mShare, bShare, mToken, bToken));
         // Create auction house

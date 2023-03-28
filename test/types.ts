@@ -2,10 +2,10 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 
 import type {
   BaseERC20,
-  ScaledERC20,
   PeerFedAuctionHouse,
   PeerFedConverter,
   PeerFedOrchestrator,
+  ScaledERC20,
 } from "../src/types/contracts";
 
 type Fixture<T> = () => Promise<T>;

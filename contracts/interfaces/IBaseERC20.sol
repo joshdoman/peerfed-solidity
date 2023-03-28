@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IBaseERC20 is IERC20 {
     function orchestrator() external returns (address);
@@ -15,11 +15,7 @@ interface IBaseERC20 is IERC20 {
 
     function setAuction(address auction_) external;
 
-    function transferOverride(
-        address from,
-        address to,
-        uint256 amount
-    ) external;
+    function transferOverride(address from, address to, uint256 amount) external;
 
     function mintOverride(address account, uint256 amount) external;
 

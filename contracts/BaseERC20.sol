@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-import "./interfaces/IBaseERC20.sol";
+import { IBaseERC20 } from "./interfaces/IBaseERC20.sol";
 
 contract BaseERC20 is ERC20Burnable, IBaseERC20 {
     address public orchestrator;
@@ -15,11 +15,7 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
 
     mapping(address => bool) private _isApproved; // approved for transfering, minting, and burning tokens
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        address orchestrator_
-    ) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, address orchestrator_) ERC20(name, symbol) {
         orchestrator = orchestrator_;
         _isApproved[orchestrator_] = true;
     }
@@ -62,11 +58,7 @@ contract BaseERC20 is ERC20Burnable, IBaseERC20 {
      *
      * Requirement: sender must be the `scaledToken` contract.
      */
-    function transferOverride(
-        address from,
-        address to,
-        uint256 amount
-    ) external {
+    function transferOverride(address from, address to, uint256 amount) external {
         require(_isApproved[msg.sender], "Forbidden");
         _transfer(from, to, amount);
     }

@@ -2,10 +2,12 @@
 
 pragma solidity 0.8.15;
 
-import "./interfaces/IBaseERC20.sol";
-import "./interfaces/IPeerFedAuctionHouse.sol";
-import "./interfaces/IWETH.sol";
-import "./libraries/PeerFedAuctionLibrary.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { IBaseERC20 } from "./interfaces/IBaseERC20.sol";
+import { IPeerFedAuctionHouse } from "./interfaces/IPeerFedAuctionHouse.sol";
+import { IWETH } from "./interfaces/IWETH.sol";
+import { PeerFedAuctionLibrary } from "./libraries/PeerFedAuctionLibrary.sol";
 
 // LICENSE
 // PeerFedAuction.sol is a modified version of Noun's DAO NounsAuctionHouse.sol, which itself is a modified
@@ -42,11 +44,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
     // The active auction
     IPeerFedAuctionHouse.Auction public auction;
 
-    constructor(
-        address mShare_,
-        address bShare_,
-        address weth_
-    ) {
+    constructor(address mShare_, address bShare_, address weth_) {
         mShare = mShare_;
         bShare = bShare_;
         weth = weth_;

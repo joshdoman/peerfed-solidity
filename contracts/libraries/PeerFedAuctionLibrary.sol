@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.15;
 
-import "@prb/math/contracts/PRBMathUD60x18.sol";
-import "./PeerFedConversionLibrary.sol";
+import { PRBMathUD60x18 } from "@prb/math/contracts/PRBMathUD60x18.sol";
+import { PeerFedConversionLibrary } from "./PeerFedConversionLibrary.sol";
 
 library PeerFedAuctionLibrary {
     using PRBMathUD60x18 for uint256;

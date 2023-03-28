@@ -2,13 +2,13 @@
 
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./interfaces/IPeerFedOrchestrator.sol";
-import "./interfaces/IBaseERC20.sol";
-import "./interfaces/IScaledERC20.sol";
-import "./interfaces/IPeerFedConverter.sol";
-import "./libraries/PeerFedConversionLibrary.sol";
+import { IPeerFedOrchestrator } from "./interfaces/IPeerFedOrchestrator.sol";
+import { IBaseERC20 } from "./interfaces/IBaseERC20.sol";
+import { IScaledERC20 } from "./interfaces/IScaledERC20.sol";
+import { IPeerFedConverter } from "./interfaces/IPeerFedConverter.sol";
+import { PeerFedConversionLibrary } from "./libraries/PeerFedConversionLibrary.sol";
 
 contract PeerFedConverter is IPeerFedConverter {
     address public immutable orchestrator;
@@ -22,13 +22,7 @@ contract PeerFedConverter is IPeerFedConverter {
         _;
     }
 
-    constructor(
-        address orchestrator_,
-        address mShare_,
-        address bShare_,
-        address mToken_,
-        address bToken_
-    ) {
+    constructor(address orchestrator_, address mShare_, address bShare_, address mToken_, address bToken_) {
         orchestrator = orchestrator_;
         mShare = mShare_;
         bShare = bShare_;

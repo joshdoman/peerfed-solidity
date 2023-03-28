@@ -4,11 +4,11 @@ import { ethers } from "hardhat";
 
 import type { Signers } from "../types";
 import { shouldBehaveLikeBaseERC20 } from "./BaseERC20.behavior";
-import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
 import { deployOwnerBalanceFixture, deployPeerFedFixture } from "./PeerFed.fixture";
 import { shouldBehaveLikePeerFedAuctionHouse } from "./PeerFedAuctionHouse.behavior";
 import { shouldBehaveLikePeerFedConverter } from "./PeerFedConverter.behavior";
 import { shouldBehaveLikePeerFedOrchestrator } from "./PeerFedOrchestrator.behavior";
+import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
 
 describe("Unit tests", function () {
   before(async function () {
@@ -89,9 +89,7 @@ describe("Unit tests", function () {
 
   describe("PeerFedAuctionHouse", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken, auctionHouse } = await this.loadFixture(
-        deployPeerFedFixture,
-      );
+      const { orchestrator, mShare, bShare, auctionHouse } = await this.loadFixture(deployPeerFedFixture);
       this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;

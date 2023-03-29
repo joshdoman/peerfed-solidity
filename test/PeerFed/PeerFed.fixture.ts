@@ -62,14 +62,13 @@ export async function deployPeerFedFixture(): Promise<{
 export async function deployOwnerBalanceFixture(auctionHouse: PeerFedAuctionHouse): Promise<void> {
   // Owner wins an auction
   const auction = await auctionHouse.auction();
-  const DURATION = await auctionHouse.DURATION();
-  const endTime = auction["startTime"].add(DURATION);
+  const endTime = auction["endTime"];
   // Bid 1 ETH
   await auctionHouse.bid({ value: eth(1) });
   // End the auction
   await setTime(endTime.toNumber());
   // Settle the auction and create a new one
-  await auctionHouse.settleCurrentAndCreateNewAuction();
+  await auctionHouse.settleAuction();
 }
 
 function eth(n: number) {

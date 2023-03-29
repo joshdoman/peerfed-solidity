@@ -13,8 +13,8 @@ pragma solidity ^0.8.6;
 
 interface IPeerFedAuctionHouse {
     struct Auction {
-        // The time that the auction started
-        uint256 startTime;
+        // The time that the auction ends
+        uint256 endTime;
         // The current highest bid amount
         uint256 bidAmount;
         // The address of the current highest bid
@@ -41,7 +41,7 @@ interface IPeerFedAuctionHouse {
         uint256 amount
     );
 
-    function settleCurrentAndCreateNewAuction() external;
+    function settleAuction() external;
 
     function bid() external payable;
 }

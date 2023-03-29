@@ -17,7 +17,8 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
 
     it("Should create the first auction", async function () {
       const auction = await this.auctionHouse.auction();
-      expect(auction["startTime"]).to.equal(await getTime());
+      const DURATION = await this.auctionHouse.DURATION();
+      expect(auction["endTime"].sub(DURATION)).to.equal(await getTime());
       expect(auction["bidAmount"]).to.equal(0);
       expect(auction["bidder"]).to.equal(constants.AddressZero);
       expect(auction["number"]).to.equal(0);
@@ -27,8 +28,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
   describe("Bid", function () {
     it("Should revert if auction has ended", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // End the auction
       await setTime(endTime.toNumber() + 1);
       await expect(this.auctionHouse.bid()).to.be.revertedWith("PeerFedAuctionHouse: AUCTION_ENDED");
@@ -107,21 +107,17 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
   describe("Settle", function () {
     it("Should revert if auction has not ended", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // Set time just prior to auction ending (calling function will add one second, do decrement 2)
       await setTime(endTime.toNumber() - 2);
-      await expect(this.auctionHouse.settleCurrentAndCreateNewAuction()).to.be.revertedWith(
-        "PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED",
-      );
+      await expect(this.auctionHouse.settleAuction()).to.be.revertedWith("PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED");
     });
 
     it("Should mint the auction house balance to the winning bidder", async function () {
       const { owner } = this.signers;
 
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // Bid 1 ETH
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
@@ -133,7 +129,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const mShareBalance = await this.mShare.balanceOf(owner.address);
       const bShareBalance = await this.bShare.balanceOf(owner.address);
       // Settle the auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Check if the owner's balance increased by expected amount
       expect(await this.mShare.balanceOf(owner.address)).to.equal(mShareBalance.add(mAmount));
       expect(await this.bShare.balanceOf(owner.address)).to.equal(bShareBalance.add(bAmount));
@@ -142,8 +138,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
     it("Should emit AuctionSettled event", async function () {
       const { owner } = this.signers;
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // Bid 1 ETH
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
@@ -152,7 +147,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const mAmount = await this.mShare.balanceOf(this.auctionHouse.address);
       const bAmount = await this.bShare.balanceOf(this.auctionHouse.address);
       // Verify the AuctionSettled event is emitted correctly
-      await expect(await this.auctionHouse.settleCurrentAndCreateNewAuction())
+      await expect(await this.auctionHouse.settleAuction())
         .to.emit(this.auctionHouse, "AuctionSettled")
         .withArgs(auction["number"], mAmount, bAmount, owner.address, eth(1));
     });
@@ -161,12 +156,11 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
   describe("Create New", function () {
     it("Should increment auction number", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // End the auction
       await setTime(endTime.toNumber());
       // Settle and create new auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Get updated auction number and verify that it's correct
       const newAuction = await this.auctionHouse.auction();
       expect(newAuction["number"]).to.equal(auction["number"].add(1));
@@ -174,29 +168,28 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
 
     it("Should reset bidder and bid amount", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // End the auction
       await setTime(endTime.toNumber());
       // Settle and create new auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Get updated auction and verify that bidder and bid amount is correct
       const newAuction = await this.auctionHouse.auction();
       expect(newAuction["bidder"]).to.equal(constants.AddressZero);
       expect(newAuction["bidAmount"]).to.equal(0);
     });
 
-    it("Should set start time to current time", async function () {
+    it("Should set start time to current time plus duration", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // End the auction
       await setTime(endTime.toNumber());
       // Settle and create new auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Get updated auction and verify that the start time is the current time
       const newAuction = await this.auctionHouse.auction();
-      expect(newAuction["startTime"]).to.equal(await getTime());
+      const DURATION = await this.auctionHouse.DURATION();
+      expect(newAuction["endTime"].sub(DURATION)).to.equal(await getTime());
     });
 
     it("Should correctly calculate the invariant issuance amount", async function () {
@@ -213,8 +206,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
 
     it("Should increase invariant by issuance amount", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // Bid 1 ETH
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
@@ -224,7 +216,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const bShareSupply = await this.bShare.totalSupply();
       const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply));
       // Settle the auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Calculate invariant after settling the auction
       const newMShareSupply = await this.mShare.totalSupply();
       const newBShareSupply = await this.bShare.totalSupply();
@@ -237,8 +229,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
 
     it("Should not change the interest rate", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // Bid 1 ETH
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
@@ -246,7 +237,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       // Get the interest rate prior to creating the auction
       const interestRate = await this.orchestrator.interestRate();
       // Settle the auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Compare the new interest rate
       const newInterestRate = await this.orchestrator.interestRate();
       if (newInterestRate.gt(interestRate)) {
@@ -259,8 +250,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
 
     it("Should roll auction house balance and issue correct amount if prior auction was not won", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // End the auction
       await setTime(endTime.toNumber());
       // Get the auction house share balance prior to settling the auction
@@ -275,7 +265,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const mAmount = mShareSupply.mul(issuance).div(invariant);
       const bAmount = bShareSupply.mul(issuance).div(invariant);
       // Settle the auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Compare the new auction house share balance
       expect(await this.mShare.balanceOf(this.auctionHouse.address)).to.equal(mBalance.add(mAmount));
       expect(await this.bShare.balanceOf(this.auctionHouse.address)).to.equal(bBalance.add(bAmount));
@@ -283,8 +273,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
 
     it("Should issue correct amount to auction house if prior auction was won", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // Bid 1 ETH
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
@@ -298,7 +287,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const mAmount = mShareSupply.mul(issuance).div(invariant);
       const bAmount = bShareSupply.mul(issuance).div(invariant);
       // Settle the auction
-      await this.auctionHouse.settleCurrentAndCreateNewAuction();
+      await this.auctionHouse.settleAuction();
       // Compare the new auction house share balance
       expect(await this.mShare.balanceOf(this.auctionHouse.address)).to.equal(mAmount);
       expect(await this.bShare.balanceOf(this.auctionHouse.address)).to.equal(bAmount);
@@ -306,8 +295,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
 
     it("Should emit AuctionCreated event", async function () {
       const auction = await this.auctionHouse.auction();
-      const DURATION = await this.auctionHouse.DURATION();
-      const endTime = auction["startTime"].add(DURATION);
+      const endTime = auction["endTime"];
       // Bid 1 ETH
       await this.auctionHouse.bid({ value: eth(1) });
       // End the auction
@@ -323,8 +311,9 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       // Verify the AuctionSettled event is emitted correctly
       const newAuctionNumber = auction["number"].add(1);
       const newStartTime = (await getTime()) + 1; // Calling function will increment time by 1
+      const DURATION = await this.auctionHouse.DURATION();
       const newEndTime = newStartTime + DURATION.toNumber();
-      await expect(await this.auctionHouse.settleCurrentAndCreateNewAuction())
+      await expect(await this.auctionHouse.settleAuction())
         .to.emit(this.auctionHouse, "AuctionCreated")
         .withArgs(newAuctionNumber, mAmount, bAmount, newStartTime, newEndTime);
     });

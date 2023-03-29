@@ -58,7 +58,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
     /**
      * @notice Settle the current auction, mint the new tokens, and create the next auction.
      */
-    function settleCurrentAndCreateNewAuction() external {
+    function settleAuction() external {
         uint64 auctionNumber = _settleAuction();
         if (auctionNumber >> 32 == 0) {
             // Create the next auction if the auction number is less than 2^32 (to avoid overflow)
@@ -73,7 +73,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
     function bid() external payable {
         IPeerFedAuctionHouse.Auction memory _auction = auction;
 
-        require(block.timestamp < _auction.startTime + DURATION, "PeerFedAuctionHouse: AUCTION_ENDED");
+        require(block.timestamp < _auction.endTime, "PeerFedAuctionHouse: AUCTION_ENDED");
         require(
             msg.value >= _auction.bidAmount + ((_auction.bidAmount * MIN_BID_INCREMENT_PERCENTAGE) / 100),
             "PeerFedAuctionHouse: INSUFFICIENT_BID"
@@ -100,7 +100,12 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
      */
     function _createAuction(uint64 auctionNumber) internal {
         (uint256 mAmount, uint256 bAmount) = _premintAuction(auctionNumber);
-        auction = Auction({ startTime: block.timestamp, bidAmount: 0, bidder: payable(0), number: auctionNumber });
+        auction = Auction({
+            endTime: block.timestamp + DURATION,
+            bidAmount: 0,
+            bidder: payable(0),
+            number: auctionNumber
+        });
 
         emit AuctionCreated(auctionNumber, mAmount, bAmount, block.timestamp, block.timestamp + DURATION);
     }
@@ -112,7 +117,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
     function _settleAuction() internal returns (uint64 auctionNumber) {
         IPeerFedAuctionHouse.Auction memory _auction = auction;
 
-        require(block.timestamp >= _auction.startTime + DURATION, "PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED");
+        require(block.timestamp >= _auction.endTime, "PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED");
 
         // Set the auction number
         auctionNumber = _auction.number;
@@ -124,7 +129,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
         uint256 bAmount = IBaseERC20(bShare_).balanceOf(address(this));
 
         if (_auction.bidder != address(0)) {
-            // Transfer the auction house share balance to the winning bidder
+            // Transfer the auction house balance to the winning bidder
             IBaseERC20(mShare_).transfer(_auction.bidder, mAmount);
             IBaseERC20(bShare_).transfer(_auction.bidder, bAmount);
         }

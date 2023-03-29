@@ -44,7 +44,7 @@ contract PeerFedOrchestrator is IPeerFedOrchestrator {
         timeOfLastConversion = block.timestamp;
     }
 
-    // Returns the current annualized interest rate w/ 18 decimals (r = M / B)
+    // Returns the current annualized interest rate w/ 18 decimals, where 1e18 = 100% (r = M / B)
     function interestRate() public view returns (uint256) {
         uint256 mShareSupply = IERC20(mShare).totalSupply();
         uint256 bShareSupply = IERC20(bShare).totalSupply();

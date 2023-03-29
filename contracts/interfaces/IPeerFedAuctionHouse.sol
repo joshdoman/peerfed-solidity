@@ -20,7 +20,7 @@ interface IPeerFedAuctionHouse {
         // The address of the current highest bid
         address payable bidder;
         // The auction number (starts at 1)
-        uint64 number;
+        uint64 auctionNumber;
     }
 
     event AuctionCreated(

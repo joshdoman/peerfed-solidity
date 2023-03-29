@@ -21,7 +21,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       expect(auction["endTime"].sub(DURATION)).to.equal(await getTime());
       expect(auction["bidAmount"]).to.equal(0);
       expect(auction["bidder"]).to.equal(constants.AddressZero);
-      expect(auction["number"]).to.equal(0);
+      expect(auction["auctionNumber"]).to.equal(0);
     });
   });
 
@@ -100,7 +100,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const bidAmount = eth(1);
       await expect(await this.auctionHouse.bid({ value: bidAmount }))
         .to.emit(this.auctionHouse, "AuctionBid")
-        .withArgs(auction["number"], owner.address, bidAmount);
+        .withArgs(auction["auctionNumber"], owner.address, bidAmount);
     });
   });
 
@@ -149,7 +149,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       // Verify the AuctionSettled event is emitted correctly
       await expect(await this.auctionHouse.settleAuction())
         .to.emit(this.auctionHouse, "AuctionSettled")
-        .withArgs(auction["number"], mAmount, bAmount, owner.address, eth(1));
+        .withArgs(auction["auctionNumber"], mAmount, bAmount, owner.address, eth(1));
     });
   });
 
@@ -163,7 +163,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       await this.auctionHouse.settleAuction();
       // Get updated auction number and verify that it's correct
       const newAuction = await this.auctionHouse.auction();
-      expect(newAuction["number"]).to.equal(auction["number"].add(1));
+      expect(newAuction["auctionNumber"]).to.equal(auction["auctionNumber"].add(1));
     });
 
     it("Should reset bidder and bid amount", async function () {
@@ -222,7 +222,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const newBShareSupply = await this.bShare.totalSupply();
       const newInvariant = sqrt(sumOfSquares(newMShareSupply, newBShareSupply));
       // Get amount of invariant issuance for the new auction
-      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["auctionNumber"].add(1));
       // Spread between invariant plus issuance and new invariant should be less than 0.001e18
       expect(invariant.add(issuance).sub(newInvariant)).to.be.at.most(eth(0.001));
     });
@@ -261,7 +261,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const bShareSupply = await this.bShare.totalSupply();
       const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply).div(eth(1)));
       // Calculate the amount of mShares and bShares to mint
-      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["auctionNumber"].add(1));
       const mAmount = mShareSupply.mul(issuance).div(invariant);
       const bAmount = bShareSupply.mul(issuance).div(invariant);
       // Settle the auction
@@ -283,7 +283,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const bShareSupply = await this.bShare.totalSupply();
       const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply).div(eth(1)));
       // Calculate the amount of mShares and bShares to mint
-      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["auctionNumber"].add(1));
       const mAmount = mShareSupply.mul(issuance).div(invariant);
       const bAmount = bShareSupply.mul(issuance).div(invariant);
       // Settle the auction
@@ -305,11 +305,11 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       const bShareSupply = await this.bShare.totalSupply();
       const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply).div(eth(1)));
       // Calculate the amount of mShares and bShares to mint
-      const issuance = await this.auctionHouse.getInvariantIssuance(auction["number"].add(1));
+      const issuance = await this.auctionHouse.getInvariantIssuance(auction["auctionNumber"].add(1));
       const mAmount = mShareSupply.mul(issuance).div(invariant);
       const bAmount = bShareSupply.mul(issuance).div(invariant);
       // Verify the AuctionSettled event is emitted correctly
-      const newAuctionNumber = auction["number"].add(1);
+      const newAuctionNumber = auction["auctionNumber"].add(1);
       const newStartTime = (await getTime()) + 1; // Calling function will increment time by 1
       const DURATION = await this.auctionHouse.DURATION();
       const newEndTime = newStartTime + DURATION.toNumber();

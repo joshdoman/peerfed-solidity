@@ -91,7 +91,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
         auction.bidAmount = msg.value;
         auction.bidder = payable(msg.sender);
 
-        emit AuctionBid(_auction.number, msg.sender, msg.value);
+        emit AuctionBid(_auction.auctionNumber, msg.sender, msg.value);
     }
 
     /**
@@ -104,7 +104,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
             endTime: block.timestamp + DURATION,
             bidAmount: 0,
             bidder: payable(0),
-            number: auctionNumber
+            auctionNumber: auctionNumber
         });
 
         emit AuctionCreated(auctionNumber, mAmount, bAmount, block.timestamp, block.timestamp + DURATION);
@@ -120,7 +120,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
         require(block.timestamp >= _auction.endTime, "PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED");
 
         // Set the auction number
-        auctionNumber = _auction.number;
+        auctionNumber = _auction.auctionNumber;
 
         // Gets the share balance of the auction house
         address mShare_ = mShare;
@@ -134,7 +134,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
             IBaseERC20(bShare_).transfer(_auction.bidder, bAmount);
         }
 
-        emit AuctionSettled(_auction.number, mAmount, bAmount, _auction.bidder, _auction.bidAmount);
+        emit AuctionSettled(_auction.auctionNumber, mAmount, bAmount, _auction.bidder, _auction.bidAmount);
     }
 
     /**

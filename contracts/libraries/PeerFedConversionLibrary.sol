@@ -13,6 +13,13 @@ library PeerFedConversionLibrary {
         return (quantity1 * quantity1) + (quantity2 * quantity2);
     }
 
+    // given some amount of asset A and pair of supplies, returns the equivalent amount of asset B
+    function quote(uint256 amountA, uint256 supplyA, uint256 supplyB) internal pure returns (uint256 amountB) {
+        require(amountA > 0, "PeerFedLibrary: INSUFFICIENT_AMOUNT");
+        require(supplyB > 0, "PeerFedLibrary: INSUFFICIENT_SUPPLY");
+        amountB = (amountA * supplyA) / supplyB;
+    }
+
     // given an input amount of an asset and pair supplies, returns the maximum output amount of the other asset
     function getAmountOut(
         uint256 amountIn,

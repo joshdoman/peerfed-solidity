@@ -55,4 +55,10 @@ interface IPeerFedConverter {
         uint256 amountOut,
         address to
     ) external returns (uint256, uint256);
+
+    function quote(uint amountA, uint supplyA, uint supplyB) external pure returns (uint amountB);
+
+    function getAmountOut(uint amountIn, uint supplyIn, uint supplyOut) external pure returns (uint amountOut);
+
+    function getAmountIn(uint amountOut, uint supplyIn, uint supplyOut) external pure returns (uint amountIn);
 }

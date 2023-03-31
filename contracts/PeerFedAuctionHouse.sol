@@ -59,7 +59,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
      * @notice Settle the current auction, mint the new tokens, and create the next auction.
      */
     function settleAuction() external {
-        uint64 auctionNumber = _settleAuction();
+        uint64 auctionNumber = _settleAuction(msg.sender);
         if (auctionNumber >> 32 == 0) {
             // Create the next auction if the auction number is less than 2^32 (to avoid overflow)
             _createAuction(auctionNumber + 1);
@@ -114,7 +114,7 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
      * @notice Settle an auction, finalizing the bid and paying out to the owner.
      * @dev If there are no bids, returns the invariant amount. Otherwise, returns zero.
      */
-    function _settleAuction() internal returns (uint64 auctionNumber) {
+    function _settleAuction(address sender) internal returns (uint64 auctionNumber) {
         IPeerFedAuctionHouse.Auction memory _auction = auction;
 
         require(block.timestamp >= _auction.endTime, "PeerFedAuctionHouse: AUCTION_HAS_NOT_ENDED");
@@ -132,9 +132,13 @@ contract PeerFedAuctionHouse is IPeerFedAuctionHouse {
             // Transfer the auction house balance to the winning bidder
             IBaseERC20(mShare_).transfer(_auction.bidder, mAmount);
             IBaseERC20(bShare_).transfer(_auction.bidder, bAmount);
+            emit AuctionSettled(_auction.auctionNumber, mAmount, bAmount, _auction.bidder, _auction.bidAmount);
+        } else {
+            // No bidder present, so transfer the auction house balance to the user settling the auction
+            IBaseERC20(mShare_).transfer(sender, mAmount);
+            IBaseERC20(bShare_).transfer(sender, bAmount);
+            emit AuctionSettled(_auction.auctionNumber, mAmount, bAmount, sender, _auction.bidAmount);
         }
-
-        emit AuctionSettled(_auction.auctionNumber, mAmount, bAmount, _auction.bidder, _auction.bidAmount);
     }
 
     /**

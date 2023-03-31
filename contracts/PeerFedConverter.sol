@@ -80,7 +80,7 @@ contract PeerFedConverter is IPeerFedConverter {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountOut) {
-        // Update scale factor before executing the converter
+        // Update scale factor before executing the conversion
         IPeerFedOrchestrator(orchestrator).updateScaleFactor();
         (, amountOut) = _convertShares(shareIn, shareOut, amountIn, 0, msg.sender, to);
         require(amountOut >= amountOutMin, "PeerFedConverter: INSUFFICIENT_OUTPUT_AMOUNT");
@@ -158,5 +158,26 @@ contract PeerFedConverter is IPeerFedConverter {
         address mShare_ = mShare;
         address bShare_ = bShare;
         return (tokenA == mShare_ && tokenB == bShare_) || (tokenB == mShare_ && tokenA == bShare_);
+    }
+
+    // **** LIBRARY FUNCTIONS ****
+    function quote(uint256 amountA, uint256 supplyA, uint256 supplyB) external pure returns (uint256 amountB) {
+        amountB = PeerFedConversionLibrary.quote(amountA, supplyA, supplyB);
+    }
+
+    function getAmountOut(
+        uint256 amountIn,
+        uint256 supplyIn,
+        uint256 supplyOut
+    ) external pure returns (uint256 amountOut) {
+        amountOut = PeerFedConversionLibrary.getAmountOut(amountIn, supplyIn, supplyOut);
+    }
+
+    function getAmountIn(
+        uint256 amountOut,
+        uint256 supplyIn,
+        uint256 supplyOut
+    ) external pure returns (uint256 amountIn) {
+        amountIn = PeerFedConversionLibrary.getAmountIn(amountOut, supplyIn, supplyOut);
     }
 }

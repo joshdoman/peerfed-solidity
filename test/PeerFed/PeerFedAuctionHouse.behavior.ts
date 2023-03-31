@@ -135,6 +135,26 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       expect(await this.bShare.balanceOf(owner.address)).to.equal(bShareBalance.add(bAmount));
     });
 
+    it("Should mint the auction house balance to the msg sender if no bid", async function () {
+      const { owner } = this.signers;
+
+      const auction = await this.auctionHouse.auction();
+      const endTime = auction["endTime"];
+      // End the auction without a bid
+      await setTime(endTime.toNumber());
+      // Get the auction house's share balance prior to settling the auction
+      const mAmount = await this.mShare.balanceOf(this.auctionHouse.address);
+      const bAmount = await this.bShare.balanceOf(this.auctionHouse.address);
+      // Get the owner's share balance prior to settling the auction
+      const mShareBalance = await this.mShare.balanceOf(owner.address);
+      const bShareBalance = await this.bShare.balanceOf(owner.address);
+      // Settle the auction
+      await this.auctionHouse.settleAuction();
+      // Check if the owner's balance increased by expected amount
+      expect(await this.mShare.balanceOf(owner.address)).to.equal(mShareBalance.add(mAmount));
+      expect(await this.bShare.balanceOf(owner.address)).to.equal(bShareBalance.add(bAmount));
+    });
+
     it("Should emit AuctionSettled event", async function () {
       const { owner } = this.signers;
       const auction = await this.auctionHouse.auction();
@@ -248,30 +268,7 @@ export function shouldBehaveLikePeerFedAuctionHouse(): void {
       expect(newInterestRate).to.equal(interestRate);
     });
 
-    it("Should roll auction house balance and issue correct amount if prior auction was not won", async function () {
-      const auction = await this.auctionHouse.auction();
-      const endTime = auction["endTime"];
-      // End the auction
-      await setTime(endTime.toNumber());
-      // Get the auction house share balance prior to settling the auction
-      const mBalance = await this.mShare.balanceOf(this.auctionHouse.address);
-      const bBalance = await this.bShare.balanceOf(this.auctionHouse.address);
-      // Calculate invariant prior to settling the auction
-      const mShareSupply = await this.mShare.totalSupply();
-      const bShareSupply = await this.bShare.totalSupply();
-      const invariant = sqrt(sumOfSquares(mShareSupply, bShareSupply).div(eth(1)));
-      // Calculate the amount of mShares and bShares to mint
-      const issuance = await this.auctionHouse.getInvariantIssuance(auction["auctionNumber"].add(1));
-      const mAmount = mShareSupply.mul(issuance).div(invariant);
-      const bAmount = bShareSupply.mul(issuance).div(invariant);
-      // Settle the auction
-      await this.auctionHouse.settleAuction();
-      // Compare the new auction house share balance
-      expect(await this.mShare.balanceOf(this.auctionHouse.address)).to.equal(mBalance.add(mAmount));
-      expect(await this.bShare.balanceOf(this.auctionHouse.address)).to.equal(bBalance.add(bAmount));
-    });
-
-    it("Should issue correct amount to auction house if prior auction was won", async function () {
+    it("Should issue correct amount to auction house after auction settled", async function () {
       const auction = await this.auctionHouse.auction();
       const endTime = auction["endTime"];
       // Bid 1 ETH

@@ -52,7 +52,7 @@ const config: HardhatUserConfig = {
       },
       chainId: chainIds.hardhat,
     },
-    goerli: {
+    sepolia: {
       url: ALCHEMY_API_URL,
       accounts: [`0x${PRIVATE_KEY}`],
     },

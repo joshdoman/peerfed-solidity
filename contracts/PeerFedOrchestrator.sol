@@ -30,9 +30,9 @@ contract PeerFedOrchestrator is IPeerFedOrchestrator {
     uint256 public constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
 
     constructor(address weth) {
-        // Create contracts for shares of money and shares of bonds
-        mShare = address(new BaseERC20("Share of Cash Supply", "sCASH", address(this)));
-        bShare = address(new BaseERC20("Share of Bond Supply", "sBOND", address(this)));
+        // Create contracts for shares of cash supply and shares of bond supply
+        mShare = address(new BaseERC20("Cash Share", "sCASH", address(this)));
+        bShare = address(new BaseERC20("Bond Share", "sBOND", address(this)));
         // Create money and bond contracts
         mToken = address(new ScaledERC20("Cash", "CASH", address(this), mShare));
         bToken = address(new ScaledERC20("Bond", "BOND", address(this), bShare));

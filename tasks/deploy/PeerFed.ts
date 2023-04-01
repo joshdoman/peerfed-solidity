@@ -15,8 +15,8 @@ task("deploy:PeerFed").setAction(async function (taskArguments: TaskArguments, {
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
 
-  // WETH address (Goerli)
-  const wethAddress = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6";
+  // WETH address (Sepolia - Aave)
+  const wethAddress = "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92";
 
   const orchestratorFactory: PeerFedOrchestrator__factory = <PeerFedOrchestrator__factory>(
     await ethers.getContractFactory("PeerFedOrchestrator")

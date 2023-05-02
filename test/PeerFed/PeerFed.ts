@@ -33,6 +33,8 @@ describe("Unit tests", function () {
     });
 
     shouldBehaveLikePeerFedOrchestrator();
+
+    shouldBehaveLikePeerFedMint();
   });
 
   describe("BaseERC20", function () {
@@ -43,9 +45,6 @@ describe("Unit tests", function () {
       this.bShare = bShare;
       this.mToken = mToken;
       this.bToken = bToken;
-
-      // Mint to owner
-      await orchestrator.mint();
     });
 
     shouldBehaveLikeBaseERC20();
@@ -59,9 +58,6 @@ describe("Unit tests", function () {
       this.bShare = bShare;
       this.mToken = mToken;
       this.bToken = bToken;
-
-      // Mint to owner
-      await orchestrator.mint();
     });
 
     shouldBehaveLikeScaledERC20();
@@ -76,27 +72,8 @@ describe("Unit tests", function () {
       this.mToken = mToken;
       this.bToken = bToken;
       this.converter = converter;
-
-      // Mint to owner
-      await orchestrator.mint();
     });
 
     shouldBehaveLikePeerFedConverter();
-  });
-
-  describe("PeerFedMint", function () {
-    beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployPeerFedFixture);
-      this.orchestrator = orchestrator;
-      this.mShare = mShare;
-      this.bShare = bShare;
-      this.mToken = mToken;
-      this.bToken = bToken;
-
-      // Mint to owner
-      await orchestrator.mint();
-    });
-
-    shouldBehaveLikePeerFedMint();
   });
 });

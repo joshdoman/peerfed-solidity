@@ -42,8 +42,8 @@ contract PeerFedOrchestrator is IPeerFedOrchestrator {
         converter = address(new PeerFedConverter(address(this), mShare, bShare, mToken, bToken));
         // Set time of last conversion to current timestamp
         timeOfLastScaleFactorUpdate = block.timestamp;
-        // Mint the first balance to this address so that supply is non-zero
-        _mint(address(this));
+        // Mint the first balance to the deployer of this contract
+        _mint(msg.sender);
     }
 
     // Returns the current annualized interest rate w/ 18 decimals, where 1e18 = 100% (r = M / B)

@@ -3,21 +3,23 @@
 pragma solidity 0.8.15;
 
 interface IPeerFedOrchestrator {
-    function mShare() external returns (address);
+    function mShare() external view returns (address);
 
-    function bShare() external returns (address);
+    function bShare() external view returns (address);
 
-    function mToken() external returns (address);
+    function mToken() external view returns (address);
 
-    function bToken() external returns (address);
+    function bToken() external view returns (address);
 
-    function converter() external returns (address);
+    function converter() external view returns (address);
 
     function interestRate() external view returns (uint256);
 
     function scaleFactor() external view returns (uint256);
 
     function updateScaleFactor() external returns (uint256);
+
+    function mintNumber() external view returns (uint64);
 
     function mint() external;
 

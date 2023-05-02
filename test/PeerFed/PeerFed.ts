@@ -37,9 +37,7 @@ describe("Unit tests", function () {
 
   describe("BaseERC20", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(
-        deployPeerFedFixture,
-      );
+      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployPeerFedFixture);
       this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
@@ -55,9 +53,7 @@ describe("Unit tests", function () {
 
   describe("ScaledERC20", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(
-        deployPeerFedFixture,
-      );
+      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployPeerFedFixture);
       this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;
@@ -73,9 +69,7 @@ describe("Unit tests", function () {
 
   describe("PeerFedConverter", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken, converter } = await this.loadFixture(
-        deployPeerFedFixture,
-      );
+      const { orchestrator, mShare, bShare, mToken, bToken, converter } = await this.loadFixture(deployPeerFedFixture);
       this.orchestrator = orchestrator;
       this.mShare = mShare;
       this.bShare = bShare;

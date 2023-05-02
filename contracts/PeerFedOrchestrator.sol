@@ -62,7 +62,8 @@ contract PeerFedOrchestrator is IPeerFedOrchestrator {
     function scaleFactor() public view returns (uint256) {
         // Approximate e^(rt) as 1 + rt since we assume r << 1
         // Users can call `update()` if approximation is insufficient
-        uint256 growthFactor = 1e18 + ((interestRate() * (block.timestamp - timeOfLastScaleFactorUpdate)) / SECONDS_PER_YEAR);
+        uint256 growthFactor = 1e18 +
+            ((interestRate() * (block.timestamp - timeOfLastScaleFactorUpdate)) / SECONDS_PER_YEAR);
         return (_startingScaleFactor * growthFactor) / 1e18;
     }
 
@@ -100,7 +101,11 @@ contract PeerFedOrchestrator is IPeerFedOrchestrator {
      * @notice Returns the number of shares and the equivalent number of tokens
      * available to be minted (mShares, bShares, mTokens, bTokens).
      */
-    function mintableAmount() external view returns (uint256 mShares, uint256 bShares, uint256 mTokens, uint256 bTokens) {
+    function mintableAmount()
+        external
+        view
+        returns (uint256 mShares, uint256 bShares, uint256 mTokens, uint256 bTokens)
+    {
         // Get the amount of invariant to be issued
         uint256 invariantIssuanceAmount = getInvariantIssuance(mintNumber);
         // Get the supply of mShare and bShare

@@ -1,13 +1,7 @@
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { utils } from "ethers";
 import { ethers } from "hardhat";
 
-import type {
-  BaseERC20,
-  PeerFedConverter,
-  PeerFedOrchestrator,
-  ScaledERC20,
-} from "../../src/types/contracts";
+import type { BaseERC20, PeerFedConverter, PeerFedOrchestrator, ScaledERC20 } from "../../src/types/contracts";
 import type { PeerFedOrchestrator__factory } from "../../src/types/factories/contracts";
 
 export async function deployPeerFedFixture(): Promise<{
@@ -25,9 +19,7 @@ export async function deployPeerFedFixture(): Promise<{
   const orchestratorFactory: PeerFedOrchestrator__factory = <PeerFedOrchestrator__factory>(
     await ethers.getContractFactory("PeerFedOrchestrator")
   );
-  const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>(
-    await orchestratorFactory.connect(owner).deploy()
-  );
+  const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>await orchestratorFactory.connect(owner).deploy();
   await orchestrator.deployed();
 
   const mShareAddress = await orchestrator.mShare();
@@ -48,12 +40,4 @@ export async function deployPeerFedFixture(): Promise<{
   );
 
   return { orchestrator, mShare, bShare, mToken, bToken, converter };
-}
-
-function eth(n: number) {
-  return utils.parseEther(n.toString());
-}
-
-async function setTime(newTime: number): Promise<void> {
-  await ethers.provider.send("evm_mine", [newTime]);
 }

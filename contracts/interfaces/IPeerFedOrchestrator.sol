@@ -27,10 +27,5 @@ interface IPeerFedOrchestrator {
 
     event ScaleFactorUpdated(address indexed sender, uint256 updatedScaleFactor, uint256 updatedAt);
 
-    event Mint(
-        uint64 indexed mintNumber,
-        address to,
-        uint256 mAmount,
-        uint256 bAmount
-    );
+    event Mint(uint64 indexed mintNumber, address to, uint256 mAmount, uint256 bAmount);
 }

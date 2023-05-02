@@ -2,12 +2,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { task } from "hardhat/config";
 import type { TaskArguments } from "hardhat/types";
 
-import type {
-  BaseERC20,
-  PeerFedConverter,
-  PeerFedOrchestrator,
-  ScaledERC20,
-} from "../../src/types/contracts";
+import type { BaseERC20, PeerFedConverter, PeerFedOrchestrator, ScaledERC20 } from "../../src/types/contracts";
 import type { PeerFedOrchestrator__factory } from "../../src/types/factories/contracts";
 
 task("deploy:PeerFed").setAction(async function (taskArguments: TaskArguments, { ethers }) {
@@ -17,9 +12,7 @@ task("deploy:PeerFed").setAction(async function (taskArguments: TaskArguments, {
   const orchestratorFactory: PeerFedOrchestrator__factory = <PeerFedOrchestrator__factory>(
     await ethers.getContractFactory("PeerFedOrchestrator")
   );
-  const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>(
-    await orchestratorFactory.connect(owner).deploy()
-  );
+  const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>await orchestratorFactory.connect(owner).deploy();
   await orchestrator.deployed();
 
   const mShareAddress = await orchestrator.mShare();

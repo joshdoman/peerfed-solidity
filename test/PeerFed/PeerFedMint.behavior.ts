@@ -1,14 +1,12 @@
 import { sqrt } from "@prb/math";
 import { expect } from "chai";
-import { constants, utils } from "ethers";
-import { ethers } from "hardhat";
+import { utils } from "ethers";
 
 import { sumOfSquares } from "./PeerFedConverter.behavior";
 
 export function shouldBehaveLikePeerFedMint(): void {
   describe("Mint", function () {
     it("Should correctly calculate the mintable amount", async function () {
-      const { owner } = this.signers;
       // Calculate invariant prior to settling the auction
       const mShareSupply = await this.mShare.totalSupply();
       const bShareSupply = await this.bShare.totalSupply();
@@ -32,14 +30,11 @@ export function shouldBehaveLikePeerFedMint(): void {
 
     it("Should mint the mintable amount to the msg sender", async function () {
       const { owner } = this.signers;
-      // Get the total supply of shares prior to minting
-      const mSupply = await this.mShare.totalSupply();
-      const bSupply = await this.bShare.totalSupply();
       // Get the owner's share balance prior to minting
       const mShareBalance = await this.mShare.balanceOf(owner.address);
       const bShareBalance = await this.bShare.balanceOf(owner.address);
       // Get available mintable amount
-      const { mShares, bShares, mTokens, bTokens } = await this.orchestrator.mintableAmount();
+      const { mShares, bShares } = await this.orchestrator.mintableAmount();
       // Mint to owner
       await this.orchestrator.mint();
       // Check if the owner's balance increased by expected amount
@@ -49,14 +44,11 @@ export function shouldBehaveLikePeerFedMint(): void {
 
     it("Should mint the mintable amount to the designated address", async function () {
       const { addr1 } = this.signers;
-      // Get the total supply of shares prior to minting
-      const mSupply = await this.mShare.totalSupply();
-      const bSupply = await this.bShare.totalSupply();
       // Get the owner's share balance prior to minting
       const mShareBalance = await this.mShare.balanceOf(addr1.address);
       const bShareBalance = await this.bShare.balanceOf(addr1.address);
       // Get available mintable amount
-      const { mShares, bShares, mTokens, bTokens } = await this.orchestrator.mintableAmount();
+      const { mShares, bShares } = await this.orchestrator.mintableAmount();
       // Mint to owner
       await this.orchestrator.mintTo(addr1.address);
       // Check if the owner's balance increased by expected amount
@@ -82,7 +74,9 @@ export function shouldBehaveLikePeerFedMint(): void {
       expect(await this.orchestrator.getInvariantIssuance(MINTS_PER_HALVING.mul(2).sub(1))).equal(
         INITIAL_ISSUANCE_PER_MINT.div(2),
       );
-      expect(await this.orchestrator.getInvariantIssuance(MINTS_PER_HALVING.mul(2))).equal(INITIAL_ISSUANCE_PER_MINT.div(4));
+      expect(await this.orchestrator.getInvariantIssuance(MINTS_PER_HALVING.mul(2))).equal(
+        INITIAL_ISSUANCE_PER_MINT.div(4),
+      );
     });
 
     it("Should increase invariant by issuance amount", async function () {
@@ -120,7 +114,7 @@ export function shouldBehaveLikePeerFedMint(): void {
     it("Should emit Mint event", async function () {
       const { owner } = this.signers;
       // Get available mintable amount
-      const { mShares, bShares, mTokens, bTokens } = await this.orchestrator.mintableAmount();
+      const { mShares, bShares } = await this.orchestrator.mintableAmount();
       // Verify the Mint event is emitted correctly
       const mintNumber = await this.orchestrator.mintNumber();
       await expect(await this.orchestrator.mint())

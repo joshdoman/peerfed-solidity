@@ -45,7 +45,7 @@ export function shouldBehaveLikePeerFedConverter(): void {
       await addTime(secondsToAdd - 1);
       await this.converter.convertShares(this.mShare.address, this.bShare.address, 100, 0, owner.address);
       expect(await this.orchestrator.scaleFactor()).to.equal(expectedScaleFactor);
-      expect(await this.orchestrator.timeOfLastConversion()).to.equal(await getTime());
+      expect(await this.orchestrator.timeOfLastScaleFactorUpdate()).to.equal(await getTime());
     });
 
     it("Should revert if invalid to", async function () {

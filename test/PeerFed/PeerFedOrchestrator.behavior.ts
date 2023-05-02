@@ -9,8 +9,8 @@ export function shouldBehaveLikePeerFedOrchestrator(): void {
       expect(await this.orchestrator.scaleFactor()).to.equal(eth(1));
     });
 
-    it("Should set the time of last conversion to now", async function () {
-      expect(await this.orchestrator.timeOfLastConversion()).to.equal(await getTime());
+    it("Should set the time of last scale factor update to now", async function () {
+      expect(await this.orchestrator.timeOfLastScaleFactorUpdate()).to.equal(await getTime());
     });
   });
 
@@ -51,7 +51,7 @@ export function shouldBehaveLikePeerFedOrchestrator(): void {
     it("Should update the time of last conversion after updating the scale factor exactly", async function () {
       await addTime(100000);
       await this.orchestrator.updateScaleFactor();
-      expect(await this.orchestrator.timeOfLastConversion()).to.equal(await getTime());
+      expect(await this.orchestrator.timeOfLastScaleFactorUpdate()).to.equal(await getTime());
     });
 
     it("Should emit ScaleFactorUpdated event", async function () {

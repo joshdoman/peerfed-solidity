@@ -4,7 +4,6 @@ import type { TaskArguments } from "hardhat/types";
 
 import type {
   BaseERC20,
-  PeerFedAuctionHouse,
   PeerFedConverter,
   PeerFedOrchestrator,
   ScaledERC20,
@@ -15,14 +14,11 @@ task("deploy:PeerFed").setAction(async function (taskArguments: TaskArguments, {
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
 
-  // WETH address (Sepolia - Aave)
-  const wethAddress = "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92";
-
   const orchestratorFactory: PeerFedOrchestrator__factory = <PeerFedOrchestrator__factory>(
     await ethers.getContractFactory("PeerFedOrchestrator")
   );
   const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>(
-    await orchestratorFactory.connect(owner).deploy(wethAddress)
+    await orchestratorFactory.connect(owner).deploy()
   );
   await orchestrator.deployed();
 
@@ -43,16 +39,10 @@ task("deploy:PeerFed").setAction(async function (taskArguments: TaskArguments, {
     await ethers.getContractAt("PeerFedConverter", converterAddress)
   );
 
-  const auctionHouseAddress = await orchestrator.auctionHouse();
-  const auctionHouse: PeerFedAuctionHouse = <PeerFedAuctionHouse>(
-    await ethers.getContractAt("PeerFedAuctionHouse", auctionHouseAddress)
-  );
-
   console.log("PeerFedOrchestrator deployed to: ", orchestrator.address);
   console.log("mShare deployed to: ", mShare.address);
   console.log("bShare deployed to: ", bShare.address);
   console.log("mToken deployed to: ", mToken.address);
   console.log("bToken deployed to: ", bToken.address);
   console.log("PeerFedConverter deployed to: ", converter.address);
-  console.log("PeerFedAuctionHouse deployed to: ", auctionHouse.address);
 });

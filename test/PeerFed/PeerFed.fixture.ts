@@ -4,7 +4,6 @@ import { ethers } from "hardhat";
 
 import type {
   BaseERC20,
-  PeerFedAuctionHouse,
   PeerFedConverter,
   PeerFedOrchestrator,
   ScaledERC20,
@@ -23,14 +22,11 @@ export async function deployPeerFedFixture(): Promise<{
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
 
-  // WETH address (Goerli)
-  const wethAddress = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6";
-
   const orchestratorFactory: PeerFedOrchestrator__factory = <PeerFedOrchestrator__factory>(
     await ethers.getContractFactory("PeerFedOrchestrator")
   );
   const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>(
-    await orchestratorFactory.connect(owner).deploy(wethAddress)
+    await orchestratorFactory.connect(owner).deploy()
   );
   await orchestrator.deployed();
 
@@ -51,24 +47,7 @@ export async function deployPeerFedFixture(): Promise<{
     await ethers.getContractAt("PeerFedConverter", converterAddress)
   );
 
-  const auctionHouseAddress = await orchestrator.auctionHouse();
-  const auctionHouse: PeerFedAuctionHouse = <PeerFedAuctionHouse>(
-    await ethers.getContractAt("PeerFedAuctionHouse", auctionHouseAddress)
-  );
-
-  return { orchestrator, mShare, bShare, mToken, bToken, converter, auctionHouse };
-}
-
-export async function deployOwnerBalanceFixture(auctionHouse: PeerFedAuctionHouse): Promise<void> {
-  // Owner wins an auction
-  const auction = await auctionHouse.auction();
-  const endTime = auction["endTime"];
-  // Bid 1 ETH
-  await auctionHouse.bid({ value: eth(1) });
-  // End the auction
-  await setTime(endTime.toNumber());
-  // Settle the auction and create a new one
-  await auctionHouse.settleAuction();
+  return { orchestrator, mShare, bShare, mToken, bToken, converter };
 }
 
 function eth(n: number) {

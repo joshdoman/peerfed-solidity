@@ -2,7 +2,6 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 
 import type {
   BaseERC20,
-  PeerFedAuctionHouse,
   PeerFedConverter,
   PeerFedOrchestrator,
   ScaledERC20,
@@ -18,7 +17,6 @@ declare module "mocha" {
     mToken: ScaledERC20;
     bToken: ScaledERC20;
     converter: PeerFedConverter;
-    auctionHouse: PeerFedAuctionHouse;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;
   }

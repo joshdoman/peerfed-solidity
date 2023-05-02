@@ -8,7 +8,7 @@ import { IPeerFedOrchestrator } from "./interfaces/IPeerFedOrchestrator.sol";
 import { IBaseERC20 } from "./interfaces/IBaseERC20.sol";
 import { IScaledERC20 } from "./interfaces/IScaledERC20.sol";
 import { IPeerFedConverter } from "./interfaces/IPeerFedConverter.sol";
-import { PeerFedConversionLibrary } from "./libraries/PeerFedConversionLibrary.sol";
+import { PeerFedLibrary } from "./libraries/PeerFedLibrary.sol";
 
 contract PeerFedConverter is IPeerFedConverter {
     address public immutable orchestrator;
@@ -131,20 +131,20 @@ contract PeerFedConverter is IPeerFedConverter {
             IBaseERC20(shareOut).mintOverride(to, amountOut);
             IBaseERC20(shareIn).burnOverride(from, amountIn);
             // Check if invariant is maintained
-            uint256 oldInvariant_ = PeerFedConversionLibrary.invariant(inSupply, outSupply);
-            uint256 newInvariant_ = PeerFedConversionLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
+            uint256 oldInvariant_ = PeerFedLibrary.invariant(inSupply, outSupply);
+            uint256 newInvariant_ = PeerFedLibrary.invariant(inSupply - amountIn, outSupply + amountOut);
             require(newInvariant_ <= oldInvariant_, "PeerFedConverter: INVALID_CONVERSION");
         } else if (amountIn > 0) {
             // Sender provided exact input amount. Go ahead and burn.
             IBaseERC20(shareIn).burnOverride(from, amountIn);
             // Calculate the output amount using the invariant and mint necessary shares.
-            amountOut = PeerFedConversionLibrary.getAmountOut(amountIn, inSupply, outSupply);
+            amountOut = PeerFedLibrary.getAmountOut(amountIn, inSupply, outSupply);
             IBaseERC20(shareOut).mintOverride(to, amountOut);
         } else {
             // Sender provided exact output amount. Go ahead and mint.
             IBaseERC20(shareOut).mintOverride(to, amountOut);
             // Calculate the needed input amount to satisfy the invariant and burn necessary shares.
-            amountIn = PeerFedConversionLibrary.getAmountIn(amountOut, inSupply, outSupply);
+            amountIn = PeerFedLibrary.getAmountIn(amountOut, inSupply, outSupply);
             IBaseERC20(shareIn).burnOverride(from, amountIn);
         }
 
@@ -162,7 +162,7 @@ contract PeerFedConverter is IPeerFedConverter {
 
     // **** LIBRARY FUNCTIONS ****
     function quote(uint256 amountA, uint256 supplyA, uint256 supplyB) external pure returns (uint256 amountB) {
-        amountB = PeerFedConversionLibrary.quote(amountA, supplyA, supplyB);
+        amountB = PeerFedLibrary.quote(amountA, supplyA, supplyB);
     }
 
     function getAmountOut(
@@ -170,7 +170,7 @@ contract PeerFedConverter is IPeerFedConverter {
         uint256 supplyIn,
         uint256 supplyOut
     ) external pure returns (uint256 amountOut) {
-        amountOut = PeerFedConversionLibrary.getAmountOut(amountIn, supplyIn, supplyOut);
+        amountOut = PeerFedLibrary.getAmountOut(amountIn, supplyIn, supplyOut);
     }
 
     function getAmountIn(
@@ -178,6 +178,6 @@ contract PeerFedConverter is IPeerFedConverter {
         uint256 supplyIn,
         uint256 supplyOut
     ) external pure returns (uint256 amountIn) {
-        amountIn = PeerFedConversionLibrary.getAmountIn(amountOut, supplyIn, supplyOut);
+        amountIn = PeerFedLibrary.getAmountIn(amountOut, supplyIn, supplyOut);
     }
 }

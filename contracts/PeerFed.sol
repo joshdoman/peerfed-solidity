@@ -51,11 +51,7 @@ contract PeerFed is IPeerFed {
      */
     function interestRate() public view returns (uint64) {
         (uint256 _reserve0, uint256 _reserve1) = getReserves();
-        if (_reserve0 > _reserve1) {
-            return uint64(((_reserve0 - _reserve1) * 1e18) / (_reserve0 + _reserve1));
-        } else {
-            return 0;
-        }
+        return PeerFedLibrary.interestRate(_reserve0, _reserve1);
     }
 
     /**
@@ -354,27 +350,5 @@ contract PeerFed is IPeerFed {
     function invariantIssuance(uint32 mintNumber) public pure returns (uint256) {
         uint32 halvings = mintNumber / MINTS_PER_HALVING;
         return INITIAL_ISSUANCE_PER_MINT >> halvings;
-    }
-
-    /** ------ PeerFedLibrary ------ */
-
-    function quote(uint256 amountA, uint256 supplyA, uint256 supplyB) external pure returns (uint256 amountB) {
-        return PeerFedLibrary.quote(amountA, supplyA, supplyB);
-    }
-
-    function getAmountOut(
-        uint256 amountIn,
-        uint256 supplyIn,
-        uint256 supplyOut
-    ) external pure returns (uint256 amountOut) {
-        amountOut = PeerFedLibrary.getAmountOut(amountIn, supplyIn, supplyOut);
-    }
-
-    function getAmountIn(
-        uint256 amountOut,
-        uint256 supplyIn,
-        uint256 supplyOut
-    ) external pure returns (uint256 amountIn) {
-        amountIn = PeerFedLibrary.getAmountIn(amountOut, supplyIn, supplyOut);
     }
 }

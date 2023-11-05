@@ -13,6 +13,11 @@ library PeerFedLibrary {
         amountB = (amountA * supplyA) / supplyB;
     }
 
+    // given the supply of A and B, returns (A - B) / (A + B) with 18 decimals if A > B. Otherwise, returns 0.
+    function interestRate(uint256 supply0, uint256 supply1) internal pure returns (uint64) {
+        return (supply0 > supply1) ? uint64(((supply0 - supply1) * 1e18) / (supply0 + supply1)) : 0;
+    }
+
     // given an input amount of an asset and pair supplies, returns the maximum output amount of the other asset
     function getAmountOut(
         uint256 amountIn,

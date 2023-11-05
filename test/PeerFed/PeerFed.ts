@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 
 import type { Signers } from "../types";
 import { shouldBehaveLikePeerFed } from "./PeerFed.behavior";
+import { shouldBehaveLikePeerFedLibrary } from "./PeerFedLibrary.behavior";
 import { deployPeerFedFixture } from "./PeerFed.fixture";
 
 describe("Unit tests", function () {
@@ -18,12 +19,22 @@ describe("Unit tests", function () {
     this.loadFixture = loadFixture;
   });
 
+  describe("PeerFedLibrary", function () {
+    beforeEach(async function () {
+      const { library } = await this.loadFixture(deployPeerFedFixture);
+      this.library = library;
+    });
+
+    shouldBehaveLikePeerFedLibrary();
+  });
+
   describe("PeerFed", function () {
     beforeEach(async function () {
-      const { peerfed, token0, token1 } = await this.loadFixture(deployPeerFedFixture);
+      const { peerfed, token0, token1, library } = await this.loadFixture(deployPeerFedFixture);
       this.peerfed = peerfed;
       this.token0 = token0;
       this.token1 = token1;
+      this.library = library;
     });
 
     shouldBehaveLikePeerFed();

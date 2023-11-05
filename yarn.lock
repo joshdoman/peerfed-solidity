@@ -1589,9 +1589,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@peerfed.sol/contracts@workspace:.":
+"@peerfed/contracts@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@peerfed.sol/contracts@workspace:."
+  resolution: "@peerfed/contracts@workspace:."
   dependencies:
     "@commitlint/cli": ^17.0.3
     "@commitlint/config-conventional": ^17.0.3

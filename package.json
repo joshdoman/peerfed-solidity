@@ -1,5 +1,5 @@
 {
-  "name": "@peerfed.sol/contracts",
+  "name": "@peerfed/contracts",
   "description": "A Solidity implementation of the PeerFed protocol",
   "version": "1.0.0",
   "author": {
@@ -37,7 +37,6 @@
     "eslint-config-prettier": "^8.5.0",
     "ethers": "^5.6.9",
     "fs-extra": "^10.1.0",
-    "hardhat": "^2.10.1",
     "hardhat-contract-sizer": "^2.6.1",
     "hardhat-gas-reporter": "^1.0.8",
     "husky": "^8.0.1",
@@ -93,8 +92,9 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.7.1",
+    "@openzeppelin/contracts": "^5.0.0",
     "@prb/math": "^2.5.0",
+    "hardhat": "^2.19.0",
     "web3": "^1.9.0"
   }
 }

@@ -1,43 +1,23 @@
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { ethers } from "hardhat";
 
-import type { BaseERC20, PeerFedConverter, PeerFedOrchestrator, ScaledERC20 } from "../../src/types/contracts";
-import type { PeerFedOrchestrator__factory } from "../../src/types/factories/contracts";
+import type { PeerFed, SwappableERC20 } from "../../src/types/contracts";
+import type { PeerFed__factory } from "../../src/types/factories/contracts";
 
 export async function deployPeerFedFixture(): Promise<{
-  orchestrator: PeerFedOrchestrator;
-  mShare: BaseERC20;
-  bShare: BaseERC20;
-  mToken: ScaledERC20;
-  bToken: ScaledERC20;
-  converter: PeerFedConverter;
-  auctionHouse: PeerFedAuctionHouse;
+  peerfed: PeerFed;
+  token0: SwappableERC20;
+  token1: SwappableERC20;
 }> {
   const signers: SignerWithAddress[] = await ethers.getSigners();
   const owner: SignerWithAddress = signers[0];
 
-  const orchestratorFactory: PeerFedOrchestrator__factory = <PeerFedOrchestrator__factory>(
-    await ethers.getContractFactory("PeerFedOrchestrator")
-  );
-  const orchestrator: PeerFedOrchestrator = <PeerFedOrchestrator>await orchestratorFactory.connect(owner).deploy();
-  await orchestrator.deployed();
+  const factory: PeerFed__factory = <PeerFed__factory>await ethers.getContractFactory("PeerFed");
+  const peerfed: PeerFed = <PeerFed>await factory.connect(owner).deploy();
+  await peerfed.deployed();
 
-  const mShareAddress = await orchestrator.mShare();
-  const mShare: BaseERC20 = <BaseERC20>await ethers.getContractAt("BaseERC20", mShareAddress);
+  const token0: SwappableERC20 = <SwappableERC20>await ethers.getContractAt("SwappableERC20", await peerfed.token0());
+  const token1: SwappableERC20 = <SwappableERC20>await ethers.getContractAt("SwappableERC20", await peerfed.token1());
 
-  const bShareAddress = await orchestrator.bShare();
-  const bShare: BaseERC20 = <BaseERC20>await ethers.getContractAt("BaseERC20", bShareAddress);
-
-  const mTokenAddress = await orchestrator.mToken();
-  const mToken: ScaledERC20 = <ScaledERC20>await ethers.getContractAt("ScaledERC20", mTokenAddress);
-
-  const bTokenAddress = await orchestrator.bToken();
-  const bToken: ScaledERC20 = <ScaledERC20>await ethers.getContractAt("ScaledERC20", bTokenAddress);
-
-  const converterAddress = await orchestrator.converter();
-  const converter: PeerFedConverter = <PeerFedConverter>(
-    await ethers.getContractAt("PeerFedConverter", converterAddress)
-  );
-
-  return { orchestrator, mShare, bShare, mToken, bToken, converter };
+  return { peerfed, token0, token1 };
 }

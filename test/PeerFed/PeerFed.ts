@@ -3,12 +3,8 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 import { ethers } from "hardhat";
 
 import type { Signers } from "../types";
-import { shouldBehaveLikeBaseERC20 } from "./BaseERC20.behavior";
+import { shouldBehaveLikePeerFed } from "./PeerFed.behavior";
 import { deployPeerFedFixture } from "./PeerFed.fixture";
-import { shouldBehaveLikePeerFedConverter } from "./PeerFedConverter.behavior";
-import { shouldBehaveLikePeerFedMint } from "./PeerFedMint.behavior";
-import { shouldBehaveLikePeerFedOrchestrator } from "./PeerFedOrchestrator.behavior";
-import { shouldBehaveLikeScaledERC20 } from "./ScaledERC20.behavior";
 
 describe("Unit tests", function () {
   before(async function () {
@@ -22,58 +18,14 @@ describe("Unit tests", function () {
     this.loadFixture = loadFixture;
   });
 
-  describe("PeerFedOrchestrator", function () {
+  describe("PeerFed", function () {
     beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployPeerFedFixture);
-      this.orchestrator = orchestrator;
-      this.mShare = mShare;
-      this.bShare = bShare;
-      this.mToken = mToken;
-      this.bToken = bToken;
+      const { peerfed, token0, token1 } = await this.loadFixture(deployPeerFedFixture);
+      this.peerfed = peerfed;
+      this.token0 = token0;
+      this.token1 = token1;
     });
 
-    shouldBehaveLikePeerFedOrchestrator();
-
-    shouldBehaveLikePeerFedMint();
-  });
-
-  describe("BaseERC20", function () {
-    beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployPeerFedFixture);
-      this.orchestrator = orchestrator;
-      this.mShare = mShare;
-      this.bShare = bShare;
-      this.mToken = mToken;
-      this.bToken = bToken;
-    });
-
-    shouldBehaveLikeBaseERC20();
-  });
-
-  describe("ScaledERC20", function () {
-    beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken } = await this.loadFixture(deployPeerFedFixture);
-      this.orchestrator = orchestrator;
-      this.mShare = mShare;
-      this.bShare = bShare;
-      this.mToken = mToken;
-      this.bToken = bToken;
-    });
-
-    shouldBehaveLikeScaledERC20();
-  });
-
-  describe("PeerFedConverter", function () {
-    beforeEach(async function () {
-      const { orchestrator, mShare, bShare, mToken, bToken, converter } = await this.loadFixture(deployPeerFedFixture);
-      this.orchestrator = orchestrator;
-      this.mShare = mShare;
-      this.bShare = bShare;
-      this.mToken = mToken;
-      this.bToken = bToken;
-      this.converter = converter;
-    });
-
-    shouldBehaveLikePeerFedConverter();
+    shouldBehaveLikePeerFed();
   });
 });

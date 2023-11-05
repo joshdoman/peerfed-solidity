@@ -58,17 +58,17 @@ library PeerFedLibrary {
         uint256 supply0,
         uint256 supply1,
         uint256 invariantIssuance
-    ) internal pure returns (uint256 issuance1, uint256 issuance2) {
+    ) internal pure returns (uint256 newAmount0, uint256 newAmount1) {
         uint256 squaredInvariant = supply0 * supply0 + supply1 * supply1;
         uint256 invariantAmount = PRBMathUD60x18.sqrt(squaredInvariant / 1e18);
         if (invariantAmount > 0) {
             // dQ1 = Q1 * C / K, dQ2 = Q2 * C / K
-            issuance1 = (supply0 * invariantIssuance) / invariantAmount;
-            issuance2 = (supply1 * invariantIssuance) / invariantAmount;
+            newAmount0 = (supply0 * invariantIssuance) / invariantAmount;
+            newAmount1 = (supply1 * invariantIssuance) / invariantAmount;
         } else {
             // dQ1 = dK / sqrt(2), dQ2 = dK / sqrt(2)
-            issuance1 = (invariantIssuance * 1e18) / PRBMathUD60x18.sqrt(2 * 1e18);
-            issuance2 = issuance1;
+            newAmount0 = (invariantIssuance * 1e18) / PRBMathUD60x18.sqrt(2 * 1e18);
+            newAmount1 = newAmount0;
         }
     }
 }

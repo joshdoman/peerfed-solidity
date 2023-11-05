@@ -28,4 +28,12 @@ contract PeerFedLibraryExternal {
     ) external pure returns (uint256) {
         return PeerFedLibrary.getAmountIn(amountOut, supplyIn, supplyOut);
     }
+
+    function issuanceAmounts(
+        uint256 supply0,
+        uint256 supply1,
+        uint256 invariantIssuance
+    ) external pure returns (uint256 newAmount0, uint256 newAmount1) {
+        (newAmount0, newAmount1) = PeerFedLibrary.issuanceAmounts(supply0, supply1, invariantIssuance);
+    }
 }

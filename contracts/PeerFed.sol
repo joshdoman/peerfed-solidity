@@ -25,7 +25,7 @@ contract PeerFed is IPeerFed {
     uint32 public checkpointTimestampLast;
     uint32 public checkpointCounter;
 
-    uint128 public constant SECONDS_PER_YEAR = 31566909; // (365.242 days * 24 hours per day * 3600 seconds per hour)
+    uint128 public constant SECONDS_PER_YEAR = 31556952; // (365.2425 days * 24 hours per day * 3600 seconds per hour)
     uint32 public constant SECONDS_PER_CHECKPOINT = 1800; // 30 minutes
     uint256 public constant INITIAL_ISSUANCE_PER_MINT = 150 * 1e18; // increase max token supply initally by 150 each mint
     uint32 public constant MINTS_PER_HALVING = 70000; // halve issuance amount approximately every 4 years

@@ -4,8 +4,8 @@ import { ethers } from "hardhat";
 
 import type { Signers } from "../types";
 import { shouldBehaveLikePeerFed } from "./PeerFed.behavior";
-import { shouldBehaveLikePeerFedLibrary } from "./PeerFedLibrary.behavior";
 import { deployPeerFedFixture } from "./PeerFed.fixture";
+import { shouldBehaveLikePeerFedLibrary } from "./PeerFedLibrary.behavior";
 
 describe("Unit tests", function () {
   before(async function () {

@@ -13,19 +13,11 @@ contract PeerFedLibraryExternal {
         return PeerFedLibrary.interestRate(supply0, supply1);
     }
 
-    function getAmountOut(
-        uint256 amountIn,
-        uint256 supplyIn,
-        uint256 supplyOut
-    ) external pure returns (uint256) {
+    function getAmountOut(uint256 amountIn, uint256 supplyIn, uint256 supplyOut) external pure returns (uint256) {
         return PeerFedLibrary.getAmountOut(amountIn, supplyIn, supplyOut);
     }
 
-    function getAmountIn(
-        uint256 amountOut,
-        uint256 supplyIn,
-        uint256 supplyOut
-    ) external pure returns (uint256) {
+    function getAmountIn(uint256 amountOut, uint256 supplyIn, uint256 supplyOut) external pure returns (uint256) {
         return PeerFedLibrary.getAmountIn(amountOut, supplyIn, supplyOut);
     }
 

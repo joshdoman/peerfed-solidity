@@ -1,6 +1,6 @@
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
-import type { PeerFed, SwappableERC20, PeerFedLibraryExternal } from "../src/types/contracts";
+import type { PeerFed, PeerFedLibraryExternal, SwappableERC20 } from "../src/types/contracts";
 
 type Fixture<T> = () => Promise<T>;
 

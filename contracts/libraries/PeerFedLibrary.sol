@@ -4,12 +4,18 @@ pragma solidity ^0.8.20;
 
 import { PRBMathUD60x18 } from "@prb/math/contracts/PRBMathUD60x18.sol";
 
+error InsufficientOutputSupply();
+error InsufficientInputAmount();
+error InsufficientOutputAmount();
+error ExcessiveInputAmount();
+error ExcessiveOutputAmount();
+
 library PeerFedLibrary {
     using PRBMathUD60x18 for uint256;
 
     // given some amount of asset A and pair of supplies, returns the equivalent amount of asset B
     function quote(uint256 amountA, uint256 supplyA, uint256 supplyB) internal pure returns (uint256 amountB) {
-        require(supplyB > 0, "PeerFedLibrary: INSUFFICIENT_OUTPUT_SUPPLY");
+        if (supplyB == 0) revert InsufficientOutputSupply();
         amountB = (amountA * supplyA) / supplyB;
     }
 
@@ -24,8 +30,8 @@ library PeerFedLibrary {
         uint256 supplyIn,
         uint256 supplyOut
     ) internal pure returns (uint256 amountOut) {
-        require(amountIn > 0, "PeerFedLibrary: INSUFFICIENT_INPUT_AMOUNT");
-        require(amountIn <= supplyIn, "PeerFedLibrary: EXCESSIVE_INPUT_AMOUNT");
+        if (amountIn == 0) revert InsufficientInputAmount();
+        if (amountIn > supplyIn) revert ExcessiveInputAmount();
         uint256 invariant_ = supplyIn * supplyIn + supplyOut * supplyOut;
         supplyIn -= amountIn;
         uint256 sqOutSupply;
@@ -41,10 +47,10 @@ library PeerFedLibrary {
         uint256 supplyIn,
         uint256 supplyOut
     ) internal pure returns (uint256 amountIn) {
-        require(amountOut > 0, "PeerFedLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
+        if (amountOut == 0) revert InsufficientOutputAmount();
         uint256 invariant_ = supplyIn * supplyIn + supplyOut * supplyOut;
         supplyOut += amountOut;
-        require(supplyOut * supplyOut <= invariant_, "PeerFedLibrary: EXCESSIVE_OUTPUT_AMOUNT");
+        if (supplyOut * supplyOut > invariant_) revert ExcessiveOutputAmount();
         uint256 sqInSupply;
         unchecked {
             sqInSupply = (invariant_ - (supplyOut * supplyOut)) / 1e18;

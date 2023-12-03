@@ -16,6 +16,7 @@
     ],
     "reason-string": "off",
     "no-inline-assembly": "off",
-    "avoid-low-level-calls": "off"
+    "avoid-low-level-calls": "off",
+    "immutable-vars-naming": "off"
   }
 }

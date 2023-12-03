@@ -4,18 +4,18 @@ pragma solidity ^0.8.20;
 
 import { PRBMathUD60x18 } from "@prb/math/contracts/PRBMathUD60x18.sol";
 
-error InsufficientOutputSupply();
-error InsufficientInputAmount();
-error InsufficientOutputAmount();
-error ExcessiveInputAmount();
-error ExcessiveOutputAmount();
+error LibraryInsufficientOutputSupply();
+error LibraryInsufficientInputAmount();
+error LibraryInsufficientOutputAmount();
+error LibraryExcessiveInputAmount();
+error LibraryExcessiveOutputAmount();
 
 library PeerFedLibrary {
     using PRBMathUD60x18 for uint256;
 
     // given some amount of asset A and pair of supplies, returns the equivalent amount of asset B
     function quote(uint256 amountA, uint256 supplyA, uint256 supplyB) internal pure returns (uint256 amountB) {
-        if (supplyB == 0) revert InsufficientOutputSupply();
+        if (supplyB == 0) revert LibraryInsufficientOutputSupply();
         amountB = (amountA * supplyA) / supplyB;
     }
 
@@ -30,8 +30,8 @@ library PeerFedLibrary {
         uint256 supplyIn,
         uint256 supplyOut
     ) internal pure returns (uint256 amountOut) {
-        if (amountIn == 0) revert InsufficientInputAmount();
-        if (amountIn > supplyIn) revert ExcessiveInputAmount();
+        if (amountIn == 0) revert LibraryInsufficientInputAmount();
+        if (amountIn > supplyIn) revert LibraryExcessiveInputAmount();
         uint256 invariant_ = supplyIn * supplyIn + supplyOut * supplyOut;
         supplyIn -= amountIn;
         uint256 sqOutSupply;
@@ -47,10 +47,10 @@ library PeerFedLibrary {
         uint256 supplyIn,
         uint256 supplyOut
     ) internal pure returns (uint256 amountIn) {
-        if (amountOut == 0) revert InsufficientOutputAmount();
+        if (amountOut == 0) revert LibraryInsufficientOutputAmount();
         uint256 invariant_ = supplyIn * supplyIn + supplyOut * supplyOut;
         supplyOut += amountOut;
-        if (supplyOut * supplyOut > invariant_) revert ExcessiveOutputAmount();
+        if (supplyOut * supplyOut > invariant_) revert LibraryExcessiveOutputAmount();
         uint256 sqInSupply;
         unchecked {
             sqInSupply = (invariant_ - (supplyOut * supplyOut)) / 1e18;

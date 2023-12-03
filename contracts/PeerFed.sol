@@ -17,9 +17,9 @@ contract PeerFed is IPeerFed {
     uint112 private reserve1;
     uint32 private blockTimestampLast;
 
-    uint32 public currentCheckpointID;
     uint128 public accumulator = 1e18;
     uint96 public lastAccumulatorResetAt;
+    uint32 public currentCheckpointID;
 
     Checkpoint[] public checkpoints;
 
@@ -28,7 +28,8 @@ contract PeerFed is IPeerFed {
 
     uint128 public constant SECONDS_PER_YEAR = 31556952; // (365.2425 days * 24 hours per day * 3600 seconds per hour)
     uint32 public constant SECONDS_PER_CHECKPOINT = 1800; // 30 minutes
-    uint256 public constant INITIAL_ISSUANCE_PER_MINT = 150 * 1e18; // increase max token supply by 300 each mint (until first halving)
+    uint32 public constant SECONDS_UNTIL_ANYONE_CAN_MINT = 2100; // winning bidder loses exclusive right to mint if 35 minutes have passed since last checkpoint
+    uint256 public constant INITIAL_ISSUANCE_PER_MINT = 150 * 1e18; // increase max token supply by 150 each mint (until first halving)
     uint32 public constant MINTS_PER_HALVING = 70000; // halve issuance amount approximately every 4 years
     uint8 public constant NUM_SAVED_CHECKPOINTS = 16; // use average interest rate over last 8 hours
 
@@ -280,6 +281,10 @@ contract PeerFed is IPeerFed {
 
     /** -------- Bid, Mint, & Checkpoint -------- */
 
+    /**
+     * @notice Replaces `currentBidder` with `msg.sender` if `msg.value` exceeds `currentBid`
+     * @notice Previous `currentBidder` is refunded their bid amount
+     */
     function bid() public payable {
         uint256 _currentBid = currentBid;
         require(msg.value > _currentBid, "PeerFed: INSUFFICIENT_BID");
@@ -290,18 +295,26 @@ contract PeerFed is IPeerFed {
         }
         currentBid = msg.value;
         currentBidder = msg.sender;
+        emit Bid(msg.sender, msg.value);
     }
 
     /**
-     * @notice Mints available amount to address `to` and updates checkpoint counter and values
+     * @notice Mints available amount to `currentBidder` and updates checkpoint interest rate, accumulator, and id.
+     * @notice Mints to `msg.sender` if `currentBidder` is not set or if `SECONDS_UNTIL_ANYONE_CAN_MINT` has elapsed since last checkpoint.
+     * @notice Reverts if `SECONDS_PER_CHECKPOINT` has not elapsed since last checkpoint.
      */
     function mint() public lock {
-        require(_mintAvailable(), "PeerFed: MINT_UNAVAILABLE");
+        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
+        uint32 timeElapsed;
+        unchecked {
+            timeElapsed = blockTimestamp - currentCheckpoint().blocktime; // overflow is desired
+        }
+        require(timeElapsed > SECONDS_PER_CHECKPOINT, "PeerFed: MINT_UNAVAILABLE");
         (uint256 newToken0, uint256 newToken1) = mintableAmount();
 
         // Mint to current bidder, but if current bidder does not exist, mint to `msg.sender`
         address to = currentBidder;
-        if (currentBidder == address(0)) to = msg.sender;
+        if (currentBidder == address(0) || timeElapsed > SECONDS_UNTIL_ANYONE_CAN_MINT) to = msg.sender;
         if (newToken0 > 0) IERC20(token0).transfer(to, newToken0);
         if (newToken1 > 0) IERC20(token1).transfer(to, newToken1);
         if (newToken0 > 0 || newToken1 > 0) emit Mint(to, newToken0, newToken1);
@@ -321,23 +334,23 @@ contract PeerFed is IPeerFed {
         Checkpoint memory _checkpoint = checkpoint;
 
         // Calculate time elapsed over the last 16 checkpoints
-        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
         uint32 checkpointTimeElapsed;
         unchecked {
             checkpointTimeElapsed = blockTimestamp - _checkpoint.blocktime; // overflow is desired
         }
 
+        // Calculate new average interest rate
         uint128 _accumulator = accumulator;
         uint128 _checkpointAccumulator = _checkpoint.accumulator;
         uint64 _checkpointInterestRate;
         if (_checkpointAccumulator < _accumulator && checkpointTimeElapsed > 0) {
-            // Calculate average interest rate over the last 8 hours
+            // Use average interest rate over the last 8 hours
             _checkpointInterestRate = uint64(
                 ((((_accumulator - _checkpointAccumulator) * 1e18) / _checkpointAccumulator) * SECONDS_PER_YEAR) /
                     checkpointTimeElapsed
             );
         } else {
-            // Accumulator overflowed or average interest rate is zero, so use current checkpoint interest rate.
+            // Use current checkpoint interest rate (accumulator overflowed or average interest rate is zero)
             _checkpointInterestRate = currentCheckpoint().interestRate;
         }
 
@@ -347,22 +360,6 @@ contract PeerFed is IPeerFed {
         checkpoint.blocktime = blockTimestamp;
         currentCheckpointID = _nextCheckpointID;
         emit NewCheckpoint(_checkpointInterestRate, _accumulator);
-    }
-
-    /**
-     * @notice Internal helper function that returns true if 30 minutes has passed since last mint.
-     */
-    function _mintAvailable()
-        private
-        view
-        returns (bool isAvailable)
-    {
-        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
-        uint32 timeElapsed;
-        unchecked {
-            timeElapsed = blockTimestamp - currentCheckpoint().blocktime; // overflow is desired
-        }
-        return timeElapsed > SECONDS_PER_CHECKPOINT;
     }
 
     /**
@@ -378,6 +375,9 @@ contract PeerFed is IPeerFed {
         );
     }
 
+    /**
+     * @notice Returns the amount the invariant `K` increases on mint `mintNumber`
+     */
     function invariantIssuance(uint32 mintNumber) public pure returns (uint256) {
         uint32 halvings = mintNumber / MINTS_PER_HALVING;
         return INITIAL_ISSUANCE_PER_MINT >> halvings;

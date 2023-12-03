@@ -26,6 +26,8 @@ interface IPeerFed {
 
     event Mint(address indexed to, uint256 newToken0, uint256 newToken1);
 
+    event Bid(address indexed bidder, uint256 bid);
+
     function token0() external view returns (address);
 
     function token1() external view returns (address);

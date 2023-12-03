@@ -52,6 +52,13 @@ contract PeerFed is IPeerFed {
     }
 
     /**
+     * @notice Returns the current checkpoint.
+     */
+    function currentCheckpoint() public view returns (Checkpoint memory) {
+        return checkpoints[currentCheckpointID % NUM_SAVED_CHECKPOINTS];
+    }
+
+    /**
      * @notice Returns the current annualized interest rate w/ 18 decimals, where 1e18 = 100% (r = (A - B) / (A + B))
      * @notice If A is not greater than B, returns 0.
      */
@@ -62,6 +69,7 @@ contract PeerFed is IPeerFed {
 
     /**
      * @notice Returns the latest accumulator given the current interest rate
+     * @notice This reflects the number of "e-bonds" per BTC
      */
     function latestAccumulator() public view returns (uint256) {
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
@@ -78,12 +86,11 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Returns the current price of BTC in "utils" with 18 decimals
-     * @notice Current price = accumulator / r, where r is the current checkpoint interest rate
+     * @notice Returns the current number of "utils" per BTC with 18 decimals
+     * @notice Quote = accumulator / r, where r is the current checkpoint interest rate
      */
     function quote() public view returns (uint256) {
-        Checkpoint memory currentCheckpoint = checkpoints[currentCheckpointID % NUM_SAVED_CHECKPOINTS];
-        return (latestAccumulator() * 1e18) / currentCheckpoint.interestRate;
+        return (latestAccumulator() * 1e18) / currentCheckpoint().interestRate;
     }
 
     /** -------- Swap Logic -------- */
@@ -331,7 +338,7 @@ contract PeerFed is IPeerFed {
             );
         } else {
             // Accumulator overflowed or average interest rate is zero, so use current checkpoint interest rate.
-            _checkpointInterestRate = checkpoints[(_nextCheckpointID - 1) % NUM_SAVED_CHECKPOINTS].interestRate;
+            _checkpointInterestRate = currentCheckpoint().interestRate;
         }
 
         // Update checkpoint values, current ID, and emit NewCheckpoint event
@@ -350,12 +357,10 @@ contract PeerFed is IPeerFed {
         view
         returns (bool isAvailable)
     {
-        uint32 _currentCheckpointID = currentCheckpointID;
-        Checkpoint memory currentCheckpoint = checkpoints[_currentCheckpointID % NUM_SAVED_CHECKPOINTS];
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
         uint32 timeElapsed;
         unchecked {
-            timeElapsed = blockTimestamp - currentCheckpoint.blocktime; // overflow is desired
+            timeElapsed = blockTimestamp - currentCheckpoint().blocktime; // overflow is desired
         }
         return timeElapsed > SECONDS_PER_CHECKPOINT;
     }

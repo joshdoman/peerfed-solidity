@@ -35,7 +35,7 @@ contract PeerFed is IPeerFed {
 
     uint8 private unlocked = 1;
     modifier lock() {
-        require(unlocked == 1, "PeerFed: LOCKED");
+        if (unlocked == 0) revert Locked();
         unlocked = 0;
         _;
         unlocked = 1;
@@ -109,7 +109,8 @@ contract PeerFed is IPeerFed {
      * @dev Internal helper function to update reserve{0,1}
      */
     function _update(uint256 supply0, uint256 supply1) private {
-        require(supply0 <= type(uint112).max && supply1 <= type(uint112).max, "PeerFed: OVERFLOW");
+        if (supply0 > type(uint112).max) revert Overflow();
+        if (supply1 > type(uint112).max) revert Overflow();
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
         uint32 timeElapsed;
         unchecked {
@@ -164,8 +165,8 @@ contract PeerFed is IPeerFed {
         address to,
         bytes memory data
     ) private lock {
-        require(amount0Out > 0 || amount1Out > 0, "PeerFed: INSUFFICIENT_OUTPUT_AMOUNT");
-        require(to != address(this), "PeerFed: INVALID_TO");
+        if (amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
+        if (to == address(this)) revert InvalidTo();
 
         if (amount0Out > 0) IERC20(token0).transfer(to, amount0Out);
         if (amount1Out > 0) IERC20(token1).transfer(to, amount1Out);
@@ -181,10 +182,8 @@ contract PeerFed is IPeerFed {
             amount0In = _reserve0 > supply0 ? _reserve0 - supply0 : 0;
             amount1In = _reserve1 > supply1 ? _reserve1 - supply1 : 0;
 
-            require(
-                supply0 * supply0 + supply1 * supply1 <= _reserve0 * _reserve0 + _reserve1 * _reserve1,
-                "PeerFed: K"
-            );
+            if (supply0 * supply0 + supply1 * supply1 > _reserve0 * _reserve0 + _reserve1 * _reserve1)
+                revert InvalidK();
 
             _update(supply0, supply1);
         }
@@ -208,7 +207,7 @@ contract PeerFed is IPeerFed {
     /** -------- Router -------- */
 
     modifier ensure(uint256 deadline) {
-        require(deadline >= block.timestamp, "PeerFed: EXPIRED");
+        if (deadline < block.timestamp) revert Expired();
         _;
     }
 
@@ -226,11 +225,11 @@ contract PeerFed is IPeerFed {
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256 value) {
         value = (utils * 1e18) / quote();
-        require(msg.value >= value, "PeerFed: INSUFFICIENT_FUNDS");
+        if (msg.value < value) revert InsufficientFunds();
         (bool success, ) = payable(to).call{ value: value }(new bytes(0));
         uint256 refund = msg.value - value;
         if (refund > 0) (success, ) = payable(msg.sender).call{ value: refund }(new bytes(0));
-        require(success, "PeerFed: TRANSFER_FAILED");
+        if (!success) revert TransferFailed();
     }
 
     /**
@@ -252,7 +251,7 @@ contract PeerFed is IPeerFed {
             SwappableERC20(token1).transferFromOverride(msg.sender, address(this), amountIn);
             amountOut = PeerFedLibrary.getAmountOut(amountIn, _reserve1, _reserve0);
         }
-        require(amountOut >= amountOutMin, "PeerFed: INSUFFICIENT_OUTPUT_AMOUNT");
+        if (amountOut < amountOutMin) revert InsufficientOutputAmount();
 
         if (input0) {
             _swap(_reserve0, _reserve1, 0, amountOut, to, new bytes(0));
@@ -280,7 +279,7 @@ contract PeerFed is IPeerFed {
             amountIn = PeerFedLibrary.getAmountIn(amountOut, _reserve1, _reserve0);
             SwappableERC20(token1).transferFromOverride(msg.sender, address(this), amountIn);
         }
-        require(amountIn <= amountInMax, "PeerFed: EXCESSIVE_INPUT_AMOUNT");
+        if (amountIn > amountInMax) revert ExcessiveInputAmount();
 
         if (input0) {
             _swap(_reserve0, _reserve1, 0, amountOut, to, new bytes(0));
@@ -297,11 +296,11 @@ contract PeerFed is IPeerFed {
      */
     function bid() public payable {
         uint256 _currentBid = currentBid;
-        require(msg.value > _currentBid, "PeerFed: INSUFFICIENT_BID");
+        if (msg.value <= _currentBid) revert InsufficientBid();
         if (currentBidder != address(0) && _currentBid > 0) {
             // Refund current bidder
             (bool success, ) = payable(currentBidder).call{ value: _currentBid }(new bytes(0));
-            require(success, "PeerFed: TRANSFER_FAILED");
+            if (!success) revert TransferFailed();
         }
         currentBid = msg.value;
         currentBidder = msg.sender;
@@ -320,7 +319,7 @@ contract PeerFed is IPeerFed {
         unchecked {
             timeElapsed = blockTimestamp - currentCheckpoint().blocktime; // overflow is desired
         }
-        require(timeElapsed > SECONDS_PER_CHECKPOINT, "PeerFed: MINT_UNAVAILABLE");
+        if (timeElapsed <= SECONDS_PER_CHECKPOINT) revert MintUnavailable();
 
         // Update checkpoint
         uint32 _nextCheckpointID = currentCheckpointID + 1;
@@ -377,7 +376,7 @@ contract PeerFed is IPeerFed {
 
         // Send contract balance to miner
         (bool success, ) = payable(block.coinbase).call{ value: address(this).balance }(new bytes(0));
-        require(success, "PeerFed: TRANSFER_FAILED");
+        if (!success) revert TransferFailed();
     }
 
     /**

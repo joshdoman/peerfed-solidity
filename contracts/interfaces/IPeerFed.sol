@@ -39,4 +39,26 @@ interface IPeerFed {
     function skim(address to) external;
 
     function sync() external;
+
+    error Locked();
+
+    error Overflow();
+
+    error InsufficientOutputAmount();
+
+    error ExcessiveInputAmount();
+
+    error InvalidTo();
+
+    error InvalidK();
+
+    error Expired();
+
+    error InsufficientFunds();
+
+    error TransferFailed();
+
+    error InsufficientBid();
+
+    error MintUnavailable();
 }

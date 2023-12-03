@@ -32,7 +32,7 @@ export function shouldBehaveLikePeerFed(): void {
     it("Should revert if bid is not greater than current bid", async function () {
       const bid = eth(0.001);
       await this.peerfed.bid({ value: bid });
-      await expect(this.peerfed.bid({ value: bid })).to.be.revertedWith("PeerFed: INSUFFICIENT_BID");
+      await expect(this.peerfed.bid({ value: bid })).to.be.revertedWithCustomError(this.peerfed, "InsufficientBid");
     });
 
     it("Should mint to current bidder if bid has been made", async function () {
@@ -66,7 +66,7 @@ export function shouldBehaveLikePeerFed(): void {
 
     it("Should revert if 30 minutes has not elapsed", async function () {
       await this.peerfed.mint();
-      await expect(this.peerfed.mint()).to.be.revertedWith("PeerFed: MINT_UNAVAILABLE");
+      await expect(this.peerfed.mint()).to.be.revertedWithCustomError(this.peerfed, "MintUnavailable");
     });
 
     it("Should clear `currentBid` and `currentBidder` after mint", async function () {
@@ -123,7 +123,10 @@ export function shouldBehaveLikePeerFed(): void {
       await this.token0.transfer(this.peerfed.address, token0In);
       const reserves = await this.peerfed.getReserves();
       const token1Out = await this.library.getAmountOut(token0In, reserves._reserve0, reserves._reserve1);
-      await expect(this.peerfed.swap(0, token1Out.add(1), addr1.address, [])).to.be.revertedWith("PeerFed: K");
+      await expect(this.peerfed.swap(0, token1Out.add(1), addr1.address, [])).to.be.revertedWithCustomError(
+        this.peerfed,
+        "InvalidK",
+      );
     });
 
     it("Should revert if token1 swap exceeds invariant", async function () {
@@ -133,7 +136,10 @@ export function shouldBehaveLikePeerFed(): void {
       await this.token1.transfer(this.peerfed.address, token1In);
       const reserves = await this.peerfed.getReserves();
       const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
-      await expect(this.peerfed.swap(token0Out.add(1), 0, addr1.address, [])).to.be.revertedWith("PeerFed: K");
+      await expect(this.peerfed.swap(token0Out.add(1), 0, addr1.address, [])).to.be.revertedWithCustomError(
+        this.peerfed,
+        "InvalidK",
+      );
     });
 
     it("Should emit Swap event", async function () {

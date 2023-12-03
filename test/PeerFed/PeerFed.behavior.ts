@@ -1,6 +1,5 @@
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 
 export function shouldBehaveLikePeerFed(): void {
@@ -11,7 +10,7 @@ export function shouldBehaveLikePeerFed(): void {
 
     it("Should correctly initialize checkpoint array with length NUM_SAVED_CHECKPOINTS", async function () {
       const secondsPerCheckpoint = await this.peerfed.SECONDS_PER_CHECKPOINT();
-      var checkpointTime = (await time.latest()) - secondsPerCheckpoint - 1;
+      const checkpointTime = (await time.latest()) - secondsPerCheckpoint - 1;
       for (let i = 0; i < (await this.peerfed.NUM_SAVED_CHECKPOINTS()); i++) {
         const checkpoint = await this.peerfed.checkpoints(i);
         expect(checkpoint.accumulator).to.equal(eth(1));
@@ -144,8 +143,9 @@ export function shouldBehaveLikePeerFed(): void {
       await this.token1.transfer(this.peerfed.address, token1In);
       const reserves = await this.peerfed.getReserves();
       const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
-      expect(await this.peerfed.swap(token0Out, 0, addr1.address, [])).to.emit(this.peerfed, "Swap")
-        .withArgs(owner.address, token0Out, 0, 0, token1In, owner.address);
+      await expect(this.peerfed.swap(token0Out, 0, addr1.address, []))
+        .to.emit(this.peerfed, "Swap")
+        .withArgs(owner.address, 0, token1In, token0Out, 0, addr1.address);
     });
 
     it("Should update reserves on swap", async function () {
@@ -167,7 +167,7 @@ export function shouldBehaveLikePeerFed(): void {
     it("Should increment checkpoint id on mint", async function () {
       const checkpointID = await this.peerfed.currentCheckpointID();
       await this.peerfed.mint();
-      expect(await this.peerfed.currentCheckpointID()).to.equal(checkpointID + 1)
+      expect(await this.peerfed.currentCheckpointID()).to.equal(checkpointID + 1);
     });
 
     it("Should correctly update the average interest rate on mint", async function () {
@@ -185,11 +185,21 @@ export function shouldBehaveLikePeerFed(): void {
 
       const secondsPerYear = await this.peerfed.SECONDS_PER_YEAR();
       const checkpointID = await this.peerfed.currentCheckpointID();
-      var accumulator = await this.peerfed.accumulator();
-      accumulator = accumulator.add(accumulator.mul(await this.peerfed.interestRate()).div(eth(1)).div(secondsPerYear));
+      let accumulator = await this.peerfed.accumulator();
+      accumulator = accumulator.add(
+        accumulator
+          .mul(await this.peerfed.interestRate())
+          .div(eth(1))
+          .div(secondsPerYear),
+      );
       const nextCheckpoint = await this.peerfed.checkpoints(checkpointID + 1);
       const checkpointTimeElapsed = (await time.latest()) - nextCheckpoint.blocktime + 1;
-      const checkpointInterestRate = accumulator.sub(nextCheckpoint.accumulator).mul(eth(1)).div(nextCheckpoint.accumulator).mul(secondsPerYear).div(checkpointTimeElapsed);
+      const checkpointInterestRate = accumulator
+        .sub(nextCheckpoint.accumulator)
+        .mul(eth(1))
+        .div(nextCheckpoint.accumulator)
+        .mul(secondsPerYear)
+        .div(checkpointTimeElapsed);
       await this.peerfed.mint();
 
       const newCheckpoint = await this.peerfed.currentCheckpoint();
@@ -212,12 +222,23 @@ export function shouldBehaveLikePeerFed(): void {
 
       const secondsPerYear = await this.peerfed.SECONDS_PER_YEAR();
       const checkpointID = await this.peerfed.currentCheckpointID();
-      var accumulator = await this.peerfed.accumulator();
-      accumulator = accumulator.add(accumulator.mul(await this.peerfed.interestRate()).div(eth(1)).div(secondsPerYear));
+      let accumulator = await this.peerfed.accumulator();
+      accumulator = accumulator.add(
+        accumulator
+          .mul(await this.peerfed.interestRate())
+          .div(eth(1))
+          .div(secondsPerYear),
+      );
       const nextCheckpoint = await this.peerfed.checkpoints(checkpointID + 1);
       const checkpointTimeElapsed = (await time.latest()) - nextCheckpoint.blocktime + 1;
-      const checkpointInterestRate = accumulator.sub(nextCheckpoint.accumulator).mul(eth(1)).div(nextCheckpoint.accumulator).mul(secondsPerYear).div(checkpointTimeElapsed);
-      await expect(this.peerfed.mint()).to.emit(this.peerfed, "NewCheckpoint")
+      const checkpointInterestRate = accumulator
+        .sub(nextCheckpoint.accumulator)
+        .mul(eth(1))
+        .div(nextCheckpoint.accumulator)
+        .mul(secondsPerYear)
+        .div(checkpointTimeElapsed);
+      await expect(this.peerfed.mint())
+        .to.emit(this.peerfed, "NewCheckpoint")
         .withArgs(checkpointInterestRate, accumulator);
     });
   });

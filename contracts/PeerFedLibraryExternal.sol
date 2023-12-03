@@ -9,7 +9,7 @@ contract PeerFedLibraryExternal {
         return PeerFedLibrary.quote(amountA, supplyA, supplyB);
     }
 
-    function interestRate(uint256 supply0, uint256 supply1) internal pure returns (uint64) {
+    function interestRate(uint256 supply0, uint256 supply1) external pure returns (uint64) {
         return PeerFedLibrary.interestRate(supply0, supply1);
     }
 

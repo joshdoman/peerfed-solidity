@@ -1,8 +1,6 @@
 import { sqrt } from "@prb/math";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import { ethers } from "hardhat";
 
 export function shouldBehaveLikePeerFedLibrary(): void {
   describe("Quote", function () {
@@ -15,7 +13,9 @@ export function shouldBehaveLikePeerFedLibrary(): void {
     it("Should correctly calculate interest rate when supplyA > supplyB", async function () {
       const supplyA = eth(20);
       const supplyB = eth(10);
-      expect(await this.library.interestRate(supplyA, supplyB)).to.equal(supplyA.sub(supplyB).mul(eth(1)).div(supplyA.add(supplyB)));
+      expect(await this.library.interestRate(supplyA, supplyB)).to.equal(
+        supplyA.sub(supplyB).mul(eth(1)).div(supplyA.add(supplyB)),
+      );
     });
 
     it("Should return zero if supplyA < supplyB", async function () {

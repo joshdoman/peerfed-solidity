@@ -17,18 +17,20 @@ contract PeerFed is IPeerFed {
     uint112 private reserve1;
     uint32 private blockTimestampLast;
 
+    uint32 public currentCheckpointID;
     uint128 public accumulator = 1e18;
-    uint128 public lastAccumulatorResetTimestamp;
+    uint96 public lastAccumulatorResetAt;
 
-    uint128 public checkpointAccumulator = 1e18;
-    uint64 public checkpointInterestRate = 1e18;
-    uint32 public checkpointTimestampLast;
-    uint32 public checkpointCounter;
+    Checkpoint[] public checkpoints;
+
+    address public currentBidder;
+    uint256 public currentBid;
 
     uint128 public constant SECONDS_PER_YEAR = 31556952; // (365.2425 days * 24 hours per day * 3600 seconds per hour)
-    uint32 public constant SECONDS_PER_CHECKPOINT = 3600; // 60 minutes
-    uint256 public constant INITIAL_ISSUANCE_PER_MINT = 300 * 1e18; // increase max token supply by 300 each mint (until first halving)
-    uint32 public constant MINTS_PER_HALVING = 35000; // halve issuance amount approximately every 4 years
+    uint32 public constant SECONDS_PER_CHECKPOINT = 1800; // 30 minutes
+    uint256 public constant INITIAL_ISSUANCE_PER_MINT = 150 * 1e18; // increase max token supply by 300 each mint (until first halving)
+    uint32 public constant MINTS_PER_HALVING = 70000; // halve issuance amount approximately every 4 years
+    uint8 public constant NUM_SAVED_CHECKPOINTS = 16; // use average interest rate over last 8 hours
 
     uint8 private unlocked = 1;
     modifier lock() {
@@ -39,10 +41,14 @@ contract PeerFed is IPeerFed {
     }
 
     constructor() {
-        token0 = address(new SwappableERC20("PeerFed Tighten", "TIGHTEN"));
-        token1 = address(new SwappableERC20("PeerFed Ease", "EASE"));
+        token0 = address(new SwappableERC20("Tighten", "Tighten"));
+        token1 = address(new SwappableERC20("Ease", "Ease"));
         blockTimestampLast = uint32(block.timestamp % 2 ** 32);
-        checkpointTimestampLast = uint32(block.timestamp % 2 ** 32) - SECONDS_PER_CHECKPOINT;
+
+        uint32 checkpointTimestampLast = blockTimestampLast - SECONDS_PER_CHECKPOINT;
+        for (uint8 i = 0; i < NUM_SAVED_CHECKPOINTS; i++) {
+            checkpoints.push(Checkpoint(1e18, 1e18, checkpointTimestampLast));
+        }
     }
 
     /**
@@ -73,10 +79,11 @@ contract PeerFed is IPeerFed {
 
     /**
      * @notice Returns the current price of BTC in "utils" with 18 decimals
-     * @notice Current price = accumulator / r, where r is the last checkpoint interest rate
+     * @notice Current price = accumulator / r, where r is the current checkpoint interest rate
      */
     function quote() public view returns (uint256) {
-        return (latestAccumulator() * 1e18) / checkpointInterestRate;
+        Checkpoint memory currentCheckpoint = checkpoints[currentCheckpointID % NUM_SAVED_CHECKPOINTS];
+        return (latestAccumulator() * 1e18) / currentCheckpoint.interestRate;
     }
 
     /** -------- Swap Logic -------- */
@@ -110,7 +117,7 @@ contract PeerFed is IPeerFed {
             } else {
                 // reset accumulator in case of overflow
                 _accumulator = 1e18;
-                lastAccumulatorResetTimestamp = uint128(block.timestamp % 2 ** 128);
+                lastAccumulatorResetAt = uint96(block.timestamp % 2 ** 96);
                 emit AccumulatorReset();
             }
             accumulator = _accumulator;
@@ -193,14 +200,14 @@ contract PeerFed is IPeerFed {
     receive() external payable {}
 
     /**
-     * @notice Transfers `amount` of "utils" of the gas token at the current quoted price
+     * @notice Transfers `utils` of the gas token at the current quoted price
      */
     function transfer(
         address payable to,
-        uint256 amount,
+        uint256 utils,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256 value) {
-        value = (amount * 1e18) / quote();
+        value = (utils * 1e18) / quote();
         require(msg.value >= value, "PeerFed: INSUFFICIENT_FUNDS");
         (bool success, ) = payable(to).call{ value: value }(new bytes(0));
         uint256 refund = msg.value - value;
@@ -264,82 +271,106 @@ contract PeerFed is IPeerFed {
         }
     }
 
-    /** -------- Mint & Checkpoint -------- */
+    /** -------- Bid, Mint, & Checkpoint -------- */
+
+    function bid() public payable {
+        uint256 _currentBid = currentBid;
+        require(msg.value > _currentBid, "PeerFed: INSUFFICIENT_BID");
+        if (currentBidder != address(0) && _currentBid > 0) {
+            // Refund current bidder
+            (bool success, ) = payable(currentBidder).call{ value: _currentBid }(new bytes(0));
+            require(success, "PeerFed: TRANSFER_FAILED");
+        }
+        currentBid = msg.value;
+        currentBidder = msg.sender;
+    }
 
     /**
      * @notice Mints available amount to address `to` and updates checkpoint counter and values
      */
-    function mintTo(address to) public lock {
-        (uint256 newToken0, uint256 newToken1, uint32 nextCheckpoint, uint32 timeElapsed) = _mintableAmount();
-        require(timeElapsed > SECONDS_PER_CHECKPOINT, "PeerFed: MINT_UNAVAILABLE");
-        checkpointCounter = nextCheckpoint;
-        checkpointTimestampLast = uint32(block.timestamp % 2 ** 32);
+    function mint() public lock {
+        require(_mintAvailable(), "PeerFed: MINT_UNAVAILABLE");
+        (uint256 newToken0, uint256 newToken1) = mintableAmount();
 
+        // Mint to current bidder, but if current bidder does not exist, mint to `msg.sender`
+        address to = currentBidder;
+        if (currentBidder == address(0)) to = msg.sender;
         if (newToken0 > 0) IERC20(token0).transfer(to, newToken0);
         if (newToken1 > 0) IERC20(token1).transfer(to, newToken1);
         if (newToken0 > 0 || newToken1 > 0) emit Mint(to, newToken0, newToken1);
         _update(IERC20(token0).totalSupply(), IERC20(token1).totalSupply());
 
+        // Send contract balance to miner
+        (bool success,) = payable(block.coinbase).call{ value: address(this).balance }(new bytes(0));
+        require(success, "PeerFed: TRANSFER_FAILED");
+
+        // Reset bid amount and bidder address
+        currentBid = 0;
+        currentBidder = address(0);
+
+        // Update checkpoint
+        uint32 _nextCheckpointID = currentCheckpointID + 1;
+        Checkpoint storage checkpoint = checkpoints[_nextCheckpointID % NUM_SAVED_CHECKPOINTS];
+        Checkpoint memory _checkpoint = checkpoint;
+
+        // Calculate time elapsed over the last 16 checkpoints
+        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
+        uint32 checkpointTimeElapsed;
+        unchecked {
+            checkpointTimeElapsed = blockTimestamp - _checkpoint.blocktime; // overflow is desired
+        }
+
         uint128 _accumulator = accumulator;
-        uint128 _checkpointAccumulator = checkpointAccumulator;
+        uint128 _checkpointAccumulator = _checkpoint.accumulator;
         uint64 _checkpointInterestRate;
-        if (_checkpointAccumulator < _accumulator && timeElapsed > 0) {
+        if (_checkpointAccumulator < _accumulator && checkpointTimeElapsed > 0) {
+            // Calculate average interest rate over the last 8 hours
             _checkpointInterestRate = uint64(
                 ((((_accumulator - _checkpointAccumulator) * 1e18) / _checkpointAccumulator) * SECONDS_PER_YEAR) /
-                    timeElapsed
+                    checkpointTimeElapsed
             );
-            checkpointInterestRate = _checkpointInterestRate;
         } else {
-            _checkpointInterestRate = checkpointInterestRate;
+            // Accumulator overflowed or average interest rate is zero, so use current checkpoint interest rate.
+            _checkpointInterestRate = checkpoints[(_nextCheckpointID - 1) % NUM_SAVED_CHECKPOINTS].interestRate;
         }
-        checkpointAccumulator = _accumulator;
-        emit Checkpoint(_checkpointInterestRate, _accumulator);
+
+        // Update checkpoint values, current ID, and emit NewCheckpoint event
+        checkpoint.interestRate = _checkpointInterestRate;
+        checkpoint.accumulator = _accumulator;
+        checkpoint.blocktime = blockTimestamp;
+        currentCheckpointID = _nextCheckpointID;
+        emit NewCheckpoint(_checkpointInterestRate, _accumulator);
+    }
+
+    /**
+     * @notice Internal helper function that returns true if 30 minutes has passed since last mint.
+     */
+    function _mintAvailable()
+        private
+        view
+        returns (bool isAvailable)
+    {
+        uint32 _currentCheckpointID = currentCheckpointID;
+        Checkpoint memory currentCheckpoint = checkpoints[_currentCheckpointID % NUM_SAVED_CHECKPOINTS];
+        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
+        uint32 timeElapsed;
+        unchecked {
+            timeElapsed = blockTimestamp - currentCheckpoint.blocktime; // overflow is desired
+        }
+        return timeElapsed > SECONDS_PER_CHECKPOINT;
     }
 
     /**
      * @notice Returns the mintable amount of token{0,1}
      */
     function mintableAmount() public view returns (uint256 newToken0, uint256 newToken1) {
-        (newToken0, newToken1, , ) = _mintableAmount();
-    }
-
-    /**
-     * @notice Internal helper function that returns the mintable amount of token{0,1}, the next checkpoint,
-     * and the time elapsed
-     */
-    function _mintableAmount()
-        private
-        view
-        returns (uint256 newToken0, uint256 newToken1, uint32 nextCheckpoint, uint32 timeElapsed)
-    {
-        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
-        unchecked {
-            timeElapsed = blockTimestamp - checkpointTimestampLast; // overflow is desired
-        }
-        if (timeElapsed <= SECONDS_PER_CHECKPOINT) return (0, 0, 0, timeElapsed);
-
-        uint32 _checkpointCounter = checkpointCounter;
-        if (_checkpointCounter == type(uint32).max) {
-            // Stop minting and return current counter
-            return (0, 0, _checkpointCounter, timeElapsed);
-        }
-
         uint256 supply0 = IERC20(token0).totalSupply();
         uint256 supply1 = IERC20(token1).totalSupply();
         (newToken0, newToken1) = PeerFedLibrary.issuanceAmounts(
             supply0,
             supply1,
-            invariantIssuance(_checkpointCounter)
+            invariantIssuance(currentCheckpointID)
         );
-        uint256 accruedMints = timeElapsed / SECONDS_PER_CHECKPOINT;
-        uint256 maxAccruedMints = MINTS_PER_HALVING - (_checkpointCounter % MINTS_PER_HALVING);
-        if (maxAccruedMints < accruedMints) accruedMints = maxAccruedMints;
-
-        newToken0 *= accruedMints;
-        newToken1 *= accruedMints;
-        nextCheckpoint = _checkpointCounter + accruedMints < type(uint32).max
-            ? uint32(_checkpointCounter + accruedMints)
-            : type(uint32).max;
     }
 
     function invariantIssuance(uint32 mintNumber) public pure returns (uint256) {

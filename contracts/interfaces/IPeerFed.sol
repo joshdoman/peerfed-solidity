@@ -3,6 +3,12 @@
 pragma solidity ^0.8.20;
 
 interface IPeerFed {
+    struct Checkpoint {
+        uint128 accumulator;
+        uint64 interestRate;
+        uint32 blocktime;
+    }
+
     event Swap(
         address indexed sender,
         uint256 amount0In,
@@ -16,7 +22,7 @@ interface IPeerFed {
 
     event AccumulatorReset();
 
-    event Checkpoint(uint64 checkpointInterestRate, uint128 checkpointAccumulator);
+    event NewCheckpoint(uint64 checkpointInterestRate, uint128 checkpointAccumulator);
 
     event Mint(address indexed to, uint256 newToken0, uint256 newToken1);
 

@@ -28,7 +28,7 @@ contract PeerFed is IPeerFed {
 
     uint128 public constant SECONDS_PER_YEAR = 31556952; // (365.2425 days * 24 hours per day * 3600 seconds per hour)
     uint32 public constant SECONDS_PER_CHECKPOINT = 1800; // 30 minutes
-    uint32 public constant SECONDS_UNTIL_ANYONE_CAN_MINT = 2100; // anyone can mint after 35 minutes
+    uint32 public constant SECONDS_UNTIL_BIDS_EXPIRE = 2100; // bids expire 35 minutes after last checkpoint
     uint256 public constant INITIAL_ISSUANCE_PER_MINT = 150 * 1e18; // increase `K` by 150 each mint initially
     uint32 public constant MINTS_PER_HALVING = 70000; // halve issuance amount approximately every 4 years
     uint8 public constant NUM_SAVED_CHECKPOINTS = 16; // use average interest rate over last 16 checkpoints (~8 hours)
@@ -116,24 +116,34 @@ contract PeerFed is IPeerFed {
             timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         }
         uint128 _accumulator = accumulator;
-        uint64 _interestRate = interestRate();
-        if (timeElapsed > 0 && _interestRate > 0) {
-            uint128 interest = (((_accumulator * _interestRate) / 1e18) * timeElapsed) / SECONDS_PER_YEAR;
-            if (_accumulator < type(uint128).max - interest) {
-                // add interest to accumulator
-                _accumulator += interest;
-            } else {
-                // reset accumulator in case of overflow
-                _accumulator = 1e18;
+        if (timeElapsed > 0) {
+            _accumulator = _updatedAccumulator(timeElapsed);
+            accumulator = _accumulator;
+            if (_accumulator == 1e18) {
+                // emit Accumulator Reset event and update lastAccumulatorResetAt
                 lastAccumulatorResetAt = uint96(block.timestamp % 2 ** 96);
                 emit AccumulatorReset();
             }
-            accumulator = _accumulator;
         }
         reserve0 = uint112(supply0);
         reserve1 = uint112(supply1);
         blockTimestampLast = blockTimestamp;
         emit Sync(supply0, supply1, _accumulator);
+    }
+
+    /**
+     * @dev Internal helper function to calculate the latest accumulator
+     */
+    function _updatedAccumulator(uint32 timeElapsed) private view returns (uint128 updatedAccumulator) {
+        uint128 _accumulator = accumulator;
+        uint128 interest = (((_accumulator * interestRate()) / 1e18) * timeElapsed) / SECONDS_PER_YEAR;
+        if (_accumulator < type(uint128).max - interest) {
+            // add interest to accumulator
+            return _accumulator + interest;
+        } else {
+            // reset accumulator in case of overflow
+            return 1e18;
+        }
     }
 
     /**
@@ -324,7 +334,11 @@ contract PeerFed is IPeerFed {
         }
 
         // Calculate new average interest rate
-        uint128 _accumulator = accumulator;
+        uint32 accumulatorTimeElapsed;
+        unchecked {
+            accumulatorTimeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+        }
+        uint128 _accumulator = _updatedAccumulator(accumulatorTimeElapsed);
         uint128 _checkpointAccumulator = _checkpoint.accumulator;
         uint64 _checkpointInterestRate;
         if (_checkpointAccumulator < _accumulator && checkpointTimeElapsed > 0) {
@@ -348,7 +362,7 @@ contract PeerFed is IPeerFed {
         // Set `to` to current bidder, but if bidder does not exist or
         // `SECONDS_UNTIL_ANYONE_CAN_MINT` has elapsed, mint to `msg.sender`
         address to = currentBidder;
-        if (currentBidder == address(0) || timeElapsed > SECONDS_UNTIL_ANYONE_CAN_MINT) to = msg.sender;
+        if (currentBidder == address(0) || timeElapsed > SECONDS_UNTIL_BIDS_EXPIRE) to = msg.sender;
 
         // Reset bid amount and bidder address
         currentBid = 0;

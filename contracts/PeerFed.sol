@@ -28,10 +28,10 @@ contract PeerFed is IPeerFed {
 
     uint128 public constant SECONDS_PER_YEAR = 31556952; // (365.2425 days * 24 hours per day * 3600 seconds per hour)
     uint32 public constant SECONDS_PER_CHECKPOINT = 1800; // 30 minutes
-    uint32 public constant SECONDS_UNTIL_ANYONE_CAN_MINT = 2100; // winning bidder loses exclusive right to mint if 35 minutes have passed since last checkpoint
-    uint256 public constant INITIAL_ISSUANCE_PER_MINT = 150 * 1e18; // increase max token supply by 150 each mint (until first halving)
+    uint32 public constant SECONDS_UNTIL_ANYONE_CAN_MINT = 2100; // anyone can mint after 35 minutes
+    uint256 public constant INITIAL_ISSUANCE_PER_MINT = 150 * 1e18; // increase `K` by 150 each mint initially
     uint32 public constant MINTS_PER_HALVING = 70000; // halve issuance amount approximately every 4 years
-    uint8 public constant NUM_SAVED_CHECKPOINTS = 16; // use average interest rate over last 8 hours
+    uint8 public constant NUM_SAVED_CHECKPOINTS = 16; // use average interest rate over last 16 checkpoints (~8 hours)
 
     uint8 private unlocked = 1;
     modifier lock() {
@@ -53,15 +53,15 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Returns the current checkpoint.
+     * @dev Returns the current checkpoint.
      */
     function currentCheckpoint() public view returns (Checkpoint memory) {
         return checkpoints[currentCheckpointID % NUM_SAVED_CHECKPOINTS];
     }
 
     /**
-     * @notice Returns the current annualized interest rate w/ 18 decimals, where 1e18 = 100% (r = (A - B) / (A + B))
-     * @notice If A is not greater than B, returns 0.
+     * @dev Returns the current annualized interest rate w/ 18 decimals, where 1e18 = 100% (r = (A - B) / (A + B))
+     * @dev If A is not greater than B, returns 0.
      */
     function interestRate() public view returns (uint64) {
         (uint256 _reserve0, uint256 _reserve1, ) = getReserves();
@@ -69,8 +69,8 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Returns the latest accumulator given the current interest rate
-     * @notice This reflects the number of "e-bonds" per BTC
+     * @dev Returns the latest accumulator given the current interest rate
+     * @dev This reflects the number of "e-bonds" per BTC
      */
     function latestAccumulator() public view returns (uint256) {
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
@@ -87,8 +87,8 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Returns the current number of "utils" per BTC with 18 decimals
-     * @notice Quote = accumulator / r, where r is the current checkpoint interest rate
+     * @dev Returns the current number of "utils" per BTC with 18 decimals
+     * @dev Quote = accumulator / r, where r is the current checkpoint interest rate
      */
     function quote() public view returns (uint256) {
         return (latestAccumulator() * 1e18) / currentCheckpoint().interestRate;
@@ -97,7 +97,7 @@ contract PeerFed is IPeerFed {
     /** -------- Swap Logic -------- */
 
     /**
-     * @notice Function to retrieve reserve{0,1}
+     * @dev Function to retrieve reserve{0,1}
      */
     function getReserves() public view returns (uint256 _reserve0, uint256 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
@@ -106,7 +106,7 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Internal helper function to update reserve{0,1}
+     * @dev Internal helper function to update reserve{0,1}
      */
     function _update(uint256 supply0, uint256 supply1) private {
         require(supply0 <= type(uint112).max && supply1 <= type(uint112).max, "PeerFed: OVERFLOW");
@@ -137,14 +137,14 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Low-level function for swapping between token{0,1}
+     * @dev Low-level function for swapping between token{0,1}
      */
     function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) public {
         _swap(reserve0, reserve1, amount0Out, amount1Out, to, data);
     }
 
     /**
-     * @notice Internal helper function for swapping between token{0,1}
+     * @dev Internal helper function for swapping between token{0,1}
      */
     function _swap(
         uint256 _reserve0,
@@ -203,12 +203,12 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Allow this contract to receive the gas token
+     * @dev Allow this contract to receive the gas token
      */
     receive() external payable {}
 
     /**
-     * @notice Transfers `utils` of the gas token at the current quoted price
+     * @dev Transfers `utils` of the gas token at the current quoted price
      */
     function transfer(
         address payable to,
@@ -224,7 +224,7 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Swaps an exact amount of token{0,1} for a min amount of token{1,0}
+     * @dev Swaps an exact amount of token{0,1} for a min amount of token{1,0}
      */
     function swapExactTokensForTokens(
         bool input0,
@@ -252,7 +252,7 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Swaps a max amount of token{0,1} for an exact amount of token {1,0}
+     * @dev Swaps a max amount of token{0,1} for an exact amount of token {1,0}
      */
     function swapTokensForExactTokens(
         bool input0,
@@ -282,8 +282,8 @@ contract PeerFed is IPeerFed {
     /** -------- Bid, Mint, & Checkpoint -------- */
 
     /**
-     * @notice Replaces `currentBidder` with `msg.sender` if `msg.value` exceeds `currentBid`
-     * @notice Previous `currentBidder` is refunded their bid amount
+     * @dev Replaces `currentBidder` with `msg.sender` if `msg.value` exceeds `currentBid`
+     * @dev Previous `currentBidder` is refunded their bid amount
      */
     function bid() public payable {
         uint256 _currentBid = currentBid;
@@ -299,9 +299,10 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Mints available amount to `currentBidder` and updates checkpoint interest rate, accumulator, and id.
-     * @notice Mints to `msg.sender` if `currentBidder` is not set or if `SECONDS_UNTIL_ANYONE_CAN_MINT` has elapsed since last checkpoint.
-     * @notice Reverts if `SECONDS_PER_CHECKPOINT` has not elapsed since last checkpoint.
+     * @dev Mints available amount to `currentBidder` and updates checkpoint interest rate, accumulator, and id.
+     * @dev Mints to `msg.sender` if `currentBidder` is not set.
+     * @dev Mints to `msg.sender` if `SECONDS_UNTIL_ANYONE_CAN_MINT` has elapsed since last checkpoint.
+     * @dev Reverts if `SECONDS_PER_CHECKPOINT` has not elapsed.
      */
     function mint() public lock {
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
@@ -310,23 +311,6 @@ contract PeerFed is IPeerFed {
             timeElapsed = blockTimestamp - currentCheckpoint().blocktime; // overflow is desired
         }
         require(timeElapsed > SECONDS_PER_CHECKPOINT, "PeerFed: MINT_UNAVAILABLE");
-        (uint256 newToken0, uint256 newToken1) = mintableAmount();
-
-        // Mint to current bidder, but if current bidder does not exist, mint to `msg.sender`
-        address to = currentBidder;
-        if (currentBidder == address(0) || timeElapsed > SECONDS_UNTIL_ANYONE_CAN_MINT) to = msg.sender;
-        if (newToken0 > 0) IERC20(token0).transfer(to, newToken0);
-        if (newToken1 > 0) IERC20(token1).transfer(to, newToken1);
-        if (newToken0 > 0 || newToken1 > 0) emit Mint(to, newToken0, newToken1);
-        _update(IERC20(token0).totalSupply(), IERC20(token1).totalSupply());
-
-        // Send contract balance to miner
-        (bool success,) = payable(block.coinbase).call{ value: address(this).balance }(new bytes(0));
-        require(success, "PeerFed: TRANSFER_FAILED");
-
-        // Reset bid amount and bidder address
-        currentBid = 0;
-        currentBidder = address(0);
 
         // Update checkpoint
         uint32 _nextCheckpointID = currentCheckpointID + 1;
@@ -360,10 +344,30 @@ contract PeerFed is IPeerFed {
         checkpoint.blocktime = blockTimestamp;
         currentCheckpointID = _nextCheckpointID;
         emit NewCheckpoint(_checkpointInterestRate, _accumulator);
+
+        // Set `to` to current bidder, but if bidder does not exist or
+        // `SECONDS_UNTIL_ANYONE_CAN_MINT` has elapsed, mint to `msg.sender`
+        address to = currentBidder;
+        if (currentBidder == address(0) || timeElapsed > SECONDS_UNTIL_ANYONE_CAN_MINT) to = msg.sender;
+
+        // Reset bid amount and bidder address
+        currentBid = 0;
+        currentBidder = address(0);
+
+        // Mint available amount to `to`
+        (uint256 newToken0, uint256 newToken1) = mintableAmount();
+        if (newToken0 > 0) IERC20(token0).transfer(to, newToken0);
+        if (newToken1 > 0) IERC20(token1).transfer(to, newToken1);
+        if (newToken0 > 0 || newToken1 > 0) emit Mint(to, newToken0, newToken1);
+        _update(IERC20(token0).totalSupply(), IERC20(token1).totalSupply());
+
+        // Send contract balance to miner
+        (bool success, ) = payable(block.coinbase).call{ value: address(this).balance }(new bytes(0));
+        require(success, "PeerFed: TRANSFER_FAILED");
     }
 
     /**
-     * @notice Returns the mintable amount of token{0,1}
+     * @dev Returns the mintable amount of token{0,1}
      */
     function mintableAmount() public view returns (uint256 newToken0, uint256 newToken1) {
         uint256 supply0 = IERC20(token0).totalSupply();
@@ -376,7 +380,7 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @notice Returns the amount the invariant `K` increases on mint `mintNumber`
+     * @dev Returns the amount the invariant `K` increases on mint `mintNumber`
      */
     function invariantIssuance(uint32 mintNumber) public pure returns (uint256) {
         uint32 halvings = mintNumber / MINTS_PER_HALVING;

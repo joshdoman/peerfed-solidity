@@ -88,18 +88,137 @@ export function shouldBehaveLikePeerFed(): void {
     it("Should emit Mint event", async function () {
       const { owner } = this.signers;
       const mintableAmount = await this.peerfed.mintableAmount();
-      expect(await this.peerfed.mint())
+      await expect(this.peerfed.mint())
         .to.emit(this.peerfed, "Mint")
         .withArgs(owner.address, mintableAmount.newToken0, mintableAmount.newToken1);
     });
   });
 
+  describe("Swap", function () {
+    it("Should swap token0 for token1", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token0In = (await this.token0.balanceOf(owner.address)).div(10);
+      await this.token0.transfer(this.peerfed.address, token0In);
+      const reserves = await this.peerfed.getReserves();
+      const token1Out = await this.library.getAmountOut(token0In, reserves._reserve0, reserves._reserve1);
+      await this.peerfed.swap(0, token1Out, addr1.address, []);
+      await expect(await this.token1.balanceOf(addr1.address)).to.equal(token1Out);
+    });
+
+    it("Should swap token1 for token0", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token1In = (await this.token1.balanceOf(owner.address)).div(10);
+      await this.token1.transfer(this.peerfed.address, token1In);
+      const reserves = await this.peerfed.getReserves();
+      const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
+      await this.peerfed.swap(token0Out, 0, addr1.address, []);
+      await expect(await this.token0.balanceOf(addr1.address)).to.equal(token0Out);
+    });
+
+    it("Should revert if token0 swap exceeds invariant", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token0In = (await this.token0.balanceOf(owner.address)).div(10);
+      await this.token0.transfer(this.peerfed.address, token0In);
+      const reserves = await this.peerfed.getReserves();
+      const token1Out = await this.library.getAmountOut(token0In, reserves._reserve0, reserves._reserve1);
+      await expect(this.peerfed.swap(0, token1Out.add(1), addr1.address, [])).to.be.revertedWith("PeerFed: K");
+    });
+
+    it("Should revert if token1 swap exceeds invariant", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token1In = (await this.token1.balanceOf(owner.address)).div(10);
+      await this.token1.transfer(this.peerfed.address, token1In);
+      const reserves = await this.peerfed.getReserves();
+      const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
+      await expect(this.peerfed.swap(token0Out.add(1), 0, addr1.address, [])).to.be.revertedWith("PeerFed: K");
+    });
+
+    it("Should emit Swap event", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token1In = (await this.token1.balanceOf(owner.address)).div(10);
+      await this.token1.transfer(this.peerfed.address, token1In);
+      const reserves = await this.peerfed.getReserves();
+      const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
+      expect(await this.peerfed.swap(token0Out, 0, addr1.address, [])).to.emit(this.peerfed, "Swap")
+        .withArgs(owner.address, token0Out, 0, 0, token1In, owner.address);
+    });
+
+    it("Should update reserves on swap", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token1In = (await this.token1.balanceOf(owner.address)).div(10);
+      await this.token1.transfer(this.peerfed.address, token1In);
+      const reserves = await this.peerfed.getReserves();
+      const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
+      await this.peerfed.swap(token0Out, 0, addr1.address, []);
+      const newReserves = await this.peerfed.getReserves();
+      await expect(newReserves._reserve0).to.equal(await this.token0.totalSupply());
+      await expect(newReserves._reserve1).to.equal(await this.token1.totalSupply());
+      await expect(newReserves._blockTimestampLast).to.equal(await time.latest());
+    });
+  });
+
   describe("Checkpoint", function () {
     it("Should increment checkpoint id on mint", async function () {
-      const { owner } = this.signers;
       const checkpointID = await this.peerfed.currentCheckpointID();
       await this.peerfed.mint();
       expect(await this.peerfed.currentCheckpointID()).to.equal(checkpointID + 1)
+    });
+
+    it("Should correctly update the average interest rate on mint", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token1In = (await this.token1.balanceOf(owner.address)).div(10);
+      await this.token1.transfer(this.peerfed.address, token1In);
+      const reserves = await this.peerfed.getReserves();
+      const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
+      await this.peerfed.swap(token0Out, 0, addr1.address, []);
+
+      const secondsPerCheckpoint = await this.peerfed.SECONDS_PER_CHECKPOINT();
+      await time.increase(secondsPerCheckpoint);
+      await this.peerfed.sync();
+
+      const secondsPerYear = await this.peerfed.SECONDS_PER_YEAR();
+      const checkpointID = await this.peerfed.currentCheckpointID();
+      var accumulator = await this.peerfed.accumulator();
+      accumulator = accumulator.add(accumulator.mul(await this.peerfed.interestRate()).div(eth(1)).div(secondsPerYear));
+      const nextCheckpoint = await this.peerfed.checkpoints(checkpointID + 1);
+      const checkpointTimeElapsed = (await time.latest()) - nextCheckpoint.blocktime + 1;
+      const checkpointInterestRate = accumulator.sub(nextCheckpoint.accumulator).mul(eth(1)).div(nextCheckpoint.accumulator).mul(secondsPerYear).div(checkpointTimeElapsed);
+      await this.peerfed.mint();
+
+      const newCheckpoint = await this.peerfed.currentCheckpoint();
+      expect(newCheckpoint.interestRate).to.equal(checkpointInterestRate);
+      expect(newCheckpoint.accumulator).to.equal(accumulator);
+    });
+
+    it("Should emit NewCheckpoint event on mint", async function () {
+      const { owner, addr1 } = this.signers;
+      await this.peerfed.mint();
+      const token1In = (await this.token1.balanceOf(owner.address)).div(10);
+      await this.token1.transfer(this.peerfed.address, token1In);
+      const reserves = await this.peerfed.getReserves();
+      const token0Out = await this.library.getAmountOut(token1In, reserves._reserve1, reserves._reserve0);
+      await this.peerfed.swap(token0Out, 0, addr1.address, []);
+
+      const secondsPerCheckpoint = await this.peerfed.SECONDS_PER_CHECKPOINT();
+      await time.increase(secondsPerCheckpoint);
+      await this.peerfed.sync();
+
+      const secondsPerYear = await this.peerfed.SECONDS_PER_YEAR();
+      const checkpointID = await this.peerfed.currentCheckpointID();
+      var accumulator = await this.peerfed.accumulator();
+      accumulator = accumulator.add(accumulator.mul(await this.peerfed.interestRate()).div(eth(1)).div(secondsPerYear));
+      const nextCheckpoint = await this.peerfed.checkpoints(checkpointID + 1);
+      const checkpointTimeElapsed = (await time.latest()) - nextCheckpoint.blocktime + 1;
+      const checkpointInterestRate = accumulator.sub(nextCheckpoint.accumulator).mul(eth(1)).div(nextCheckpoint.accumulator).mul(secondsPerYear).div(checkpointTimeElapsed);
+      await expect(this.peerfed.mint()).to.emit(this.peerfed, "NewCheckpoint")
+        .withArgs(checkpointInterestRate, accumulator);
     });
   });
 }

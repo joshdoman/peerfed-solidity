@@ -294,7 +294,7 @@ contract PeerFed is IPeerFed {
      * @dev Replaces `currentBidder` with `msg.sender` if `msg.value` exceeds `currentBid`
      * @dev Previous `currentBidder` is refunded their bid amount
      */
-    function bid() public payable {
+    function bid() public payable lock {
         uint256 _currentBid = currentBid;
         if (msg.value <= _currentBid) revert InsufficientBid();
         if (currentBidder != address(0) && _currentBid > 0) {

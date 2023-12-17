@@ -172,22 +172,16 @@ contract PeerFed is IPeerFed {
         if (amount1Out > 0) IERC20(token1).transfer(to, amount1Out);
         if (data.length > 0) IPeerFedCallee(to).peerFedCall(msg.sender, amount0Out, amount1Out, data);
 
-        uint256 amount0In;
-        uint256 amount1In;
-        {
-            // scope for supply{0,1}
-            uint256 supply0 = IERC20(token0).totalSupply();
-            uint256 supply1 = IERC20(token1).totalSupply();
+        uint256 supply0 = IERC20(token0).totalSupply();
+        uint256 supply1 = IERC20(token1).totalSupply();
+        
+        if (supply0 * supply0 + supply1 * supply1 > _reserve0 * _reserve0 + _reserve1 * _reserve1)
+            revert InvalidK();
 
-            amount0In = _reserve0 > supply0 ? _reserve0 - supply0 : 0;
-            amount1In = _reserve1 > supply1 ? _reserve1 - supply1 : 0;
+        _update(supply0, supply1);
 
-            if (supply0 * supply0 + supply1 * supply1 > _reserve0 * _reserve0 + _reserve1 * _reserve1)
-                revert InvalidK();
-
-            _update(supply0, supply1);
-        }
-
+        uint256 amount0In = _reserve0 > supply0 ? _reserve0 - supply0 : 0;
+        uint256 amount1In = _reserve1 > supply1 ? _reserve1 - supply1 : 0;
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
     }
 

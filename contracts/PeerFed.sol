@@ -70,7 +70,7 @@ contract PeerFed is IPeerFed {
 
     /**
      * @dev Returns the latest accumulator given the current interest rate
-     * @dev This reflects the number of "e-bonds" per BTC
+     * @dev This reflects the number of "e-bonds" per sat
      */
     function latestAccumulator() public view returns (uint256) {
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
@@ -87,7 +87,7 @@ contract PeerFed is IPeerFed {
     }
 
     /**
-     * @dev Returns the current number of "utils" per BTC with 18 decimals
+     * @dev Returns the current number of "utils" per sat with 18 decimals
      * @dev Quote = accumulator / r, where r is the current checkpoint interest rate
      */
     function quote() public view returns (uint256) {
@@ -174,7 +174,7 @@ contract PeerFed is IPeerFed {
 
         uint256 supply0 = IERC20(token0).totalSupply();
         uint256 supply1 = IERC20(token1).totalSupply();
-        
+
         if (supply0 * supply0 + supply1 * supply1 > _reserve0 * _reserve0 + _reserve1 * _reserve1)
             revert InvalidK();
 
@@ -218,7 +218,7 @@ contract PeerFed is IPeerFed {
         uint256 utils,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256 value) {
-        value = (utils * 1e18) / quote();
+        value = (utils * 1e10) / quote();
         if (msg.value < value) revert InsufficientFunds();
         (bool success, ) = payable(to).call{ value: value }(new bytes(0));
         uint256 refund = msg.value - value;

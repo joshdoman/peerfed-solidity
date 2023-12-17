@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-interface IPeerFed {
+interface IUtil {
     struct Checkpoint {
         uint128 accumulator;
         uint64 interestRate;

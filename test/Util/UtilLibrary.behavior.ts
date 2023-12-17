@@ -2,7 +2,7 @@ import { sqrt } from "@prb/math";
 import { expect } from "chai";
 import { parseEther } from "ethers/lib/utils";
 
-export function shouldBehaveLikePeerFedLibrary(): void {
+export function shouldBehaveLikeUtilLibrary(): void {
   describe("Quote", function () {
     it("Should correctly calculate quote for pair swap", async function () {
       expect(await this.library.quote(eth(1), eth(10), eth(2))).to.equal(eth(5));

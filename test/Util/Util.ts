@@ -3,9 +3,9 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signe
 import { ethers } from "hardhat";
 
 import type { Signers } from "../types";
-import { shouldBehaveLikePeerFed } from "./PeerFed.behavior";
-import { deployPeerFedFixture } from "./PeerFed.fixture";
-import { shouldBehaveLikePeerFedLibrary } from "./PeerFedLibrary.behavior";
+import { shouldBehaveLikeUtil } from "./Util.behavior";
+import { deployUtilFixture } from "./Util.fixture";
+import { shouldBehaveLikeUtilLibrary } from "./UtilLibrary.behavior";
 
 describe("Unit tests", function () {
   before(async function () {
@@ -19,24 +19,24 @@ describe("Unit tests", function () {
     this.loadFixture = loadFixture;
   });
 
-  describe("PeerFedLibrary", function () {
+  describe("UtilLibrary", function () {
     beforeEach(async function () {
-      const { library } = await this.loadFixture(deployPeerFedFixture);
+      const { library } = await this.loadFixture(deployUtilFixture);
       this.library = library;
     });
 
-    shouldBehaveLikePeerFedLibrary();
+    shouldBehaveLikeUtilLibrary();
   });
 
-  describe("PeerFed", function () {
+  describe("Util", function () {
     beforeEach(async function () {
-      const { peerfed, token0, token1, library } = await this.loadFixture(deployPeerFedFixture);
-      this.peerfed = peerfed;
+      const { util, token0, token1, library } = await this.loadFixture(deployUtilFixture);
+      this.util = util;
       this.token0 = token0;
       this.token1 = token1;
       this.library = library;
     });
 
-    shouldBehaveLikePeerFed();
+    shouldBehaveLikeUtil();
   });
 });

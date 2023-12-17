@@ -1,4 +1,4 @@
-# PeerFed [![Github Actions][gha-badge]][gha] [![Hardhat][hardhat-badge]][hardhat] [![License: MIT][license-badge]][license]
+# Util [![Github Actions][gha-badge]][gha] [![Hardhat][hardhat-badge]][hardhat] [![License: MIT][license-badge]][license]
 
 [gha]: https://github.com/paulrberg/hardhat-template/actions
 [gha-badge]: https://github.com/paulrberg/hardhat-template/actions/workflows/ci.yml/badge.svg
@@ -7,7 +7,7 @@
 [license]: https://opensource.org/licenses/MIT
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 
-A Solidity implementation of the PeerFed protocol. The protocol is currently deployed on Sepolia, but a deployment on Rootstock is under development. An interactive frontend can be found [here](https://github.com/joshdoman/util-frontend). Learn more at [https://theutil.org/util.pdf](https://theutil.org/util.pdf)
+A Solidity implementation of the Util protocol. The protocol is currently deployed on Sepolia, but a deployment on Rootstock is under development. An interactive frontend can be found [here](https://github.com/joshdoman/util-frontend). Learn more at [https://theutil.org/util.pdf](https://theutil.org/util.pdf)
 
 ## Usage
 

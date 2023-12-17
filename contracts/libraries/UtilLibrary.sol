@@ -10,7 +10,7 @@ error LibraryInsufficientOutputAmount();
 error LibraryExcessiveInputAmount();
 error LibraryExcessiveOutputAmount();
 
-library PeerFedLibrary {
+library UtilLibrary {
     using PRBMathUD60x18 for uint256;
 
     // given some amount of asset A and pair of supplies, returns the equivalent amount of asset B

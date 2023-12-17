@@ -5,11 +5,11 @@ pragma solidity ^0.8.20;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { SwappableERC20 } from "./SwappableERC20.sol";
-import { IPeerFed } from "./interfaces/IPeerFed.sol";
-import { IPeerFedCallee } from "./interfaces/IPeerFedCallee.sol";
-import { PeerFedLibrary } from "./libraries/PeerFedLibrary.sol";
+import { IUtil } from "./interfaces/IUtil.sol";
+import { IUtilCallee } from "./interfaces/IUtilCallee.sol";
+import { UtilLibrary } from "./libraries/UtilLibrary.sol";
 
-contract PeerFed is IPeerFed {
+contract Util is IUtil {
     address public immutable token0;
     address public immutable token1;
 
@@ -65,7 +65,7 @@ contract PeerFed is IPeerFed {
      */
     function interestRate() public view returns (uint64) {
         (uint256 _reserve0, uint256 _reserve1, ) = getReserves();
-        return PeerFedLibrary.interestRate(_reserve0, _reserve1);
+        return UtilLibrary.interestRate(_reserve0, _reserve1);
     }
 
     /**
@@ -170,13 +170,12 @@ contract PeerFed is IPeerFed {
 
         if (amount0Out > 0) IERC20(token0).transfer(to, amount0Out);
         if (amount1Out > 0) IERC20(token1).transfer(to, amount1Out);
-        if (data.length > 0) IPeerFedCallee(to).peerFedCall(msg.sender, amount0Out, amount1Out, data);
+        if (data.length > 0) IUtilCallee(to).utilCall(msg.sender, amount0Out, amount1Out, data);
 
         uint256 supply0 = IERC20(token0).totalSupply();
         uint256 supply1 = IERC20(token1).totalSupply();
 
-        if (supply0 * supply0 + supply1 * supply1 > _reserve0 * _reserve0 + _reserve1 * _reserve1)
-            revert InvalidK();
+        if (supply0 * supply0 + supply1 * supply1 > _reserve0 * _reserve0 + _reserve1 * _reserve1) revert InvalidK();
 
         _update(supply0, supply1);
 
@@ -240,10 +239,10 @@ contract PeerFed is IPeerFed {
 
         if (input0) {
             SwappableERC20(token0).transferFromOverride(msg.sender, address(this), amountIn);
-            amountOut = PeerFedLibrary.getAmountOut(amountIn, _reserve0, _reserve1);
+            amountOut = UtilLibrary.getAmountOut(amountIn, _reserve0, _reserve1);
         } else {
             SwappableERC20(token1).transferFromOverride(msg.sender, address(this), amountIn);
-            amountOut = PeerFedLibrary.getAmountOut(amountIn, _reserve1, _reserve0);
+            amountOut = UtilLibrary.getAmountOut(amountIn, _reserve1, _reserve0);
         }
         if (amountOut < amountOutMin) revert InsufficientOutputAmount();
 
@@ -267,10 +266,10 @@ contract PeerFed is IPeerFed {
         (uint256 _reserve0, uint256 _reserve1, ) = getReserves();
 
         if (input0) {
-            amountIn = PeerFedLibrary.getAmountIn(amountOut, _reserve0, _reserve1);
+            amountIn = UtilLibrary.getAmountIn(amountOut, _reserve0, _reserve1);
             SwappableERC20(token0).transferFromOverride(msg.sender, address(this), amountIn);
         } else {
-            amountIn = PeerFedLibrary.getAmountIn(amountOut, _reserve1, _reserve0);
+            amountIn = UtilLibrary.getAmountIn(amountOut, _reserve1, _reserve0);
             SwappableERC20(token1).transferFromOverride(msg.sender, address(this), amountIn);
         }
         if (amountIn > amountInMax) revert ExcessiveInputAmount();
@@ -379,11 +378,7 @@ contract PeerFed is IPeerFed {
     function mintableAmount() public view returns (uint256 newToken0, uint256 newToken1) {
         uint256 supply0 = IERC20(token0).totalSupply();
         uint256 supply1 = IERC20(token1).totalSupply();
-        (newToken0, newToken1) = PeerFedLibrary.issuanceAmounts(
-            supply0,
-            supply1,
-            invariantIssuance(currentCheckpointID)
-        );
+        (newToken0, newToken1) = UtilLibrary.issuanceAmounts(supply0, supply1, invariantIssuance(currentCheckpointID));
     }
 
     /**

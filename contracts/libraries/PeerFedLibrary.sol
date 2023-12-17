@@ -33,9 +33,9 @@ library PeerFedLibrary {
         if (amountIn == 0) revert LibraryInsufficientInputAmount();
         if (amountIn > supplyIn) revert LibraryExcessiveInputAmount();
         uint256 invariant_ = supplyIn * supplyIn + supplyOut * supplyOut;
-        supplyIn -= amountIn;
         uint256 sqOutSupply;
         unchecked {
+            supplyIn -= amountIn;
             sqOutSupply = (invariant_ - (supplyIn * supplyIn)) / 1e18;
         }
         amountOut = PRBMathUD60x18.sqrt(sqOutSupply) - supplyOut;

@@ -29,22 +29,27 @@ The util is designed to be a stabilizing unit of account for the Bitcoin economy
   <img width="748" alt="Screenshot 2023-12-19 at 12 04 42 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/1ab83f6d-3045-4d11-b5c4-9daddb55a68a">
 </p>
 
+<sup><sub>E-bond icon created by Smashicons - [Flaticon](https://www.flaticon.com/free-icons/stock-market)</sub></sup>
+
 ## Protocol Specification
-This protocol is intended to live directly on Bitcoin as a lightweight metaprotocol, akin to the Runes protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin.
+This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. A hardfork of Tighten and Ease balances can take place in the future.
 
 ### Tighten and Ease
-The interest rate $r$ is controlled by the holders of Tighten and Ease, who change the interest rate by converting between them. Conversions are governed by the constant sum-of-squares invariant $A^2+B^2=K^2$, where $A$ and $B$ are the outstanding quantity of Tighten and Ease, respectively, and $K$ is some constant before and after the conversion. The current interest rate $r = (A-B)/(A+B)$ if $A > B$ and zero otherwise.
+The interest rate $r$ is controlled by the holders of Tighten and Ease by converting between the two tokens. Conversions are governed by the constant sum-of-squares invariant $A^2+B^2=K^2$, where $A$ and $B$ are the outstanding quantity of Tighten and Ease, respectively, and $K$ is some constant before and after the conversion. The current interest rate $r = (A-B)/(A+B)$ if $A > B$ and zero otherwise.
 
 Users can safely convert between Tighten and Ease using the functions `swapExactTokensForTokens` and `swapTokensForExactTokens`.
 
 ### Auctions
-Tighten and Ease are auctioned off once every 30 minutes. This is initially done such that the fully converted quantity $K$ increases by 150 each auction, decreasing by 50% every 70,000 auctions. The split between Tighten and Ease matches the relative supply at the time the auction is settled, and the current split can be obtained using the function `mintableAmount`.
+Tighten and Ease are auctioned off once every 30 minutes. This is done such that the fully converted quantity $K$ increases by 150 each auction, decreasing by 50% every 70,000 auctions. The split between Tighten and Ease matches the relative supply at the time the auction is settled, and the current split can be obtained using the function `mintableAmount`.
 
 Bids are placed using the function `bid`, requiring the transfer of RBTC. For a bid to be valid, it must exceed `currentBid` by 1%. The previous bidder is then refunded.
 
-Auctions are settled using the function `mint`. Anyone can call this function if 30 minutes have elapsed since the last auction was settled, and Tighten and Ease are issued to the winning bidder (if present). If there is no bidder or 35 minutes have elapsed, Tighten and Ease are issued to `msg.sender`. Any RBTC held by the contract is then transferred to `block.coinbase`.
+Auctions are settled using the function `mint`. Anyone can call this function if 30 minutes have elapsed since the last auction was settled. Tighten and Ease are issued to the winning bidder (if present), but if there is no bidder or 35 minutes have elapsed, Tighten and Ease are issued to `msg.sender`. Any RBTC held by the contract is then transferred to `block.coinbase`.
 
-Auctions serve a second purpose: updating the average interest rate. While the number of "e-bonds" per sat grows at the current interest rate $r$, the number of "utils" per "e-bond" is a function of the average interest rate over the previous 8 hours. This is updated each auction using the average growth rate over the previous 16 auctions.
+Auctions serve a second purpose: updating the average interest rate. While the number of "e-bonds" per sat grows at the current interest rate $r$, the number of "utils" per "e-bond" is a function of the average interest rate over the previous 8 hours. This is updated each auction using the average interest rate over the previous 16 auctions.
+
+### Quote
+The current number of "utils" per sat can be obtained using the function `quote`. The current number of "e-bonds" per sat can be obtained using `latestAccumulator`. To safely transfer "utils" worth of RBTC, users are encouraged to use the `transfer` function in [Util.sol](./contracts/Util.sol).
 
 ## Usage
 

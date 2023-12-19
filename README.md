@@ -11,7 +11,7 @@ A Solidity implementation of the Util protocol. The protocol is currently deploy
 
 ## Motivation
 
-The internet would benefit from a native monetary system that has price stability. Many argue that bitcoin is the natural basis for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account, specifically as a [standard of deferred payment](https://en.wikipedia.org/wiki/Standard_of_deferred_payment). As economic conditions change, demand for BTC rises and falls, forcing merchants to update their prices. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.). These types of transactions are critical for the Bitcoin economy to flourish.
+The internet would benefit from a native monetary system that has price stability. Many argue that bitcoin is the natural basis for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account, particularly as a [standard of deferred payment](https://en.wikipedia.org/wiki/Standard_of_deferred_payment). As economic conditions change, demand for BTC rises and falls, forcing merchants to update their prices. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.). These types of transactions are critical for a Bitcoin economy to flourish.
 
 ## What is the Util?
 
@@ -27,14 +27,14 @@ The util is designed to be a stabilizing unit of account for the Bitcoin economy
 
 <br/>
 <p align="center">
-  <img width="748" alt="Screenshot 2023-12-19 at 12 04 42 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/1ab83f6d-3045-4d11-b5c4-9daddb55a68a">
+  <img width="735" alt="Screenshot 2023-12-19 at 3 51 36 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/a3cb5f03-fa67-487b-8494-fa012f83dcac">
 </p>
 
 <sup><sub>E-bond icon created by Smashicons - [Flaticon](https://www.flaticon.com/free-icons/stock-market)</sub></sup>
 
 ## Protocol Specification
 
-This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. A hardfork of Tighten and Ease balances can take place in the future.
+This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. Migrating to a metaprotocol may occur in the future through a hardfork of Tighten and Ease balances.
 
 ### Tighten and Ease
 

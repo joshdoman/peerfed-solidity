@@ -97,7 +97,7 @@ contract Util is IUtil {
     /** -------- Swap Logic -------- */
 
     /**
-     * @dev Function to retrieve reserve{0,1}
+     * @dev Function to retrieve reserve{0,1} and blockTimestampLast
      */
     function getReserves() public view returns (uint256 _reserve0, uint256 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;

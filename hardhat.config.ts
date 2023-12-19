@@ -31,14 +31,14 @@ const config: HardhatUserConfig = {
     },
     rsktestnet: {
       chainId: 31,
-      url: 'https://public-node.testnet.rsk.co/',
+      url: "https://public-node.testnet.rsk.co/",
       accounts: {
         mnemonic: mnemonic,
         initialIndex: 0,
         path: "m/44'/60'/0'/0",
         count: 10,
       },
-    }
+    },
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,

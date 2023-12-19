@@ -34,7 +34,7 @@ The util is designed to be a stabilizing unit of account for the Bitcoin economy
 
 ## Protocol Specification
 
-This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. The protocol may be migrated in the future, but doing so will require a hardfork of Tighten and Ease balances.
+This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. Migrating to a metaprotocol may occur in the future through a hardfork of Tighten and Ease balances.
 
 ### Tighten and Ease
 

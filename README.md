@@ -7,7 +7,7 @@
 [license]: https://opensource.org/licenses/MIT
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 
-A Solidity implementation of the Util protocol. The protocol is currently deployed on Sepolia, but a deployment on Rootstock is under development. An interactive frontend can be found [here](https://github.com/joshdoman/util-frontend). Learn more at [https://theutil.org/util.pdf](https://theutil.org/util.pdf)
+A Solidity implementation of the Util protocol. The protocol is currently deployed on the Rootstock testnet. An interactive frontend can be found [here](https://github.com/joshdoman/util-frontend). Learn more at [https://theutil.org/util.pdf](https://theutil.org/util.pdf)
 
 ## Usage
 

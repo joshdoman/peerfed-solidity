@@ -38,7 +38,7 @@ This protocol is intended to eventually live directly on Bitcoin as a lightweigh
 
 ### Tighten and Ease
 
-The interest rate $r$ is controlled by the holders of Tighten and Ease by converting between the two tokens. Conversions are governed by the constant sum-of-squares invariant $A^2+B^2=K^2$, where $A$ and $B$ are the outstanding quantity of Tighten and Ease, respectively, and $K$ is some constant before and after the conversion. The current interest rate $r = (A-B)/(A+B)$ if $A > B$ and zero otherwise.
+The interest rate $r$ is controlled by the holders of Tighten and Ease by converting between the two tokens. Conversions are governed by the constant sum-of-squares invariant $A^2+B^2=K^2$, where $A$ and $B$ are the outstanding quantity of Tighten and Ease, respectively, and $K$ is some constant before and after the conversion. The current interest rate $r = (A-B)/(A+B)$, but $r = 0$ if $A < B$.
 
 Users can safely convert between Tighten and Ease using the functions `swapExactTokensForTokens` and `swapTokensForExactTokens`.
 

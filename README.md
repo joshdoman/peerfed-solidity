@@ -48,7 +48,7 @@ Tighten and Ease are auctioned off once every 30 minutes. This is done such that
 
 Bids are placed using the function `bid`, requiring the transfer of RBTC. For a bid to be valid, it must exceed `currentBid` by 1%. The previous bidder is then refunded.
 
-Auctions are settled using the function `mint`. Anyone can call this function if 30 minutes have elapsed since the last auction was settled. Tighten and Ease are issued to the winning bidder (if present), but if there is no bidder or 35 minutes have elapsed, Tighten and Ease are issued to `msg.sender`. Any RBTC held by the contract is then transferred to `block.coinbase`.
+Auctions are settled using the function `settle`. Anyone can call this function if 30 minutes have elapsed since the last auction was settled. Tighten and Ease are issued to the winning bidder (if present), but if there is no bidder or 35 minutes have elapsed, Tighten and Ease are issued to `msg.sender`. Any RBTC held by the contract is then transferred to `block.coinbase`.
 
 Auctions serve a second purpose: updating the average interest rate. While the number of "e-bonds" per sat grows at the current interest rate $r$, the number of "utils" per "e-bond" is a function of the average interest rate over the previous 8 hours. This is updated each auction using the average interest rate over the previous 16 auctions.
 

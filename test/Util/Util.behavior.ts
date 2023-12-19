@@ -39,7 +39,7 @@ export function shouldBehaveLikeUtil(): void {
       const { owner, addr1 } = this.signers;
       const mintableAmount = await this.util.mintableAmount();
       await this.util.connect(addr1).bid({ value: eth(0.001) });
-      await this.util.connect(owner).mint();
+      await this.util.connect(owner).settle();
       expect(await this.token0.balanceOf(addr1.address)).to.equal(mintableAmount.newToken0);
       expect(await this.token1.balanceOf(addr1.address)).to.equal(mintableAmount.newToken1);
     });
@@ -47,7 +47,7 @@ export function shouldBehaveLikeUtil(): void {
     it("Should mint to `msg.sender` if there is no bidder", async function () {
       const { owner } = this.signers;
       const mintableAmount = await this.util.mintableAmount();
-      await this.util.mint();
+      await this.util.settle();
       expect(await this.token0.balanceOf(owner.address)).to.equal(mintableAmount.newToken0);
       expect(await this.token1.balanceOf(owner.address)).to.equal(mintableAmount.newToken1);
     });
@@ -59,26 +59,26 @@ export function shouldBehaveLikeUtil(): void {
       const checkpoint = await this.util.currentCheckpoint();
       const secondsUntilBidsExpire = await this.util.SECONDS_UNTIL_BIDS_EXPIRE();
       await time.increaseTo(checkpoint.blocktime + secondsUntilBidsExpire + 1);
-      await this.util.connect(owner).mint();
+      await this.util.connect(owner).settle();
       expect(await this.token0.balanceOf(owner.address)).to.equal(mintableAmount.newToken0);
       expect(await this.token1.balanceOf(owner.address)).to.equal(mintableAmount.newToken1);
     });
 
     it("Should revert if 30 minutes has not elapsed", async function () {
-      await this.util.mint();
-      await expect(this.util.mint()).to.be.revertedWithCustomError(this.util, "MintUnavailable");
+      await this.util.settle();
+      await expect(this.util.settle()).to.be.revertedWithCustomError(this.util, "MintUnavailable");
     });
 
     it("Should clear `currentBid` and `currentBidder` after mint", async function () {
       await this.util.bid({ value: eth(0.001) });
-      await this.util.mint();
+      await this.util.settle();
       expect(await this.util.currentBid()).to.equal(0);
       expect(await this.util.currentBidder()).to.equal(ethers.constants.AddressZero);
     });
 
     it("Should update reserves after mint", async function () {
       await this.util.bid({ value: eth(0.001) });
-      await this.util.mint();
+      await this.util.settle();
       const reserves = await this.util.getReserves();
       expect(reserves._reserve0).to.equal(await this.token0.totalSupply());
       expect(reserves._reserve1).to.equal(await this.token1.totalSupply());
@@ -87,7 +87,7 @@ export function shouldBehaveLikeUtil(): void {
     it("Should emit Mint event", async function () {
       const { owner } = this.signers;
       const mintableAmount = await this.util.mintableAmount();
-      await expect(this.util.mint())
+      await expect(this.util.settle())
         .to.emit(this.util, "Mint")
         .withArgs(owner.address, mintableAmount.newToken0, mintableAmount.newToken1);
     });
@@ -96,7 +96,7 @@ export function shouldBehaveLikeUtil(): void {
   describe("Swap", function () {
     it("Should swap token0 for token1", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token0In = (await this.token0.balanceOf(owner.address)).div(10);
       await this.token0.transfer(this.util.address, token0In);
       const reserves = await this.util.getReserves();
@@ -107,7 +107,7 @@ export function shouldBehaveLikeUtil(): void {
 
     it("Should swap token1 for token0", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token1In = (await this.token1.balanceOf(owner.address)).div(10);
       await this.token1.transfer(this.util.address, token1In);
       const reserves = await this.util.getReserves();
@@ -118,7 +118,7 @@ export function shouldBehaveLikeUtil(): void {
 
     it("Should revert if token0 swap exceeds invariant", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token0In = (await this.token0.balanceOf(owner.address)).div(10);
       await this.token0.transfer(this.util.address, token0In);
       const reserves = await this.util.getReserves();
@@ -131,7 +131,7 @@ export function shouldBehaveLikeUtil(): void {
 
     it("Should revert if token1 swap exceeds invariant", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token1In = (await this.token1.balanceOf(owner.address)).div(10);
       await this.token1.transfer(this.util.address, token1In);
       const reserves = await this.util.getReserves();
@@ -144,7 +144,7 @@ export function shouldBehaveLikeUtil(): void {
 
     it("Should emit Swap event", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token1In = (await this.token1.balanceOf(owner.address)).div(10);
       await this.token1.transfer(this.util.address, token1In);
       const reserves = await this.util.getReserves();
@@ -156,7 +156,7 @@ export function shouldBehaveLikeUtil(): void {
 
     it("Should update reserves on swap", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token1In = (await this.token1.balanceOf(owner.address)).div(10);
       await this.token1.transfer(this.util.address, token1In);
       const reserves = await this.util.getReserves();
@@ -172,13 +172,13 @@ export function shouldBehaveLikeUtil(): void {
   describe("Checkpoint", function () {
     it("Should increment checkpoint id on mint", async function () {
       const checkpointID = await this.util.currentCheckpointID();
-      await this.util.mint();
+      await this.util.settle();
       expect(await this.util.currentCheckpointID()).to.equal(checkpointID + 1);
     });
 
     it("Should correctly update the average interest rate on mint", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token1In = (await this.token1.balanceOf(owner.address)).div(10);
       await this.token1.transfer(this.util.address, token1In);
       const reserves = await this.util.getReserves();
@@ -206,7 +206,7 @@ export function shouldBehaveLikeUtil(): void {
         .div(nextCheckpoint.accumulator)
         .mul(secondsPerYear)
         .div(checkpointTimeElapsed);
-      await this.util.mint();
+      await this.util.settle();
 
       const newCheckpoint = await this.util.currentCheckpoint();
       expect(newCheckpoint.interestRate).to.equal(checkpointInterestRate);
@@ -215,7 +215,7 @@ export function shouldBehaveLikeUtil(): void {
 
     it("Should emit NewCheckpoint event on mint", async function () {
       const { owner, addr1 } = this.signers;
-      await this.util.mint();
+      await this.util.settle();
       const token1In = (await this.token1.balanceOf(owner.address)).div(10);
       await this.token1.transfer(this.util.address, token1In);
       const reserves = await this.util.getReserves();
@@ -243,7 +243,9 @@ export function shouldBehaveLikeUtil(): void {
         .div(nextCheckpoint.accumulator)
         .mul(secondsPerYear)
         .div(checkpointTimeElapsed);
-      await expect(this.util.mint()).to.emit(this.util, "NewCheckpoint").withArgs(checkpointInterestRate, accumulator);
+      await expect(this.util.settle())
+        .to.emit(this.util, "NewCheckpoint")
+        .withArgs(checkpointInterestRate, accumulator);
     });
   });
 }

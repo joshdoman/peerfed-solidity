@@ -301,12 +301,13 @@ contract Util is IUtil {
     }
 
     /**
-     * @dev Mints available amount to `currentBidder` and updates checkpoint interest rate, accumulator, and id.
-     * @dev Mints to `msg.sender` if `currentBidder` is not set.
-     * @dev Mints to `msg.sender` if `SECONDS_UNTIL_ANYONE_CAN_MINT` has elapsed since last checkpoint.
+     * @dev Settles current auction, mints available amount to `currentBidder`, and updates checkpoint
+     * interest rate, accumulator, and id.
+     * @dev Mints available amount to `msg.sender` if `currentBidder` is not set.
+     * @dev Mints to `msg.sender` if `SECONDS_UNTIL_BIDS_EXPIRE` has elapsed since last checkpoint.
      * @dev Reverts if `SECONDS_PER_CHECKPOINT` has not elapsed.
      */
-    function mint() public lock {
+    function settle() public lock {
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
         uint32 timeElapsed;
         unchecked {
@@ -352,7 +353,7 @@ contract Util is IUtil {
         emit NewCheckpoint(_checkpointInterestRate, _accumulator);
 
         // Set `to` to current bidder, but if bidder does not exist or
-        // `SECONDS_UNTIL_ANYONE_CAN_MINT` has elapsed, mint to `msg.sender`
+        // `SECONDS_UNTIL_BIDS_EXPIRE` has elapsed, mint to `msg.sender`
         address to = currentBidder;
         if (currentBidder == address(0) || timeElapsed > SECONDS_UNTIL_BIDS_EXPIRE) to = msg.sender;
 

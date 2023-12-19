@@ -27,14 +27,14 @@ The util is designed to be a stabilizing unit of account for the Bitcoin economy
 
 <br/>
 <p align="center">
-  <img width="748" alt="Screenshot 2023-12-19 at 12 04 42 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/1ab83f6d-3045-4d11-b5c4-9daddb55a68a">
+  <img width="735" alt="Screenshot 2023-12-19 at 3 51 36 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/a3cb5f03-fa67-487b-8494-fa012f83dcac">
 </p>
 
 <sup><sub>E-bond icon created by Smashicons - [Flaticon](https://www.flaticon.com/free-icons/stock-market)</sub></sup>
 
 ## Protocol Specification
 
-This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. Tighten and Ease balances can be hardforked in the future if there is enough user demand.
+This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. Tighten and Ease balances can be hardforked in the future if there is user demand.
 
 ### Tighten and Ease
 

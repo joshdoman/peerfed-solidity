@@ -15,32 +15,10 @@ if (!mnemonic) {
   throw new Error("Please set your MNEMONIC in a .env file");
 }
 
-const ALCHEMY_API_URL: string | undefined = process.env.ALCHEMY_API_URL;
-if (!ALCHEMY_API_URL) {
-  throw new Error("Please set your ALCHEMY_API_URL in a .env file");
-}
-
-const PRIVATE_KEY: string | undefined = process.env.PRIVATE_KEY;
-if (!PRIVATE_KEY) {
-  throw new Error("Please set your PRIVATE_KEY in a .env file");
-}
-
 const ETHERSCAN_API_KEY: string | undefined = process.env.ETHERSCAN_API_KEY;
 if (!ETHERSCAN_API_KEY) {
   throw new Error("Please set your ETHERSCAN_API_KEY in a .env file");
 }
-
-const chainIds = {
-  "arbitrum-mainnet": 42161,
-  avalanche: 43114,
-  bsc: 56,
-  hardhat: 31337,
-  mainnet: 1,
-  "optimism-mainnet": 10,
-  "polygon-mainnet": 137,
-  "polygon-mumbai": 80001,
-  rinkeby: 4,
-};
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -49,12 +27,18 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic,
       },
-      chainId: chainIds.hardhat,
+      chainId: 31337,
     },
-    sepolia: {
-      url: ALCHEMY_API_URL,
-      accounts: [`0x${PRIVATE_KEY}`],
-    },
+    rsktestnet: {
+      chainId: 31,
+      url: 'https://public-node.testnet.rsk.co/',
+      accounts: {
+        mnemonic: mnemonic,
+        initialIndex: 0,
+        path: "m/44'/60'/0'/0",
+        count: 10,
+      },
+    }
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,

@@ -11,7 +11,7 @@ A Solidity implementation of the Util protocol. The protocol is currently deploy
 
 ## Motivation
 
-The internet would benefit from a native monetary system that has price stability. Many argue that bitcoin is the natural basis for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account, particularly as a [standard of deferred payment](https://en.wikipedia.org/wiki/Standard_of_deferred_payment). As economic conditions change, demand for BTC rises and falls, forcing merchants to update their prices. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.). These types of transactions are critical for a Bitcoin economy to flourish.
+The internet would benefit from a native monetary system that has price stability. Many argue that bitcoin is the natural basis for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account, particularly as a [standard of deferred payment](https://en.wikipedia.org/wiki/Standard_of_deferred_payment). As economic conditions change, demand for BTC rises and falls, forcing merchants to update their prices. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.), which are critical for an economy to flourish.
 
 ## What is the Util?
 
@@ -32,9 +32,21 @@ The util is designed to be a stabilizing unit of account for the Bitcoin economy
 
 <sup><sub>E-bond icon created by Smashicons - [Flaticon](https://www.flaticon.com/free-icons/stock-market)</sub></sup>
 
+### Use Case
+
+Let's suppose Alice wishes to engage Bob's services for some ongoing work that she needs help with. Both Alice and Bob keep their savings in bitcoin, and they would like to settle their transactions directly in BTC. Rather than pay Bob upfront, however, Alice wishes to pay Bob once each week, with the expectation that the work will last several months.
+
+Bob is open to this arrangement, but he doesn't want to renegogiate his rate with Alice every week. The problem they face is deciding on the unit of account to price the work in. Neither Alice or Bob wants to price the work in fiat (they live in different countries and there is volatile inflation in their home currencies), but pricing the work in BTC is not acceptable to either party. A fixed rate leaves Alice expecting to pay more each week for the same amount of work (since bitcoin's expected real rate of return is non-zero), and bitcoin's fixed supply leaves the value of BTC vulnerable to a positive or negative economic shock, adding risk for both Alice and Bob.
+
+Instead of pricing the work directly in BTC, Alice and Bob agree to price the work in "utils" of BTC, since each "util" is expected to be worth the same in the future as it is today.
+
+<p align="center">
+  <img width="740" alt="Screenshot 2023-12-20 at 3 31 36 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/46872b90-15ca-426b-b685-3a877681ff6f">
+</p>
+
 ## Protocol Specification
 
-This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. Migrating to a metaprotocol may occur in the future through a hardfork of Tighten and Ease balances.
+This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. Migrating to a metaprotocol may occur in the future, but it will require a hardfork of Tighten and Ease balances.
 
 ### Tighten and Ease
 

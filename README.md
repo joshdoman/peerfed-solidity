@@ -23,7 +23,7 @@ The util is designed to be a stabilizing unit of account for the Bitcoin economy
 2. Goods and services are priced in "utils" instead of BTC.
 3. Sats map to "utils" through an intermediary unit of account called an "e-bond." The number of "e-bonds" per sat grows at an interest rate $r$, and there are $1/r$ "utils" per e-bond.
 4. The interest rate $r$ is continuously set through the relative quantity of two convertible tokens, Tighten and Ease, rather than through token voting or a central authority.
-5. The price level in the economy will be relatively stable if the interest rate equals bitcoin's required real rate of return.
+5. The price level in the economy will stabilize if the interest rate equals bitcoin's required real rate of return.
 
 <br/>
 <p align="center">

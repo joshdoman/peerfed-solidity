@@ -44,6 +44,8 @@ Instead of pricing the work directly in BTC, Alice and Bob agree to price the wo
   <img width="740" alt="Screenshot 2023-12-20 at 3 31 36 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/46872b90-15ca-426b-b685-3a877681ff6f">
 </p>
 
+The "util" offers price stability because the number of "utils" per BTC expands and contracts in line with bitcoin's value in the "util" economy, if the interest rate $r$ approximates bitcoin's expected real rate of return. Holders of Tighten and Ease are incentivized to set $r$ at this rate so that the "util" is competitive as a unit of account (otherwise their holdings have no value). While Alice or Bob could try to change the interest rate by converting between Tighten and Ease, doing so will only have a lasting effect if the new conversion rate reflects the relative market price, which requires building consensus within the wider market.
+
 ## Protocol Specification
 
 This protocol is intended to eventually live directly on Bitcoin as a lightweight metaprotocol, akin to the [Runes](https://rodarmor.com/blog/runes/) protocol proposed by Casey Rodarmor. In the short-run, however, due to ease of implementation, it has been implemented as a smart contract on Rootstock, an EVM sidechain merge-mined with Bitcoin. Migrating to a metaprotocol may occur in the future, but it will require a hardfork of Tighten and Ease balances.

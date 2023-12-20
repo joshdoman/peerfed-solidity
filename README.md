@@ -44,7 +44,7 @@ Instead of pricing the work directly in BTC, Alice and Bob agree to price the wo
   <img width="710" alt="Screenshot 2023-12-20 at 4 12 00 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/9e3c36f4-e6c0-49cc-824c-0a593c843aa5">
 </p>
 
-The "util" offers price stability because the number of "utils" per BTC expands and contracts in line with bitcoin's value in the "util" economy, if the interest rate $r$ approximates bitcoin's expected real rate of return. Holders of Tighten and Ease are incentivized to set $r$ at this rate so that the "util" is competitive as a unit of account (otherwise their holdings have no value). While Alice or Bob could try to change the interest rate by converting between Tighten and Ease, doing so will only have a lasting effect if the new conversion rate reflects the relative market price, which requires building consensus within the wider market.
+The "util" offers price stability because the number of "utils" per BTC expands and contracts in line with bitcoin's value in the "util" economy, if the interest rate $r$ approximates bitcoin's required real rate of return. Holders of Tighten and Ease are incentivized to set $r$ at this rate so that the "util" is competitive as a unit of account (otherwise their holdings have no value). While Alice or Bob could try to change the interest rate by converting between Tighten and Ease, doing so will only have a lasting effect if the new conversion rate reflects the relative market price, which requires building consensus within the wider market.
 
 ## Protocol Specification
 

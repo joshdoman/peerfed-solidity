@@ -369,8 +369,11 @@ contract Util is IUtil {
         _update(IERC20(token0).totalSupply(), IERC20(token1).totalSupply());
 
         // Send contract balance to miner
-        (bool success, ) = payable(block.coinbase).call{ value: address(this).balance }(new bytes(0));
-        if (!success) revert TransferFailed();
+        uint256 balance = address(this).balance;
+        if (balance > 0) {
+            (bool success, ) = payable(block.coinbase).call{ value: balance }(new bytes(0));
+            if (!success) emit MinerTransferFailed();
+        }
     }
 
     /**

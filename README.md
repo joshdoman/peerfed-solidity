@@ -11,7 +11,7 @@ A Solidity implementation of the Util protocol. The protocol is currently deploy
 
 ## Disclaimer
 
-This software is purely experimental and intended solely for demonstration. Under no circumustance will the author deploy this software on mainnet.
+_This software is purely experimental and intended solely for demonstration. The author will never deploy this software on a mainnet network._
 
 ## Motivation
 

@@ -9,9 +9,13 @@
 
 A Solidity implementation of the Util protocol. The protocol is currently deployed on the Rootstock testnet. An interactive frontend can be found at [https://testnet.theutil.org](https://testnet.theutil.org) or built locally using [this repository](https://github.com/joshdoman/util-frontend). Learn more at [https://theutil.org/util.pdf](https://theutil.org/util.pdf)
 
+## Disclaimer
+
+This software is purely experimental and intended solely for demonstration. Under no circumustance will the author deploy this software on mainnet.
+
 ## Motivation
 
-The internet would benefit from a native monetary system that has price stability. Many argue that bitcoin is the natural basis for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account, particularly as a [standard of deferred payment](https://en.wikipedia.org/wiki/Standard_of_deferred_payment). As economic conditions change, demand for BTC rises and falls, forcing merchants to update their prices. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.), which are critical for an economy to flourish.
+The internet would benefit from a native monetary system that has price stability. Bitcoin is the natural basis for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account, particularly as a [standard of deferred payment](https://en.wikipedia.org/wiki/Standard_of_deferred_payment). As economic conditions change, demand for BTC rises and falls, forcing merchants to update their prices. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.), which are critical for an economy to flourish.
 
 ## What is the Util?
 

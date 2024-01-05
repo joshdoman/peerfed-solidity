@@ -38,7 +38,7 @@ The util is designed to be a stabilizing unit of account for the Bitcoin economy
 
 ### Use Case
 
-Let's suppose Alice wishes to engage Bob's services for some ongoing work that she needs help with. Both Alice and Bob keep their savings in bitcoin, and they would like to settle their transactions directly in BTC. Rather than pay Bob upfront, however, Alice wishes to pay Bob once each week, with the expectation that the work will last several months.
+Let's suppose Alice wishes to engage Bob's services for some ongoing work that she needs help with. Both Alice and Bob keep their savings in bitcoin, and they would like to settle their transactions in bitcoin. Rather than pay Bob upfront, however, Alice wishes to pay Bob once each week, with the expectation that the work will last several months.
 
 Bob is open to this arrangement, but he doesn't want to renegogiate his rate with Alice every week. The problem they face is deciding on the unit of account to price the work in. Neither Alice or Bob wants to price the work in fiat (they live in different countries and there is volatile inflation in their home currencies), but pricing the work in BTC is not acceptable to either party. A fixed rate leaves Alice expecting to pay more each week for the same amount of work (since bitcoin's expected real rate of return is non-zero), and bitcoin's fixed supply leaves the value of BTC vulnerable to a positive or negative economic shock, adding risk for both Alice and Bob.
 

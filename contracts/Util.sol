@@ -355,7 +355,7 @@ contract Util is IUtil {
         // Set `to` to current bidder, but if bidder does not exist or
         // `SECONDS_UNTIL_BIDS_EXPIRE` has elapsed, mint to `msg.sender`
         address to = currentBidder;
-        if (currentBidder == address(0) || timeElapsed > SECONDS_UNTIL_BIDS_EXPIRE) to = msg.sender;
+        if (to == address(0) || timeElapsed > SECONDS_UNTIL_BIDS_EXPIRE) to = msg.sender;
 
         // Reset bid amount and bidder address
         currentBid = 0;

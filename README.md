@@ -11,7 +11,7 @@ A Solidity implementation of the Util protocol. The protocol is currently deploy
 
 ## Disclaimer
 
-_This software is highly experimental. Use at your own risk._
+_This software is experimental. Assets created by it are worthless. Use at your own risk._
 
 ## Motivation
 

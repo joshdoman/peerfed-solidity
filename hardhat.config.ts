@@ -15,11 +15,6 @@ if (!mnemonic) {
   throw new Error("Please set your MNEMONIC in a .env file");
 }
 
-const ETHERSCAN_API_KEY: string | undefined = process.env.ETHERSCAN_API_KEY;
-if (!ETHERSCAN_API_KEY) {
-  throw new Error("Please set your ETHERSCAN_API_KEY in a .env file");
-}
-
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -39,9 +34,6 @@ const config: HardhatUserConfig = {
         count: 10,
       },
     },
-  },
-  etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
   },
   gasReporter: {
     currency: "USD",

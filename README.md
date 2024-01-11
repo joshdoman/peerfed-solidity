@@ -40,9 +40,9 @@ The util is an alternative unit of account for the Bitcoin economy, which can of
 
 Let's suppose Alice wishes to engage Bob's services for some ongoing work that she needs help with. Both Alice and Bob keep their savings in bitcoin, and they would like to settle their transactions in bitcoin. Rather than pay Bob upfront, however, Alice wishes to pay Bob once each week, with the expectation that the work will last several months.
 
-Bob is open to this arrangement, but he doesn't want to renegogiate his rate with Alice every week. The problem they face is deciding on the unit of account to price the work in. Neither Alice or Bob wants to price the work in fiat (they live in different countries and there is volatile inflation in their home currencies), but pricing the work in BTC is not acceptable to either party. A fixed rate leaves Alice expecting to pay more each week for the same amount of work (since bitcoin's expected real rate of return is non-zero), and bitcoin's fixed supply leaves the value of BTC vulnerable to a positive or negative economic shock, adding risk for both Alice and Bob.
+Bob is open to this arrangement, but he doesn't want to renegogiate his rate with Alice every week. The problem they face is deciding on the unit of account to price the work in. Neither Alice nor Bob wants to price the work in fiat (they live in different countries and there is volatile inflation in their home currencies), but pricing the work in BTC is not acceptable to either party. A fixed rate leaves Alice expecting to pay more each week for the same amount of work (since bitcoin's expected real rate of return is non-zero), and bitcoin's fixed supply makes the future purchasing power of BTC uncertain, adding risk for both Alice and Bob.
 
-Instead of pricing the work directly in BTC, Alice and Bob agree to price the work in "utils" of BTC, since each "util" is expected to be worth the same in the future as it is today.
+Instead of pricing the work directly in BTC, Alice and Bob agree to price the work in "utils," since each "util" is expected to be worth the same in the future as it is today.
 
 <p align="center">
   <img width="710" alt="Screenshot 2023-12-20 at 4 12 00 PM" src="https://github.com/joshdoman/util-solidity/assets/22065307/9e3c36f4-e6c0-49cc-824c-0a593c843aa5">

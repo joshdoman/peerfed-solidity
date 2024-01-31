@@ -15,7 +15,7 @@ _This software is experimental. Assets created by it are not backed by anything 
 
 ## Motivation
 
-The internet would benefit from a native monetary system that has price stability. Bitcoin is the natural store of value for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account for [deferred payments](https://en.wikipedia.org/wiki/Standard_of_deferred_payment). As economic conditions change, demand for BTC rises and falls, forcing merchants to update prices denominated in BTC. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.), which are critical for an economy to flourish.
+The internet would benefit from a native monetary system that has price stability. Bitcoin is the natural store of value for this monetary system, but bitcoin's fixed supply makes BTC a poor unit of account, particularly for transactions where payment is due in the future (see [standard of deferred payments](https://en.wikipedia.org/wiki/Standard_of_deferred_payment)). As economic conditions change, demand for BTC rises and falls, forcing merchants to update their prices. This is problematic for transactions where payment is due in the future (i.e., wages, subscriptions, purchases made on credit, etc.), which are critical for an economy to flourish.
 
 ## What is the Util?
 

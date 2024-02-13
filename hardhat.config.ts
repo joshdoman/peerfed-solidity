@@ -34,6 +34,16 @@ const config: HardhatUserConfig = {
         count: 10,
       },
     },
+    rsk: {
+      chainId: 30,
+      url: "https://public-node.rsk.co/",
+      accounts: {
+        mnemonic: mnemonic,
+        initialIndex: 4,
+        path: "m/44'/60'/0'/0",
+        count: 10,
+      },
+    },
   },
   gasReporter: {
     currency: "USD",
